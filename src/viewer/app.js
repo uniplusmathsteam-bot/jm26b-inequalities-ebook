@@ -232,6 +232,7 @@ function applyTransform() {
   clampView();
   world.style.transform = `translate(${state.tx}px, ${state.ty}px) scale(${state.scale})`;
   updateIndicator();
+  if (ink.selectionCount()) ink.syncSelection();
   if (applyTransform.timer) return;
   applyTransform.timer = setTimeout(() => {
     applyTransform.timer = 0;
@@ -239,12 +240,16 @@ function applyTransform() {
   }, 80);
 }
 
+function toolbarShown() {
+  return !document.body.classList.contains("tools-hidden");
+}
+
 function reservedRight() {
-  return toolbar.classList.contains("dock-right") ? 84 : 16;
+  return toolbarShown() && toolbar.classList.contains("dock-right") ? 84 : 16;
 }
 
 function reservedLeft() {
-  return toolbar.classList.contains("dock-left") ? 84 : 16;
+  return toolbarShown() && toolbar.classList.contains("dock-left") ? 84 : 16;
 }
 
 function placeChrome() {
@@ -288,6 +293,7 @@ function updateIndicator() {
   if (!best) return;
   const label = document.getElementById("page-label");
   label.textContent = best.classList.contains("continuation") ? `Page ${best.dataset.page}+` : `Page ${best.dataset.page} / 16`;
+  document.getElementById("pr-label").textContent = best.classList.contains("continuation") ? `${best.dataset.page}+ / 16` : `${best.dataset.page} / 16`;
   if (state.currentKey !== best.dataset.key) {
     state.currentKey = best.dataset.key;
     document.querySelectorAll(".thumb").forEach((t) => t.classList.toggle("on", t.dataset.key === state.currentKey));
@@ -321,7 +327,106 @@ function scrollToQuestion(id) {
 function stepPage(dir) {
   const list = sheets();
   const index = Math.min(list.length - 1, Math.max(0, list.indexOf(currentSheet()) + dir));
-  scrollToSheet(list[index]);
+  if (presenting()) showPage(list[index]);
+  else scrollToSheet(list[index]);
+}
+
+/* ---------- presentation mode ---------- */
+
+const present = { fit: "page", fullscreen: false, idle: 0 };
+
+function presenting() {
+  return document.body.classList.contains("present");
+}
+
+/** In presentation mode: the whole page (or its width) centred on the screen. */
+function showPage(sheet = currentSheet()) {
+  if (!sheet) return;
+  stopInertia();
+  placeChrome();
+  const vw = viewport.clientWidth;
+  const vh = viewport.clientHeight;
+  const availW = vw - reservedLeft() - reservedRight();
+  const h = sheet.offsetHeight;
+  const top = parseFloat(sheet.style.top) || 0;
+  state.scale = present.fit === "page" ? Math.min(availW / PAGE_W, (vh - 20) / h) : Math.min(2.4, availW / PAGE_W);
+  state.scale = Math.max(0.3, state.scale);
+  state.tx = reservedLeft() + (availW - PAGE_W * state.scale) / 2;
+  state.ty = present.fit === "page" ? (vh - h * state.scale) / 2 - top * state.scale : 10 - top * state.scale;
+  state.currentKey = sheet.dataset.key;
+  applyTransform();
+}
+
+function wakePresenter() {
+  const bar = document.getElementById("presenter");
+  bar.classList.remove("idle");
+  clearTimeout(present.idle);
+  present.idle = setTimeout(() => bar.classList.add("idle"), 2600);
+}
+
+function setPresent(on) {
+  if (on === presenting()) return;
+  const bar = document.getElementById("presenter");
+  document.body.classList.toggle("present", on);
+  bar.hidden = !on;
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("more").open = false;
+  const root = document.documentElement;
+  if (on) {
+    const sheet = currentSheet();
+    const request = root.requestFullscreen || root.webkitRequestFullscreen;
+    if (request && !document.fullscreenElement && !document.webkitFullscreenElement) {
+      present.fullscreen = true;
+      Promise.resolve(request.call(root)).catch(() => { present.fullscreen = false; });
+    }
+    wakePresenter();
+    requestAnimationFrame(() => showPage(sheet));
+    toast("Presentation mode: ‹ › or swipe to change page, Esc to leave");
+  } else {
+    document.body.classList.remove("tools-hidden");
+    document.getElementById("pr-tools").textContent = "Hide tools";
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (present.fullscreen && (document.fullscreenElement || document.webkitFullscreenElement) && exit) {
+      Promise.resolve(exit.call(document)).catch(() => {});
+    }
+    present.fullscreen = false;
+    requestAnimationFrame(fitWidth);
+  }
+}
+
+function bindPresenter() {
+  const bar = document.getElementById("presenter");
+  document.getElementById("present").onclick = () => setPresent(true);
+  document.getElementById("pr-exit").onclick = () => setPresent(false);
+  document.getElementById("pr-prev").onclick = () => stepPage(-1);
+  document.getElementById("pr-next").onclick = () => stepPage(1);
+  document.getElementById("pr-fit").onclick = (event) => {
+    present.fit = present.fit === "page" ? "width" : "page";
+    event.currentTarget.textContent = present.fit === "page" ? "Fit width" : "Whole page";
+    showPage();
+  };
+  document.getElementById("pr-tools").onclick = (event) => {
+    const hidden = document.body.classList.toggle("tools-hidden");
+    event.currentTarget.textContent = hidden ? "Show tools" : "Hide tools";
+    showPage();
+  };
+  document.getElementById("pr-replay").onclick = () => replayCurrent();
+  bar.addEventListener("pointerdown", wakePresenter);
+  window.addEventListener("pointermove", () => {
+    if (presenting() && bar.classList.contains("idle")) wakePresenter();
+  }, { passive: true });
+  const onFullscreen = () => {
+    const full = document.fullscreenElement || document.webkitFullscreenElement;
+    if (!full && present.fullscreen && presenting()) setPresent(false);
+  };
+  document.addEventListener("fullscreenchange", onFullscreen);
+  document.addEventListener("webkitfullscreenchange", onFullscreen);
+}
+
+function replayCurrent() {
+  const key = currentSheet()?.dataset.key;
+  if (!key || !ink.replayPage(key)) toast("No ink on this page to replay yet");
+  else toast("Replaying the ink on this page… tap anywhere to stop");
 }
 
 /* ---------- inertia ---------- */
@@ -355,10 +460,10 @@ function startInertia(vx, vy) {
 
 const MODE_TEXT = {
   read: "Read mode: drag or scroll to move, tap a box to reveal the next step",
-  pen: "Pen: draw and hold to snap a straight line, circle or box; one finger scrolls",
+  pen: "Pen: draw and hold to snap a line, triangle, circle or box; tap ink with a finger to edit it",
   highlighter: "Highlighter: swipe across text and it snaps onto the line; hold to straighten",
-  eraser: "Eraser: touch a stroke to remove it",
-  lasso: "Select: circle strokes, then drag them or press Delete",
+  eraser: "Eraser: touch a stroke to remove it; turn on Partial erase to rub out just a part",
+  lasso: "Select: circle strokes or tap one, then drag, resize from the corner, or use the menu",
   laser: "Laser pointer: point with the pen or mouse; the trail fades and is never saved",
 };
 
@@ -372,6 +477,7 @@ function toast(text) {
 
 function setTool(type, quiet = false) {
   ink.setTool({ type });
+  if (type !== "lasso") ink.clearSelection();
   toolbar.querySelectorAll("[data-tool]").forEach((b) => b.classList.toggle("on", b.dataset.tool === type));
   toolbar.querySelectorAll(".opts").forEach((o) => {
     o.hidden = o.dataset.for !== type;
@@ -392,6 +498,11 @@ function setTool(type, quiet = false) {
 function syncSnapToggles() {
   toolbar.querySelectorAll("[data-snap]").forEach((b) => {
     const on = ink.getTool()[b.dataset.snap] !== false;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", String(on));
+  });
+  toolbar.querySelectorAll("[data-flag]").forEach((b) => {
+    const on = ink.getTool()[b.dataset.flag] === true;
     b.classList.toggle("on", on);
     b.setAttribute("aria-pressed", String(on));
   });
@@ -419,6 +530,15 @@ function bindToolbar() {
       syncSnapToggles();
       saveUI();
       toast(`${snap.textContent.trim()}: ${ink.getTool()[key] ? "on" : "off"}`);
+      return;
+    }
+    const flag = event.target.closest("[data-flag]");
+    if (flag) {
+      const key = flag.dataset.flag;
+      ink.setTool({ [key]: ink.getTool()[key] !== true });
+      syncSnapToggles();
+      saveUI();
+      toast(`${flag.textContent.trim()}: ${ink.getTool()[key] ? "on" : "off"}`);
       return;
     }
     const size = event.target.closest("[data-size]");
@@ -457,7 +577,9 @@ function bindToolbar() {
   };
   document.addEventListener("ink-selection", (event) => {
     document.getElementById("delete-selection").hidden = event.detail.count === 0;
+    placeSelMenu(event.detail);
   });
+  bindSelMenu();
   document.addEventListener("ink-snap", (event) => {
     const { shape, axis, onText } = event.detail;
     const line = { h: "Horizontal line", v: "Vertical line", d: "45° line" }[axis] || "Straight line";
@@ -467,6 +589,66 @@ function bindToolbar() {
   syncSnapToggles();
   const size = ink.getTool().size;
   toolbar.querySelectorAll("[data-size]").forEach((b) => b.classList.toggle("on", Number(b.dataset.size) === size));
+}
+
+/* ---------- selection menu ---------- */
+
+const PEN_COLORS = ["#1c1c1c", "#163a86", "#d92d20", "#1d8a4a"];
+const MARK_COLORS = ["#ffe14a", "#ff8ad4", "#8ee08a", "#8eb4f0"];
+const selMenu = document.getElementById("sel-menu");
+let selKinds = "";
+
+function placeSelMenu(detail = { count: ink.selectionCount() }) {
+  const rect = ink.selectionRect();
+  if (!detail.count || detail.moving || !rect) {
+    selMenu.hidden = true;
+    return;
+  }
+  const kinds = ink.selectionTools().map((t) => (t === "highlighter" ? "highlighter" : "pen"));
+  const key = [...new Set(kinds)].sort().join(",");
+  if (key !== selKinds) {
+    selKinds = key;
+    const box = selMenu.querySelector(".sel-colors");
+    box.replaceChildren();
+    for (const kind of ["pen", "highlighter"]) {
+      if (!kinds.includes(kind)) continue;
+      for (const color of kind === "pen" ? PEN_COLORS : MARK_COLORS) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.dataset.selColor = color;
+        b.dataset.kind = kind;
+        b.style.setProperty("--c", color);
+        b.title = kind === "pen" ? "Ink colour" : "Highlight colour";
+        box.append(b);
+      }
+    }
+  }
+  selMenu.hidden = false;
+  const w = selMenu.offsetWidth;
+  const h = selMenu.offsetHeight;
+  const topLimit = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--top")) || 0) + 8;
+  let top = rect.top - h - 12;
+  if (top < topLimit) top = rect.bottom + 12;
+  top = Math.min(Math.max(topLimit, top), window.innerHeight - h - 8);
+  const left = Math.min(Math.max(8, rect.left + rect.width / 2 - w / 2), window.innerWidth - w - 8);
+  selMenu.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+}
+
+function bindSelMenu() {
+  selMenu.addEventListener("click", (event) => {
+    const swatch = event.target.closest("[data-sel-color]");
+    if (swatch) {
+      ink.recolorSelection(swatch.dataset.selColor, swatch.dataset.kind);
+      return;
+    }
+    const action = event.target.closest("[data-sel]")?.dataset.sel;
+    if (action === "thin") ink.thickenSelection(1 / 1.3);
+    else if (action === "thick") ink.thickenSelection(1.3);
+    else if (action === "shape" && !ink.shapeSelection()) toast("Nothing to tidy: draw a rough line, triangle, box or circle first");
+    else if (action === "copy") ink.duplicateSelection();
+    else if (action === "delete") ink.deleteSelection();
+    else if (action === "done") ink.clearSelection();
+  });
 }
 
 /* ---------- viewport gestures ---------- */
@@ -516,11 +698,31 @@ function bindViewport() {
     drag = { id: event.pointerId, x: event.clientX, y: event.clientY, tx: state.tx, ty: state.ty, moved: false, samples: [] };
   };
 
+  // Two-finger tap = undo, three-finger tap = redo (as in Notability and GoodNotes).
+  let fingers = null;
+  const fingerDown = (event) => {
+    fingers ??= { start: performance.now(), max: 0, moved: false, origin: new Map() };
+    fingers.origin.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    fingers.max = Math.max(fingers.max, fingers.origin.size);
+  };
+  const fingerUp = (event) => {
+    if (!fingers?.origin.has(event.pointerId)) return;
+    fingers.origin.delete(event.pointerId);
+    if (fingers.origin.size) return;
+    const { max, moved, start } = fingers;
+    fingers = null;
+    if (moved || max < 2 || performance.now() - start > 450) return;
+    suppressClickUntil = performance.now() + 400;
+    const done = max === 2 ? ink.undo() : ink.redo();
+    toast(done ? (max === 2 ? "Undo" : "Redo") : max === 2 ? "Nothing to undo" : "Nothing to redo");
+  };
+
   viewport.addEventListener("pointerdown", (event) => {
     if (event.target.closest(UI_SELECTOR)) return;
     if (palm(event)) return;
     stopInertia();
     if (event.pointerType === "touch") {
+      fingerDown(event);
       touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
       if (touches.size === 1) startDrag(event);
       if (touches.size === 2) {
@@ -538,6 +740,8 @@ function bindViewport() {
   });
 
   window.addEventListener("pointermove", (event) => {
+    const origin = fingers?.origin.get(event.pointerId);
+    if (origin && Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > 14) fingers.moved = true;
     if (touches.has(event.pointerId)) touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
     if (pinch && touches.size >= 2) {
       const [a, b] = [...touches.values()];
@@ -566,10 +770,22 @@ function bindViewport() {
   });
 
   const end = (event) => {
+    fingerUp(event);
     touches.delete(event.pointerId);
     if (touches.size < 2) pinch = null;
     if (!drag || drag.id !== event.pointerId) return;
     document.body.classList.remove("dragging");
+    if (drag.moved && presenting() && present.fit === "page") {
+      // Presenting a whole page: a swipe turns the page, a small drag springs back.
+      suppressClickUntil = performance.now() + 350;
+      const dx = event.clientX - drag.x;
+      const dy = event.clientY - drag.y;
+      drag = null;
+      if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy)) stepPage(dx < 0 ? 1 : -1);
+      else if (Math.abs(dy) > 90) stepPage(dy < 0 ? 1 : -1);
+      else showPage();
+      return;
+    }
     if (drag.moved) {
       suppressClickUntil = performance.now() + 350;
       const s = drag.samples;
@@ -588,7 +804,7 @@ function bindViewport() {
   window.addEventListener("pointercancel", end);
 
   window.addEventListener("click", (event) => {
-    if (performance.now() < suppressClickUntil && !event.target.closest(".toolbar, .topbar, .drawer")) {
+    if (performance.now() < suppressClickUntil && !event.target.closest(".toolbar, .topbar, .drawer, .sel-menu, .presenter")) {
       event.stopPropagation();
       event.preventDefault();
     }
@@ -619,6 +835,8 @@ function bindViewport() {
     }
     const tapOK = ink.getTool().type === "read" || lastPointer === "touch";
     if (!tapOK) return;
+    // Tapping ink selects it for editing; tapping away clears the selection.
+    if (ink.tapSelect(event.clientX, event.clientY, lastPointer === "touch" ? 12 : 6)) return;
     const hint = event.target.closest("[data-link]");
     if (hint) {
       toggleLink(hint.dataset.q, hint.dataset.link);
@@ -756,6 +974,11 @@ function bindChrome() {
     more.open = false;
     window.print();
   };
+  document.getElementById("replay").onclick = () => {
+    more.open = false;
+    replayCurrent();
+  };
+  bindPresenter();
   window.addEventListener("keydown", (event) => {
     if (event.target.closest("input, select, textarea")) return;
     const key = event.key.toLowerCase();
@@ -771,6 +994,24 @@ function bindChrome() {
       return;
     }
     if (event.metaKey || event.ctrlKey || event.altKey) return;
+    if (key === "f5") {
+      event.preventDefault();
+      setPresent(!presenting());
+      return;
+    }
+    if (presenting()) {
+      // Clickers send arrows, Page Up/Down and space.
+      const turn = { arrowright: 1, arrowdown: 1, pagedown: 1, " ": 1, arrowleft: -1, arrowup: -1, pageup: -1 }[key];
+      if (turn) {
+        event.preventDefault();
+        stepPage(event.shiftKey && key === " " ? -1 : turn);
+        return;
+      }
+      if (key === "escape" && !document.body.classList.contains("drawer-open")) {
+        setPresent(false);
+        return;
+      }
+    }
     const tools = { escape: "read", v: "read", p: "pen", h: "highlighter", e: "eraser", l: "lasso", k: "laser" };
     if (key === "escape" && document.body.classList.contains("drawer-open")) {
       closeGraphic();
@@ -791,7 +1032,7 @@ function bindChrome() {
     else if (key === "end") scrollToY(state.worldH);
     else if (key === "delete" || key === "backspace") ink.deleteSelection();
   });
-  window.addEventListener("resize", fitWidth);
+  window.addEventListener("resize", () => (presenting() ? showPage() : fitWidth()));
 }
 
 /* ---------- start ---------- */

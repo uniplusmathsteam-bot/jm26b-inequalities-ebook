@@ -1,4 +1,4 @@
-const CACHE = "jm26b-ebook-v3";
+const CACHE = "jm26b-ebook-v4";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

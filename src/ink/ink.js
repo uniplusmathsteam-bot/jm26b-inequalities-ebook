@@ -3,12 +3,14 @@ import { linePoints, recognise, snapAngle, snapToText, straightHighlight } from 
 
 const DB_NAME = "jm26b-ebook";
 const STORE = "kv";
-const HOLD_MS = 480;
+const HOLD_MS = 520;
 const HOLD_SLOP = 5;
 const LASER_FADE = 700;
 // iPad Safari caps each canvas near 16.7 MP and all canvases together by memory,
 // so only pages near the screen with ink on them get full-size canvases.
 const MAX_PIXELS = 5e6;
+const CLOSED = new Set(["rect", "ellipse", "triangle"]);
+const DRAW_TOOLS = new Set(["pen", "highlighter", "eraser"]);
 
 function uid() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
@@ -16,6 +18,28 @@ function uid() {
 
 function dist(a, b) {
   return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function segDist(p, a, b) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  const t = len2 ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2)) : 0;
+  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+}
+
+/** Distance from a point to the drawn path of a stroke. */
+function strokeDist(stroke, point) {
+  const pts = stroke.points;
+  if (!pts.length) return Infinity;
+  let d = dist(pts[0], point);
+  for (let i = 1; i < pts.length; i++) d = Math.min(d, segDist(point, pts[i - 1], pts[i]));
+  if (CLOSED.has(stroke.shape) && pts.length > 2) d = Math.min(d, segDist(point, pts[pts.length - 1], pts[0]));
+  return d;
+}
+
+function clone(stroke) {
+  return { ...stroke, points: stroke.points.map((p) => ({ ...p })) };
 }
 
 function pointInPoly(p, poly) {
@@ -48,15 +72,18 @@ export function createInk() {
   const undoStack = [];
   const redoStack = [];
   const selection = new Set();
+  const replayHidden = new Set();
   let draft = null;
   let lasso = null;
   let laser = null;
   let laserLoop = false;
   let moving = null;
+  let replay = null;
   let activeId = null;
   let eraserBatch = null;
   let saveTimer = 0;
   let dbPromise = null;
+  let selEl = null;
 
   function sheets() {
     return [...document.querySelectorAll(".sheet")];
@@ -64,6 +91,18 @@ export function createInk() {
 
   function sheetByKey(key) {
     return document.querySelector(`.sheet[data-key="${key}"]`);
+  }
+
+  function sheetAt(x, y) {
+    return sheets().find((sheet) => {
+      const r = sheet.getBoundingClientRect();
+      return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+    });
+  }
+
+  /** Screen pixels per page point for a sheet at the current zoom. */
+  function zoomOf(sheet) {
+    return sheet.getBoundingClientRect().width / sheet.offsetWidth || 1;
   }
 
   function clientToPdf(sheet, clientX, clientY) {
@@ -74,11 +113,45 @@ export function createInk() {
     };
   }
 
+  /* ---------- history ---------- */
+
   function pushHistory(entry) {
     undoStack.push(entry);
-    if (undoStack.length > 80) undoStack.shift();
+    if (undoStack.length > 120) undoStack.shift();
     redoStack.length = 0;
   }
+
+  function removeId(id) {
+    const index = strokes.findIndex((s) => s.id === id);
+    if (index >= 0) strokes.splice(index, 1);
+  }
+
+  /** Takes out `remove` and puts in `add`; strokes kept by id stay in place. */
+  function applySwap(remove, add) {
+    const keep = new Set(add.map((s) => s.id));
+    for (const stroke of remove) if (!keep.has(stroke.id)) removeId(stroke.id);
+    for (const stroke of add) {
+      const index = strokes.findIndex((s) => s.id === stroke.id);
+      if (index >= 0) strokes[index] = clone(stroke);
+      else strokes.push(clone(stroke));
+    }
+  }
+
+  /** Records an edit of existing strokes made by `change`. */
+  function editStrokes(list, change) {
+    if (!list.length) return false;
+    const before = list.map(clone);
+    const changed = list.map(change).some(Boolean);
+    if (!changed) return false;
+    pushHistory({ type: "swap", removed: before, added: list.map(clone) });
+    scheduleSave();
+    const pages = new Set(list.map((s) => s.page));
+    for (const page of pages) redraw(sheetByKey(page));
+    syncSelection();
+    return true;
+  }
+
+  /* ---------- saving ---------- */
 
   /** Saving clones every stroke, so it waits for a pause and never runs mid-stroke. */
   function scheduleSave() {
@@ -123,6 +196,8 @@ export function createInk() {
     }
   }
 
+  /* ---------- canvases ---------- */
+
   function targetSize(sheet) {
     const rect = sheet.getBoundingClientRect();
     if (rect.width < 8 || rect.height < 8) return null;
@@ -161,14 +236,9 @@ export function createInk() {
     const size = targetSize(sheet);
     if (!size) return;
     const key = sheet.dataset.key;
-    const mine = strokes.filter((s) => s.page === key && !s.hidden);
-    const pens = mine.filter((s) => s.tool !== "highlighter");
-    const ink = sheet.querySelector('canvas[data-layer="ink"]');
-    const selectedHere = selection.size && mine.some((s) => selection.has(s.id));
+    const mine = strokes.filter((s) => s.page === key && !replayHidden.has(s.id));
     drawList(sheet.querySelector('canvas[data-layer="hl"]'), mine.filter((s) => s.tool === "highlighter"), sheet, size);
-    if (pens.length) drawList(ink, pens, sheet, size);
-    else fit(ink, selectedHere ? size : TINY);
-    if (selectedHere) paintSelection(ink, key, sheet);
+    drawList(sheet.querySelector('canvas[data-layer="ink"]'), mine.filter((s) => s.tool !== "highlighter"), sheet, size);
     sheet.dataset.inkSize = `${size.w}x${size.h}`;
   }
 
@@ -207,28 +277,37 @@ export function createInk() {
     return canvas;
   }
 
+  function clearLive(page) {
+    const canvas = page && sheetByKey(page)?.querySelector('canvas[data-layer="live"]');
+    canvas?.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  /** Paints one temporary stroke on the live layer of its page. */
+  function paintTemp(sheet, stroke) {
+    const canvas = liveCanvas(sheet);
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.classList.toggle("hl", stroke?.tool === "highlighter");
+    if (stroke && stroke.points.length) {
+      paintStroke(ctx, stroke, canvas.width / sheet.offsetWidth, canvas.height / sheet.offsetHeight);
+      ctx.globalAlpha = 1;
+    }
+    return canvas;
+  }
+
   function paintLive() {
     cancelAnimationFrame(liveFrame);
     liveFrame = 0;
     const item = draft && !draft.eraser ? draft : null;
     const page = item?.page || lasso?.page || null;
-    if (livePage && livePage !== page) {
-      const old = sheetByKey(livePage)?.querySelector('canvas[data-layer="live"]');
-      old?.getContext("2d").clearRect(0, 0, old.width, old.height);
-    }
+    if (livePage && livePage !== page) clearLive(livePage);
     livePage = page;
     if (!page) return;
     const sheet = sheetByKey(page);
     if (!sheet) return;
-    const canvas = liveCanvas(sheet);
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    canvas.classList.toggle("hl", item?.tool === "highlighter");
-    const k = canvas.width / sheet.offsetWidth;
-    if (item && item.points.length) {
-      paintStroke(ctx, item, k, canvas.height / sheet.offsetHeight);
-      ctx.globalAlpha = 1;
-    }
+    // Predicted points (where supported) close the gap between the ink and the Pencil tip.
+    const shown = item?.predicted?.length ? { ...item, points: item.points.concat(item.predicted) } : item;
+    const canvas = paintTemp(sheet, shown);
     if (lasso) paintLasso(canvas, lasso.points, sheet);
   }
 
@@ -250,6 +329,10 @@ export function createInk() {
     }
   }
 
+  function redrawAll() {
+    refresh(true);
+  }
+
   function paintLasso(canvas, points, sheet) {
     if (!points.length) return;
     const ctx = canvas.getContext("2d");
@@ -265,20 +348,6 @@ export function createInk() {
     ctx.restore();
   }
 
-  function paintSelection(canvas, key, sheet) {
-    const box = bounds(strokes.filter((s) => s.page === key && selection.has(s.id)));
-    if (!box) return;
-    const ctx = canvas.getContext("2d");
-    const sx = canvas.width / sheet.offsetWidth;
-    const sy = canvas.height / sheet.offsetHeight;
-    ctx.save();
-    ctx.strokeStyle = "#163a86";
-    ctx.setLineDash([5, 4]);
-    ctx.lineWidth = 1.25 * sx;
-    ctx.strokeRect(box.x0 * sx, box.y0 * sy, (box.x1 - box.x0) * sx, (box.y1 - box.y0) * sy);
-    ctx.restore();
-  }
-
   function bounds(list) {
     if (!list.length) return null;
     let x0 = Infinity;
@@ -286,33 +355,214 @@ export function createInk() {
     let x1 = -Infinity;
     let y1 = -Infinity;
     for (const stroke of list) {
+      const r = stroke.size / 2;
       for (const p of stroke.points) {
-        x0 = Math.min(x0, p.x);
-        y0 = Math.min(y0, p.y);
-        x1 = Math.max(x1, p.x);
-        y1 = Math.max(y1, p.y);
+        x0 = Math.min(x0, p.x - r);
+        y0 = Math.min(y0, p.y - r);
+        x1 = Math.max(x1, p.x + r);
+        y1 = Math.max(y1, p.y + r);
       }
     }
     return { x0: x0 - 4, y0: y0 - 4, x1: x1 + 4, y1: y1 + 4 };
   }
 
-  function redrawAll() {
-    refresh(true);
+  /* ---------- selection ---------- */
+
+  function selected() {
+    return strokes.filter((s) => selection.has(s.id));
   }
 
-  function hitStrokes(page, point, radius) {
-    return strokes.filter((s) => s.page === page && s.points.some((p) => dist(p, point) <= radius));
+  function syncSelection() {
+    for (const id of [...selection]) if (!strokes.some((s) => s.id === id)) selection.delete(id);
+    const list = selected();
+    const box = bounds(list);
+    const sheet = box && sheetByKey(list[0].page);
+    if (!sheet) {
+      selEl?.remove();
+      selEl = null;
+    } else {
+      if (!selEl) {
+        selEl = document.createElement("div");
+        selEl.className = "ink-sel";
+        selEl.innerHTML = '<i class="ink-handle"></i>';
+      }
+      if (selEl.parentElement !== sheet) sheet.append(selEl);
+      selEl.style.left = `${box.x0}px`;
+      selEl.style.top = `${box.y0}px`;
+      selEl.style.width = `${box.x1 - box.x0}px`;
+      selEl.style.height = `${box.y1 - box.y0}px`;
+      selEl.style.setProperty("--k", String(1 / zoomOf(sheet)));
+    }
+    document.dispatchEvent(new CustomEvent("ink-selection", { detail: { count: selection.size, moving: Boolean(moving) } }));
   }
+
+  function selectIds(ids) {
+    selection.clear();
+    for (const id of ids) selection.add(id);
+    syncSelection();
+  }
+
+  function clearSelection() {
+    if (!selection.size) return;
+    selection.clear();
+    syncSelection();
+  }
+
+  /** The topmost stroke under a point: pen ink wins over highlights beneath it. */
+  function hitStroke(page, point, slop) {
+    let fallback = null;
+    for (let i = strokes.length - 1; i >= 0; i--) {
+      const s = strokes[i];
+      if (s.page !== page || replayHidden.has(s.id)) continue;
+      if (strokeDist(s, point) > s.size / 2 + slop) continue;
+      if (s.tool !== "highlighter") return s;
+      fallback ??= s;
+    }
+    return fallback;
+  }
+
+  /** "move", "scale" (corner handle) or null for a point on a sheet. */
+  function selectionGrab(sheet, point) {
+    const list = selected();
+    if (!list.length || list[0].page !== sheet.dataset.key) return null;
+    const box = bounds(list);
+    const reach = 16 / zoomOf(sheet);
+    if (dist(point, { x: box.x1, y: box.y1 }) <= reach) return "scale";
+    if (point.x >= box.x0 && point.x <= box.x1 && point.y >= box.y0 && point.y <= box.y1) return "move";
+    return null;
+  }
+
+  /** A tap on ink selects it; a tap elsewhere clears the selection. Returns true if used. */
+  function tapSelect(clientX, clientY, slopPx = 8) {
+    const sheet = sheetAt(clientX, clientY);
+    if (!sheet) return false;
+    const point = clientToPdf(sheet, clientX, clientY);
+    const hit = hitStroke(sheet.dataset.key, point, slopPx / zoomOf(sheet));
+    if (hit) {
+      selectIds([hit.id]);
+      return true;
+    }
+    if (!selection.size) return false;
+    if (selectionGrab(sheet, point)) return true;
+    clearSelection();
+    return true;
+  }
+
+  function startEdit(mode, sheet, point) {
+    const live = selected();
+    moving = { mode, page: sheet.dataset.key, start: point, last: point, box: bounds(live), orig: live.map(clone), live, frame: 0 };
+    syncSelection();
+  }
+
+  function applyEdit() {
+    const m = moving;
+    m.frame = 0;
+    if (m.mode === "move") {
+      const dx = m.last.x - m.start.x;
+      const dy = m.last.y - m.start.y;
+      m.live.forEach((s, i) => {
+        s.points = m.orig[i].points.map((p) => ({ ...p, x: p.x + dx, y: p.y + dy }));
+      });
+    } else {
+      const ax = m.box.x0;
+      const ay = m.box.y0;
+      const vx = m.box.x1 - ax;
+      const vy = m.box.y1 - ay;
+      const f = Math.max(0.15, Math.min(8, ((m.last.x - ax) * vx + (m.last.y - ay) * vy) / (vx * vx + vy * vy || 1)));
+      m.live.forEach((s, i) => {
+        const o = m.orig[i];
+        s.points = o.points.map((p) => ({ ...p, x: ax + (p.x - ax) * f, y: ay + (p.y - ay) * f }));
+        s.size = Math.max(0.4, Math.min(90, o.size * f));
+      });
+    }
+    redraw(sheetByKey(m.page));
+    syncSelection();
+  }
+
+  function finishEdit() {
+    const m = moving;
+    if (m.frame) {
+      cancelAnimationFrame(m.frame);
+      applyEdit();
+    }
+    moving = null;
+    if (dist(m.start, m.last) > 0.5) {
+      pushHistory({ type: "swap", removed: m.orig, added: m.live.map(clone) });
+      scheduleSave();
+    }
+    syncSelection();
+  }
+
+  /** Recolours the selected strokes of one tool ("pen" covers all pen ink). */
+  function recolorSelection(color, kind) {
+    const list = selected().filter((s) => (kind === "highlighter" ? s.tool === "highlighter" : s.tool !== "highlighter"));
+    return editStrokes(list, (s) => {
+      const same = s.color === color;
+      s.color = color;
+      return !same;
+    });
+  }
+
+  function thickenSelection(factor) {
+    return editStrokes(selected(), (s) => {
+      s.size = Math.max(0.4, Math.min(90, s.size * factor));
+      return true;
+    });
+  }
+
+  function shapeSelection() {
+    return editStrokes(selected(), (s) => {
+      if (s.shape) return false;
+      const found = recognise(s.points);
+      if (!found) return false;
+      s.shape = found.shape;
+      s.points = found.points;
+      return true;
+    });
+  }
+
+  function duplicateSelection() {
+    const copies = selected().map((s) => ({ ...clone(s), id: uid(), points: s.points.map((p) => ({ ...p, x: p.x + 14, y: p.y + 14 })) }));
+    if (!copies.length) return false;
+    strokes.push(...copies);
+    pushHistory({ type: "swap", removed: [], added: copies.map(clone) });
+    scheduleSave();
+    redraw(sheetByKey(copies[0].page));
+    selectIds(copies.map((s) => s.id));
+    return true;
+  }
+
+  function deleteSelection() {
+    const removed = selected().map(clone);
+    if (!removed.length) return;
+    for (const stroke of removed) removeId(stroke.id);
+    selection.clear();
+    pushHistory({ type: "swap", removed, added: [] });
+    scheduleSave();
+    redrawAll();
+    syncSelection();
+  }
+
+  /* ---------- drawing helpers ---------- */
 
   function addPoint(target, event, sheet) {
-    const list = event.getCoalescedEvents ? event.getCoalescedEvents() : [event];
+    // pointerdown usually has no coalesced events, which would drop the first point.
+    const coalesced = event.getCoalescedEvents?.() || [];
+    const list = coalesced.length ? coalesced : [event];
+    const pen = event.pointerType === "pen";
     for (const item of list) {
       const p = clientToPdf(sheet, item.clientX, item.clientY);
-      p.p = item.pressure && item.pressure > 0 ? item.pressure : 0.5;
-      p.t = performance.now();
       const prev = target.points[target.points.length - 1];
-      if (!prev || dist(prev, p) > 0.35) target.points.push(p);
+      // Pencil pressure is noisy, and often 0 on the very first sample: smooth it.
+      if (pen) p.p = item.pressure > 0 ? (prev ? prev.p * 0.35 + item.pressure * 0.65 : item.pressure) : prev?.p ?? 0.35;
+      else p.p = item.pressure > 0 ? item.pressure : 0.5;
+      p.t = performance.now();
+      if (!prev || dist(prev, p) > target.minStep) target.points.push(p);
+      else if (pen) prev.p = p.p;
     }
+    const predicted = pen && event.getPredictedEvents ? event.getPredictedEvents() : [];
+    const last = target.points[target.points.length - 1];
+    target.predicted = predicted.slice(0, 3).map((item) => ({ ...clientToPdf(sheet, item.clientX, item.clientY), p: last?.p ?? 0.5 }));
   }
 
   /**
@@ -362,12 +612,12 @@ export function createInk() {
     const a = stroke.points[0];
     const b = stroke.points[stroke.points.length - 1];
     if (sheet && !stroke.rows) stroke.rows = rowsFor(sheet);
-    const fit = tool.snapText !== false && sheet ? snapToText(a, b, stroke.rows) : null;
-    if (fit) {
-      stroke.points = linePoints(fit.a, fit.b);
-      stroke.size = fit.size;
+    const fitted = tool.snapText !== false && sheet ? snapToText(a, b, stroke.rows) : null;
+    if (fitted) {
+      stroke.points = linePoints(fitted.a, fitted.b);
+      stroke.size = fitted.size;
     } else stroke.size = stroke.baseSize ?? stroke.size;
-    return Boolean(fit);
+    return Boolean(fitted);
   }
 
   function armHold(event) {
@@ -389,6 +639,7 @@ export function createInk() {
     draft.anchor = found.a ? { x: found.a.x, y: found.a.y } : null;
     draft.axis = found.axis || null;
     draft.points = found.points;
+    draft.predicted = null;
     let onText = false;
     if (draft.tool === "highlighter" && draft.shape === "line" && draft.axis === "h") onText = snapHighlightToText(draft);
     scheduleLive();
@@ -416,7 +667,60 @@ export function createInk() {
     snapHighlightToText(stroke);
   }
 
-  /* Laser pointer: a glowing trail that fades on its own canvas and is never saved. */
+  /* ---------- eraser ---------- */
+
+  /** The parts of a stroke left after rubbing out a circle. */
+  function splitStroke(stroke, point, radius) {
+    let pts = stroke.points;
+    const inside = (p) => dist(p, point) <= radius;
+    if (!pts.some(inside)) return null;
+    if (CLOSED.has(stroke.shape)) {
+      const first = pts.findIndex(inside);
+      pts = pts.slice(first).concat(pts.slice(0, first), [pts[first]]);
+    }
+    const pieces = [];
+    let run = [];
+    for (const p of pts) {
+      if (inside(p)) {
+        if (run.length > 1) pieces.push(run);
+        run = [];
+      } else run.push({ ...p });
+    }
+    if (run.length > 1) pieces.push(run);
+    return pieces.map((points) => ({
+      ...stroke,
+      id: uid(),
+      points,
+      shape: stroke.shape ? "path" : undefined,
+      cut: true,
+    }));
+  }
+
+  function eraseAt(sheet, point) {
+    const radius = 8 + tool.size;
+    const page = sheet.dataset.key;
+    const onlyHighlights = tool.eraseHighlights === true;
+    const partial = tool.erasePartial === true;
+    const hits = strokes.filter((s) => s.page === page
+      && (!onlyHighlights || s.tool === "highlighter")
+      && strokeDist(s, point) <= radius + s.size * 0.3);
+    if (!hits.length) return;
+    for (const hit of hits) {
+      const pieces = partial ? splitStroke(hit, point, radius + hit.size * 0.3) : [];
+      if (!pieces) continue;
+      const index = strokes.indexOf(hit);
+      strokes.splice(index, 1, ...pieces);
+      selection.delete(hit.id);
+      const fresh = eraserBatch.added.findIndex((s) => s.id === hit.id);
+      if (fresh >= 0) eraserBatch.added.splice(fresh, 1);
+      else eraserBatch.removed.push(clone(hit));
+      eraserBatch.added.push(...pieces);
+    }
+    redraw(sheet);
+  }
+
+  /* ---------- laser ---------- */
+
   function laserCanvas(sheet) {
     let canvas = sheet.querySelector('canvas[data-layer="laser"]');
     if (!canvas) {
@@ -489,13 +793,88 @@ export function createInk() {
     laser.points.push(p);
   }
 
+  /* ---------- ink replay ---------- */
+
+  function stopReplay() {
+    if (!replay) return;
+    cancelAnimationFrame(replay.frame);
+    const key = replay.key;
+    replay = null;
+    replayHidden.clear();
+    clearLive(key);
+    redraw(sheetByKey(key));
+    document.dispatchEvent(new CustomEvent("ink-replay", { detail: { playing: false } }));
+  }
+
+  /** Redraws a page's ink stroke by stroke, in the order it was written. */
+  function replayPage(key) {
+    stopReplay();
+    const sheet = sheetByKey(key);
+    const list = strokes.filter((s) => s.page === key);
+    if (!sheet || !list.length) return false;
+    clearSelection();
+    for (const s of list) replayHidden.add(s.id);
+    redraw(sheet);
+    const total = list.reduce((n, s) => n + s.points.length, 0);
+    const rate = Math.max(0.3, total / 9000);
+    replay = { key, list, i: 0, n: 0, wait: 250, last: performance.now(), frame: 0 };
+    const frame = (now) => {
+      if (!replay) return;
+      const dt = Math.min(50, now - replay.last);
+      replay.last = now;
+      if (replay.wait > 0) replay.wait -= dt;
+      else {
+        const stroke = replay.list[replay.i];
+        replay.n += dt * rate * (stroke.shape ? 3 : 1);
+        if (replay.n >= stroke.points.length) {
+          replayHidden.delete(stroke.id);
+          clearLive(key);
+          commit(stroke);
+          replay.i += 1;
+          replay.n = 0;
+          replay.wait = 70;
+          if (replay.i >= replay.list.length) {
+            stopReplay();
+            return;
+          }
+        } else {
+          const part = { ...stroke, points: stroke.points.slice(0, Math.max(1, Math.floor(replay.n))), shape: stroke.shape ? "path" : undefined };
+          paintTemp(sheet, part);
+        }
+      }
+      replay.frame = requestAnimationFrame(frame);
+    };
+    replay.frame = requestAnimationFrame(frame);
+    document.dispatchEvent(new CustomEvent("ink-replay", { detail: { playing: true } }));
+    return true;
+  }
+
+  /* ---------- pointer handling ---------- */
+
   function onDown(event) {
-    if (event.pointerType === "touch") return;
-    if (tool.type === "hand" || tool.type === "read") return;
-    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (replay) stopReplay();
     const sheet = event.target.closest?.(".sheet");
     if (!sheet) return;
     if (event.target.closest("button, input, a, select, textarea, .ctl")) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (activeId !== null) {
+      // A second finger or a palm never interrupts the Pencil.
+      if (event.pointerType === "touch") return;
+      finish();
+    }
+    const point = clientToPdf(sheet, event.clientX, event.clientY);
+    // Dragging inside a selection moves it (or resizes it from the corner), with any tool.
+    const grab = selectionGrab(sheet, point);
+    if (grab) {
+      event.preventDefault();
+      event.stopPropagation();
+      activeId = event.pointerId;
+      startEdit(grab, sheet, point);
+      sheet.setPointerCapture?.(event.pointerId);
+      return;
+    }
+    if (event.pointerType === "touch") return;
+    if (tool.type === "hand" || tool.type === "read") return;
     event.preventDefault();
     activeId = event.pointerId;
     if (tool.type === "laser") {
@@ -510,22 +889,15 @@ export function createInk() {
       }
       return;
     }
-    const point = clientToPdf(sheet, event.clientX, event.clientY);
+    clearSelection();
     if (tool.type === "lasso") {
-      const box = bounds(strokes.filter((s) => selection.has(s.id) && s.page === sheet.dataset.key));
-      if (box && point.x >= box.x0 && point.x <= box.x1 && point.y >= box.y0 && point.y <= box.y1) {
-        moving = { page: sheet.dataset.key, last: point, before: strokes.filter((s) => selection.has(s.id)).map((s) => ({ id: s.id, points: s.points.map((p) => ({ ...p })) })) };
-      } else {
-        selection.clear();
-        lasso = { page: sheet.dataset.key, points: [point] };
-      }
+      lasso = { page: sheet.dataset.key, points: [point] };
       sheet.setPointerCapture?.(event.pointerId);
-      redraw(sheet);
       scheduleLive();
       return;
     }
     if (tool.type === "eraser") {
-      eraserBatch = [];
+      eraserBatch = { removed: [], added: [] };
       eraseAt(sheet, point);
       draft = { eraser: true, page: sheet.dataset.key };
       sheet.setPointerCapture?.(event.pointerId);
@@ -538,6 +910,7 @@ export function createInk() {
       color: tool.color,
       size: tool.type === "highlighter" ? tool.size * 7 : tool.size,
       points: [],
+      minStep: 0.45 / zoomOf(sheet),
     };
     draft.baseSize = draft.size;
     const hint = event.target.closest?.("[data-link]");
@@ -548,10 +921,8 @@ export function createInk() {
     paintLive();
   }
 
-  let moveFrame = 0;
-
   function onMove(event) {
-    if (event.pointerType === "touch" || event.pointerId !== activeId) return;
+    if (event.pointerId !== activeId) return;
     if (laser?.down) {
       const own = sheetByKey(laser.page);
       if (own) laserPoint(own, event);
@@ -561,22 +932,8 @@ export function createInk() {
     if (!sheet) return;
     const point = clientToPdf(sheet, event.clientX, event.clientY);
     if (moving) {
-      const dx = point.x - moving.last.x;
-      const dy = point.y - moving.last.y;
-      for (const stroke of strokes) {
-        if (!selection.has(stroke.id)) continue;
-        for (const p of stroke.points) {
-          p.x += dx;
-          p.y += dy;
-        }
-      }
       moving.last = point;
-      if (!moveFrame) {
-        moveFrame = requestAnimationFrame(() => {
-          moveFrame = 0;
-          redraw(sheet);
-        });
-      }
+      if (!moving.frame) moving.frame = requestAnimationFrame(applyEdit);
       return;
     }
     if (lasso) {
@@ -599,25 +956,13 @@ export function createInk() {
     scheduleLive();
   }
 
-  function eraseAt(sheet, point) {
-    const radius = 8 + tool.size;
-    const hits = hitStrokes(sheet.dataset.key, point, radius);
-    if (!hits.length) return;
-    const removed = hits.map((s) => ({ ...s, points: s.points.map((p) => ({ ...p })) }));
-    for (const hit of hits) {
-      const index = strokes.indexOf(hit);
-      if (index >= 0) strokes.splice(index, 1);
-      selection.delete(hit.id);
-    }
-    if (eraserBatch) eraserBatch.push(...removed);
-    else pushHistory({ type: "delete", strokes: removed });
-    scheduleSave();
-    redraw(sheet);
-  }
-
   function onUp(event) {
     // A palm lifting off the glass must not end the Pencil stroke.
     if (event.pointerId !== activeId) return;
+    finish();
+  }
+
+  function finish() {
     activeId = null;
     disarmHold();
     if (laser?.down) {
@@ -625,29 +970,30 @@ export function createInk() {
       return;
     }
     if (moving) {
-      const after = moving.before.map((item) => {
-        const stroke = strokes.find((s) => s.id === item.id);
-        return { id: item.id, points: stroke.points.map((p) => ({ ...p })) };
-      });
-      pushHistory({ type: "move", before: moving.before, after });
-      moving = null;
-      scheduleSave();
+      finishEdit();
       return;
     }
     if (lasso) {
       const page = lasso.page;
-      for (const stroke of strokes) {
-        if (stroke.page !== page) continue;
-        if (stroke.points.some((p) => pointInPoly(p, lasso.points))) selection.add(stroke.id);
-      }
+      const pts = lasso.points;
+      const box = bounds([{ size: 0, points: pts }]);
       lasso = null;
       paintLive();
-      redraw(sheetByKey(page));
-      document.dispatchEvent(new CustomEvent("ink-selection", { detail: { count: selection.size } }));
+      if (box.x1 - box.x0 < 12 && box.y1 - box.y0 < 12) {
+        // A tap with the select tool picks the stroke under it.
+        const sheet = sheetByKey(page);
+        const hit = sheet && hitStroke(page, pts[0], 8 / zoomOf(sheet));
+        selectIds(hit ? [hit.id] : []);
+        return;
+      }
+      selectIds(strokes.filter((s) => s.page === page && s.points.some((p) => pointInPoly(p, pts))).map((s) => s.id));
       return;
     }
     if (!draft || draft.eraser) {
-      if (eraserBatch && eraserBatch.length) pushHistory({ type: "delete", strokes: eraserBatch });
+      if (eraserBatch && (eraserBatch.removed.length || eraserBatch.added.length)) {
+        pushHistory({ type: "swap", removed: eraserBatch.removed, added: eraserBatch.added.map(clone) });
+        scheduleSave();
+      }
       eraserBatch = null;
       draft = null;
       return;
@@ -665,54 +1011,44 @@ export function createInk() {
     draft = null;
     if (stroke.points.length) {
       finishHighlight(stroke);
-      delete stroke.anchor;
-      delete stroke.axis;
-      delete stroke.baseSize;
-      delete stroke.rows;
+      for (const key of ["anchor", "axis", "baseSize", "rows", "minStep", "predicted"]) delete stroke[key];
       strokes.push(stroke);
-      pushHistory({ type: "add", stroke });
+      pushHistory({ type: "add", stroke: clone(stroke) });
       commit(stroke);
       scheduleSave();
     }
     paintLive();
   }
 
+  /* ---------- undo and page actions ---------- */
+
   function undo() {
+    stopReplay();
     const entry = undoStack.pop();
-    if (!entry) return;
+    if (!entry) return false;
     redoStack.push(entry);
     apply(entry, true);
+    return true;
   }
 
   function redo() {
+    stopReplay();
     const entry = redoStack.pop();
-    if (!entry) return;
+    if (!entry) return false;
     undoStack.push(entry);
     apply(entry, false);
+    return true;
   }
 
   function apply(entry, reverse) {
     if (entry.type === "add") {
-      if (reverse) {
-        const index = strokes.findIndex((s) => s.id === entry.stroke.id);
-        if (index >= 0) strokes.splice(index, 1);
-      } else strokes.push(entry.stroke);
-    } else if (entry.type === "delete") {
-      if (reverse) strokes.push(...entry.strokes);
-      else {
-        for (const stroke of entry.strokes) {
-          const index = strokes.findIndex((s) => s.id === stroke.id);
-          if (index >= 0) strokes.splice(index, 1);
-        }
-      }
-    } else if (entry.type === "move") {
-      const source = reverse ? entry.before : entry.after;
-      for (const item of source) {
-        const stroke = strokes.find((s) => s.id === item.id);
-        if (stroke) stroke.points = item.points.map((p) => ({ ...p }));
-      }
+      if (reverse) removeId(entry.stroke.id);
+      else strokes.push(clone(entry.stroke));
+    } else if (entry.type === "swap") {
+      if (reverse) applySwap(entry.added, entry.removed);
+      else applySwap(entry.removed, entry.added);
     } else if (entry.type === "clear") {
-      if (reverse) strokes.push(...entry.strokes);
+      if (reverse) strokes.push(...entry.strokes.map(clone));
       else {
         for (let i = strokes.length - 1; i >= 0; i--) {
           if (strokes[i].page === entry.page) strokes.splice(i, 1);
@@ -721,10 +1057,11 @@ export function createInk() {
     }
     scheduleSave();
     redrawAll();
+    syncSelection();
   }
 
   function clearPage(page) {
-    const removed = strokes.filter((s) => s.page === page).map((s) => ({ ...s, points: s.points.map((p) => ({ ...p })) }));
+    const removed = strokes.filter((s) => s.page === page).map(clone);
     if (!removed.length) return;
     for (let i = strokes.length - 1; i >= 0; i--) {
       if (strokes[i].page === page) strokes.splice(i, 1);
@@ -733,19 +1070,45 @@ export function createInk() {
     pushHistory({ type: "clear", page, strokes: removed });
     scheduleSave();
     redraw(sheetByKey(page));
+    syncSelection();
   }
 
-  function deleteSelection() {
-    const removed = strokes.filter((s) => selection.has(s.id)).map((s) => ({ ...s, points: s.points.map((p) => ({ ...p })) }));
-    if (!removed.length) return;
-    for (let i = strokes.length - 1; i >= 0; i--) {
-      if (selection.has(strokes[i].id)) strokes.splice(i, 1);
-    }
-    selection.clear();
-    pushHistory({ type: "delete", strokes: removed });
-    scheduleSave();
-    redrawAll();
-    document.dispatchEvent(new CustomEvent("ink-selection", { detail: { count: 0 } }));
+  /* ---------- Pencil hover preview ---------- */
+
+  function bindHover(world) {
+    const dot = document.createElement("div");
+    dot.className = "pencil-hover";
+    document.body.append(dot);
+    let timer = 0;
+    const hide = () => {
+      clearTimeout(timer);
+      dot.classList.remove("show");
+    };
+    world.addEventListener("pointermove", (event) => {
+      if (event.pointerType !== "pen" || event.buttons || !DRAW_TOOLS.has(tool.type)) {
+        hide();
+        return;
+      }
+      const sheet = event.target.closest?.(".sheet");
+      if (!sheet) {
+        hide();
+        return;
+      }
+      const k = zoomOf(sheet);
+      const eraser = tool.type === "eraser";
+      const d = eraser ? (8 + tool.size) * 2 * k : tool.type === "highlighter" ? tool.size * 7 * k : Math.max(4, tool.size * 0.9 * k);
+      dot.style.width = `${d}px`;
+      dot.style.height = `${d}px`;
+      dot.style.transform = `translate(${event.clientX - d / 2}px, ${event.clientY - d / 2}px)`;
+      dot.style.setProperty("--c", eraser ? "transparent" : tool.color);
+      dot.classList.toggle("eraser", eraser);
+      dot.classList.toggle("marker", tool.type === "highlighter");
+      dot.classList.add("show");
+      clearTimeout(timer);
+      timer = setTimeout(hide, 500);
+    });
+    world.addEventListener("pointerdown", hide, true);
+    world.addEventListener("pointerleave", hide);
   }
 
   function bind(world) {
@@ -763,6 +1126,7 @@ export function createInk() {
     world.addEventListener("touchstart", claimStylus, { passive: false });
     world.addEventListener("touchmove", claimStylus, { passive: false });
     world.addEventListener("touchend", claimStylus, { passive: false });
+    bindHover(world);
     // iPadOS can discard a backgrounded tab without warning, so save at once.
     const flush = () => {
       if (!saveTimer) return;
@@ -789,17 +1153,31 @@ export function createInk() {
     redo,
     clearPage,
     deleteSelection,
+    clearSelection,
+    tapSelect,
+    recolorSelection,
+    thickenSelection,
+    shapeSelection,
+    duplicateSelection,
+    syncSelection,
     selectionCount() { return selection.size; },
+    selectionTools() { return [...new Set(selected().map((s) => s.tool))]; },
+    selectionRect() { return selEl?.getBoundingClientRect() || null; },
+    replayPage,
+    stopReplay,
+    replaying() { return Boolean(replay); },
     toJSON() {
       return strokes.map((s) => ({ ...s, points: s.points.map((p) => ({ x: p.x, y: p.y, p: p.p })) }));
     },
     fromJSON(data) {
+      stopReplay();
       strokes.splice(0, strokes.length, ...(data || []));
       selection.clear();
       undoStack.length = 0;
       redoStack.length = 0;
       scheduleSave();
       redrawAll();
+      syncSelection();
     },
     strokesFor(page) { return strokes.filter((s) => s.page === page); },
   };

@@ -4,16 +4,30 @@ export const HIGHLIGHT_ALPHA = 0.45;
 /** Freehand pen ink renders at roughly this fraction of its nominal size. */
 const PEN_WIDTH = 0.72;
 
+const CLOSED = new Set(["rect", "ellipse", "triangle"]);
+
+/** Lifts light Pencil pressure so soft writing still shows; 0.5 stays 0.5. */
+function pressure(p) {
+  if (p == null) return 0.5;
+  return Math.max(0.06, Math.min(1, 0.5 * Math.pow(2 * p, 0.72)));
+}
+
 function freehand(stroke) {
   const highlighter = stroke.tool === "highlighter";
-  return getStroke(stroke.points.map((p) => [p.x, p.y, p.p ?? 0.5]), {
+  const pts = stroke.points;
+  let length = 0;
+  for (let i = 1; i < pts.length; i++) length += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+  // Short strokes (dots, decimal points) get little or no taper so they never vanish.
+  const taper = highlighter || stroke.cut ? 0 : Math.min(8, length * 0.3);
+  return getStroke(pts.map((p) => [p.x, p.y, pressure(p.p)]), {
     size: stroke.size,
     thinning: highlighter ? 0 : 0.55,
-    smoothing: 0.55,
-    streamline: 0.45,
-    simulatePressure: stroke.points.every((p) => p.p == null || p.p === 0.5),
-    start: { cap: true, taper: highlighter ? 0 : 8 },
-    end: { cap: true, taper: highlighter ? 0 : 8 },
+    smoothing: 0.5,
+    streamline: 0.3,
+    simulatePressure: pts.every((p) => p.p == null || p.p === 0.5),
+    last: true,
+    start: { cap: true, taper },
+    end: { cap: true, taper },
   });
 }
 
@@ -25,7 +39,7 @@ function signature(stroke) {
   const pts = stroke.points;
   const a = pts[0];
   const b = pts[pts.length - 1];
-  return `${pts.length}|${a?.x},${a?.y}|${b?.x},${b?.y}|${stroke.size}|${stroke.shape || ""}`;
+  return `${pts.length}|${a?.x},${a?.y}|${b?.x},${b?.y}|${a?.p}|${b?.p}|${stroke.size}|${stroke.shape || ""}`;
 }
 
 function pathFor(stroke) {
@@ -35,7 +49,7 @@ function pathFor(stroke) {
   const path = new Path2D();
   if (stroke.shape) {
     stroke.points.forEach((p, i) => (i ? path.lineTo(p.x, p.y) : path.moveTo(p.x, p.y)));
-    if (stroke.shape === "ellipse" || stroke.shape === "rect") path.closePath();
+    if (CLOSED.has(stroke.shape)) path.closePath();
   } else {
     const outline = freehand(stroke);
     outline.forEach((pt, i) => (i ? path.lineTo(pt[0], pt[1]) : path.moveTo(pt[0], pt[1])));

@@ -1,8 +1,8 @@
 /**
  * "Draw and hold" shape recognition, in the spirit of Notability and
  * OneNote: a roughly straight stroke becomes a perfect line (snapped to
- * horizontal, vertical or 45°), a closed loop becomes a circle, ellipse or
- * rectangle. All coordinates are sheet units (PDF points).
+ * horizontal, vertical or 45°), a closed loop becomes a triangle, circle,
+ * ellipse or rectangle. All coordinates are sheet units (PDF points).
  */
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -90,6 +90,77 @@ function rectPoints(b) {
   return densify([{ x: b.x0, y: b.y0 }, { x: b.x1, y: b.y0 }, { x: b.x1, y: b.y1 }, { x: b.x0, y: b.y1 }], true);
 }
 
+function segDist(p, a, b) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  const t = len2 ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2)) : 0;
+  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+}
+
+/** Ramer–Douglas–Peucker simplification of an open path. */
+function simplify(points, eps) {
+  if (points.length < 3) return points.slice();
+  const a = points[0];
+  const b = points[points.length - 1];
+  let max = -1;
+  let index = 0;
+  for (let i = 1; i < points.length - 1; i++) {
+    const d = segDist(points[i], a, b);
+    if (d > max) {
+      max = d;
+      index = i;
+    }
+  }
+  if (max <= eps) return [a, b];
+  return simplify(points.slice(0, index + 1), eps).slice(0, -1).concat(simplify(points.slice(index), eps));
+}
+
+/** Corner points of a closed freehand loop, with near-straight and doubled corners removed. */
+function corners(points, span) {
+  const start = points[0];
+  let far = 0;
+  points.forEach((p, i) => {
+    if (dist(p, start) > dist(points[far], start)) far = i;
+  });
+  const loop = points.concat([start]);
+  const eps = Math.max(3, span * 0.07);
+  const v = simplify(loop.slice(0, far + 1), eps).slice(0, -1).concat(simplify(loop.slice(far), eps));
+  v.pop();
+  let changed = true;
+  while (changed && v.length > 3) {
+    changed = false;
+    for (let i = 0; i < v.length; i++) {
+      const prev = v[(i - 1 + v.length) % v.length];
+      const cur = v[i];
+      const next = v[(i + 1) % v.length];
+      const a1 = Math.atan2(prev.y - cur.y, prev.x - cur.x);
+      const a2 = Math.atan2(next.y - cur.y, next.x - cur.x);
+      let angle = (Math.abs(a1 - a2) * 180) / Math.PI;
+      if (angle > 180) angle = 360 - angle;
+      if (angle > 150 || dist(cur, next) < span * 0.12) {
+        v.splice(i, 1);
+        changed = true;
+        break;
+      }
+    }
+  }
+  return v;
+}
+
+/** Squares up triangle edges that are within 7° of horizontal or vertical. */
+function squareUp(tri) {
+  const out = tri.map((p) => ({ x: p.x, y: p.y }));
+  for (let i = 0; i < 3; i++) {
+    const a = out[i];
+    const b = out[(i + 1) % 3];
+    const deg = Math.abs((Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI);
+    if (Math.min(deg, 180 - deg) <= 7) a.y = b.y = (a.y + b.y) / 2;
+    else if (Math.abs(deg - 90) <= 7) a.x = b.x = (a.x + b.x) / 2;
+  }
+  return out;
+}
+
 /**
  * Returns { shape, points, a, axis } for a recognisable stroke, or null to
  * keep it freehand.
@@ -115,6 +186,16 @@ export function recognise(points) {
   const cy = (b.y0 + b.y1) / 2;
   const rx = Math.max(3, b.w / 2);
   const ry = Math.max(3, b.h / 2);
+
+  const v = corners(points, span);
+  if (v.length === 3) {
+    const tri = squareUp(v);
+    let triErr = 0;
+    for (const p of points) triErr += Math.min(segDist(p, tri[0], tri[1]), segDist(p, tri[1], tri[2]), segDist(p, tri[2], tri[0]));
+    triErr /= points.length * Math.min(rx, ry);
+    if (triErr < 0.16) return { shape: "triangle", points: densify(tri, true) };
+  }
+
   let ellErr = 0;
   let rectErr = 0;
   for (const p of points) {

@@ -37,6 +37,7 @@
       <button type="button" id="zoom-out" title="Zoom out (Ctrl + wheel)">−</button>
       <button type="button" id="fit" title="Fit width">Fit</button>
       <button type="button" id="zoom-in" title="Zoom in (Ctrl + wheel)">+</button>
+      <button type="button" id="present" title="Presentation mode: full screen, one page at a time (F5)">Present</button>
       <button type="button" id="show-all" title="Reveal every step of every answer">Show all answers</button>
       <button type="button" id="hide-all" title="Hide every step again">Hide all</button>
       <button type="button" id="thumbs-toggle">Pages</button>
@@ -44,11 +45,12 @@
         <summary>More</summary>
         <div class="menu">
           <button type="button" id="hints-toggle">Hide link hints</button>
+          <button type="button" id="replay">Replay this page's ink</button>
           <button type="button" id="export-pdf">Export PDF with ink</button>
           <button type="button" id="print">Print / Save as PDF</button>
           <button type="button" id="export-json">Save ink file</button>
           <button type="button" id="import-json">Load ink file</button>
-          <p class="keys">Keys: Esc / V read · P pen · H highlighter · E eraser · K laser · L select · Ctrl+Z undo · Ctrl+wheel zoom</p>
+          <p class="keys">Touch: tap ink to edit it · two-finger tap undo · three-finger tap redo.<br>Keys: Esc / V read · P pen · H highlighter · E eraser · K laser · L select · F5 present · Ctrl+Z undo · Ctrl+wheel zoom</p>
         </div>
       </details>
       <input id="import-file" type="file" accept="application/json,.json" hidden>
@@ -116,6 +118,12 @@
       <svg viewBox="0 0 24 24"><path d="M16.2 3.8l4 4a2 2 0 0 1 0 2.8L11 19.8H6.8l-3-3a2 2 0 0 1 0-2.8L13.4 3.8a2 2 0 0 1 2.8 0z"/><path d="M8.5 9.5l6 6M11 19.8h9"/></svg>
       <span>Erase</span>
     </button>
+    <div class="opts" data-for="eraser" hidden>
+      <div class="snaps">
+        <button type="button" data-flag="erasePartial" title="Rub out only the part you touch, like a real eraser">Partial erase</button>
+        <button type="button" data-flag="eraseHighlights" title="Erase highlights and leave pen ink alone">Marks only</button>
+      </div>
+    </div>
     <button type="button" class="tool" data-tool="laser" title="Laser pointer (K)">
       <svg viewBox="0 0 24 24"><path d="M3 21l7.5-7.5"/><path d="M10.5 13.5l1.8-1.8"/><circle cx="16" cy="8" r="2.6" class="laser-dot"/><path d="M16 2.5v1.6M16 11.9v1.6M21.5 8h-1.6M12.1 8h-1.6M19.9 4.1l-1.1 1.1M13.2 10.8l-1.1 1.1M19.9 11.9l-1.1-1.1"/></svg>
       <span>Laser</span>
@@ -145,6 +153,26 @@
       <svg viewBox="0 0 24 24"><path d="M4 12h16M12 4v16M4 12l3-3M4 12l3 3M20 12l-3-3M20 12l-3 3"/></svg>
       <span>Move bar</span>
     </button>
+  </div>
+
+  <div id="sel-menu" class="sel-menu" hidden>
+    <div class="sel-colors"></div>
+    <button type="button" data-sel="thin" title="Thinner">−</button>
+    <button type="button" data-sel="thick" title="Thicker">+</button>
+    <button type="button" data-sel="shape" title="Turn rough lines, triangles, boxes and circles into neat shapes">Shape</button>
+    <button type="button" data-sel="copy" title="Duplicate">Copy</button>
+    <button type="button" data-sel="delete" title="Delete" class="danger">Delete</button>
+    <button type="button" data-sel="done" title="Done">✕</button>
+  </div>
+
+  <div id="presenter" class="presenter" hidden>
+    <button type="button" id="pr-prev" title="Previous page">‹</button>
+    <span id="pr-label">1 / 16</span>
+    <button type="button" id="pr-next" title="Next page">›</button>
+    <button type="button" id="pr-fit" title="Switch between whole page and page width">Fit width</button>
+    <button type="button" id="pr-replay" title="Replay the ink on this page">Replay ink</button>
+    <button type="button" id="pr-tools" title="Show or hide the drawing tools">Hide tools</button>
+    <button type="button" id="pr-exit" title="Leave presentation mode (Esc)">Exit</button>
   </div>
 
   <div id="toast" class="toast" role="status"></div>
