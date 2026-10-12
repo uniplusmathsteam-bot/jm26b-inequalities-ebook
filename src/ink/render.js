@@ -17,30 +17,53 @@ function freehand(stroke) {
   });
 }
 
+/* Outlines are costly to compute, so each stroke keeps its path (in page units)
+   until its points, size or shape change. */
+const paths = new WeakMap();
+
+function signature(stroke) {
+  const pts = stroke.points;
+  const a = pts[0];
+  const b = pts[pts.length - 1];
+  return `${pts.length}|${a?.x},${a?.y}|${b?.x},${b?.y}|${stroke.size}|${stroke.shape || ""}`;
+}
+
+function pathFor(stroke) {
+  const key = signature(stroke);
+  const hit = paths.get(stroke);
+  if (hit && hit.key === key && hit.points === stroke.points) return hit.path;
+  const path = new Path2D();
+  if (stroke.shape) {
+    stroke.points.forEach((p, i) => (i ? path.lineTo(p.x, p.y) : path.moveTo(p.x, p.y)));
+    if (stroke.shape === "ellipse" || stroke.shape === "rect") path.closePath();
+  } else {
+    const outline = freehand(stroke);
+    outline.forEach((pt, i) => (i ? path.lineTo(pt[0], pt[1]) : path.moveTo(pt[0], pt[1])));
+    if (outline.length) path.closePath();
+  }
+  paths.set(stroke, { key, points: stroke.points, path });
+  return path;
+}
+
 /**
  * Paints one stroke. Snapped shapes (stroke.shape) are stroked as exact
  * paths; highlighter shapes use square ends so they cover whole words.
  */
 export function paintStroke(ctx, stroke, sx, sy) {
   ctx.globalAlpha = stroke.tool === "highlighter" ? HIGHLIGHT_ALPHA : 1;
+  if (!stroke.points.length || (stroke.shape && stroke.points.length < 2)) return;
+  const path = pathFor(stroke);
+  ctx.save();
+  ctx.scale(sx, sy);
   if (stroke.shape) {
-    const pts = stroke.points;
-    if (pts.length < 2) return;
-    ctx.beginPath();
-    pts.forEach((p, i) => (i ? ctx.lineTo(p.x * sx, p.y * sy) : ctx.moveTo(p.x * sx, p.y * sy)));
-    if (stroke.shape === "ellipse" || stroke.shape === "rect") ctx.closePath();
     ctx.strokeStyle = stroke.color;
-    ctx.lineWidth = stroke.size * (stroke.tool === "highlighter" ? 1 : PEN_WIDTH) * sx;
+    ctx.lineWidth = stroke.size * (stroke.tool === "highlighter" ? 1 : PEN_WIDTH);
     ctx.lineJoin = "round";
     ctx.lineCap = stroke.tool === "highlighter" ? "butt" : "round";
-    ctx.stroke();
-    return;
+    ctx.stroke(path);
+  } else {
+    ctx.fillStyle = stroke.color;
+    ctx.fill(path);
   }
-  const outline = freehand(stroke);
-  if (!outline.length) return;
-  ctx.beginPath();
-  outline.forEach((pt, i) => (i ? ctx.lineTo(pt[0] * sx, pt[1] * sy) : ctx.moveTo(pt[0] * sx, pt[1] * sy)));
-  ctx.closePath();
-  ctx.fillStyle = stroke.color;
-  ctx.fill();
+  ctx.restore();
 }

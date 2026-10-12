@@ -53,6 +53,7 @@ export function createInk() {
   let laser = null;
   let laserLoop = false;
   let moving = null;
+  let activeId = null;
   let eraserBatch = null;
   let saveTimer = 0;
   let dbPromise = null;
@@ -79,12 +80,17 @@ export function createInk() {
     redoStack.length = 0;
   }
 
+  /** Saving clones every stroke, so it waits for a pause and never runs mid-stroke. */
   function scheduleSave() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
+      if (draft || lasso || moving) {
+        scheduleSave();
+        return;
+      }
       saveTimer = 0;
       save();
-    }, 350);
+    }, 1500);
   }
 
   async function save() {
@@ -92,7 +98,7 @@ export function createInk() {
       const db = await (dbPromise ??= openDB());
       await new Promise((resolve, reject) => {
         const tx = db.transaction(STORE, "readwrite");
-        tx.objectStore(STORE).put(strokes.map((s) => ({ ...s, points: s.points.map((p) => ({ ...p })) })), "strokes");
+        tx.objectStore(STORE).put(strokes, "strokes");
         tx.oncomplete = resolve;
         tx.onerror = () => reject(tx.error);
       });
@@ -156,17 +162,78 @@ export function createInk() {
     if (!size) return;
     const key = sheet.dataset.key;
     const mine = strokes.filter((s) => s.page === key && !s.hidden);
-    const live = draft && draft.page === key ? mine.concat(draft) : mine;
-    const pens = live.filter((s) => s.tool !== "highlighter");
+    const pens = mine.filter((s) => s.tool !== "highlighter");
     const ink = sheet.querySelector('canvas[data-layer="ink"]');
-    const lassoHere = lasso && lasso.page === key;
     const selectedHere = selection.size && mine.some((s) => selection.has(s.id));
-    drawList(sheet.querySelector('canvas[data-layer="hl"]'), live.filter((s) => s.tool === "highlighter"), sheet, size);
+    drawList(sheet.querySelector('canvas[data-layer="hl"]'), mine.filter((s) => s.tool === "highlighter"), sheet, size);
     if (pens.length) drawList(ink, pens, sheet, size);
-    else fit(ink, lassoHere || selectedHere ? size : TINY);
-    if (lassoHere) paintLasso(ink, lasso.points, sheet);
+    else fit(ink, selectedHere ? size : TINY);
     if (selectedHere) paintSelection(ink, key, sheet);
     sheet.dataset.inkSize = `${size.w}x${size.h}`;
+  }
+
+  /** Adds one finished stroke to its layer without repainting the page. */
+  function commit(stroke) {
+    const sheet = sheetByKey(stroke.page);
+    if (!sheet) return;
+    const size = targetSize(sheet);
+    const canvas = sheet.querySelector(`canvas[data-layer="${stroke.tool === "highlighter" ? "hl" : "ink"}"]`);
+    if (!size || sheet.dataset.inkSize !== `${size.w}x${size.h}` || canvas.width !== size.w || canvas.height !== size.h) {
+      redraw(sheet);
+      return;
+    }
+    const ctx = canvas.getContext("2d");
+    paintStroke(ctx, stroke, canvas.width / sheet.offsetWidth, canvas.height / sheet.offsetHeight);
+    ctx.globalAlpha = 1;
+  }
+
+  /* The stroke being drawn (and the lasso) live on their own canvas, painted
+     at most once per frame, so a busy page never slows the pen down. */
+  let liveFrame = 0;
+  let livePage = null;
+
+  function liveCanvas(sheet) {
+    let canvas = sheet.querySelector('canvas[data-layer="live"]');
+    if (!canvas) {
+      canvas = document.createElement("canvas");
+      canvas.dataset.layer = "live";
+      sheet.append(canvas);
+    }
+    const size = targetSize(sheet) || TINY;
+    if (canvas.width !== size.w || canvas.height !== size.h) {
+      canvas.width = size.w;
+      canvas.height = size.h;
+    }
+    return canvas;
+  }
+
+  function paintLive() {
+    cancelAnimationFrame(liveFrame);
+    liveFrame = 0;
+    const item = draft && !draft.eraser ? draft : null;
+    const page = item?.page || lasso?.page || null;
+    if (livePage && livePage !== page) {
+      const old = sheetByKey(livePage)?.querySelector('canvas[data-layer="live"]');
+      old?.getContext("2d").clearRect(0, 0, old.width, old.height);
+    }
+    livePage = page;
+    if (!page) return;
+    const sheet = sheetByKey(page);
+    if (!sheet) return;
+    const canvas = liveCanvas(sheet);
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.classList.toggle("hl", item?.tool === "highlighter");
+    const k = canvas.width / sheet.offsetWidth;
+    if (item && item.points.length) {
+      paintStroke(ctx, item, k, canvas.height / sheet.offsetHeight);
+      ctx.globalAlpha = 1;
+    }
+    if (lasso) paintLasso(canvas, lasso.points, sheet);
+  }
+
+  function scheduleLive() {
+    if (!liveFrame) liveFrame = requestAnimationFrame(paintLive);
   }
 
   /** Repaints pages near the screen when their size changed; frees the rest. */
@@ -324,7 +391,7 @@ export function createInk() {
     draft.points = found.points;
     let onText = false;
     if (draft.tool === "highlighter" && draft.shape === "line" && draft.axis === "h") onText = snapHighlightToText(draft);
-    redraw(sheetByKey(draft.page));
+    scheduleLive();
     document.dispatchEvent(new CustomEvent("ink-snap", { detail: { shape: draft.shape, axis: draft.axis, onText } }));
   }
 
@@ -430,6 +497,7 @@ export function createInk() {
     if (!sheet) return;
     if (event.target.closest("button, input, a, select, textarea, .ctl")) return;
     event.preventDefault();
+    activeId = event.pointerId;
     if (tool.type === "laser") {
       const running = laser?.page === sheet.dataset.key;
       if (laser && !running) laserCanvas(sheetByKey(laser.page) || sheet).getContext("2d").clearRect(0, 0, 1e5, 1e5);
@@ -453,6 +521,7 @@ export function createInk() {
       }
       sheet.setPointerCapture?.(event.pointerId);
       redraw(sheet);
+      scheduleLive();
       return;
     }
     if (tool.type === "eraser") {
@@ -476,11 +545,13 @@ export function createInk() {
     addPoint(draft, event, sheet);
     armHold(event);
     sheet.setPointerCapture?.(event.pointerId);
-    redraw(sheet);
+    paintLive();
   }
 
+  let moveFrame = 0;
+
   function onMove(event) {
-    if (event.pointerType === "touch") return;
+    if (event.pointerType === "touch" || event.pointerId !== activeId) return;
     if (laser?.down) {
       const own = sheetByKey(laser.page);
       if (own) laserPoint(own, event);
@@ -500,12 +571,17 @@ export function createInk() {
         }
       }
       moving.last = point;
-      redraw(sheet);
+      if (!moveFrame) {
+        moveFrame = requestAnimationFrame(() => {
+          moveFrame = 0;
+          redraw(sheet);
+        });
+      }
       return;
     }
     if (lasso) {
       lasso.points.push(point);
-      redraw(sheet);
+      scheduleLive();
       return;
     }
     if (!draft) return;
@@ -515,12 +591,12 @@ export function createInk() {
     }
     if (draft.shape) {
       adjustShape(point);
-      redraw(sheet);
+      scheduleLive();
       return;
     }
     addPoint(draft, event, sheet);
     if (!hold || Math.hypot(event.clientX - hold.x, event.clientY - hold.y) > HOLD_SLOP) armHold(event);
-    redraw(sheet);
+    scheduleLive();
   }
 
   function eraseAt(sheet, point) {
@@ -539,7 +615,10 @@ export function createInk() {
     redraw(sheet);
   }
 
-  function onUp() {
+  function onUp(event) {
+    // A palm lifting off the glass must not end the Pencil stroke.
+    if (event.pointerId !== activeId) return;
+    activeId = null;
     disarmHold();
     if (laser?.down) {
       laser.down = false;
@@ -562,6 +641,7 @@ export function createInk() {
         if (stroke.points.some((p) => pointInPoly(p, lasso.points))) selection.add(stroke.id);
       }
       lasso = null;
+      paintLive();
       redraw(sheetByKey(page));
       document.dispatchEvent(new CustomEvent("ink-selection", { detail: { count: selection.size } }));
       return;
@@ -576,26 +656,25 @@ export function createInk() {
     delete draft.tap;
     if (tap && performance.now() - tap.t < 350 && draft.points.every((p) => dist(p, draft.points[0]) < 2.5)) {
       // A quick tap on a link hint opens it instead of leaving a dot.
-      const page = draft.page;
       draft = null;
-      redraw(sheetByKey(page));
+      paintLive();
       document.dispatchEvent(new CustomEvent("ink-link-tap", { detail: tap }));
       return;
     }
-    if (draft.points.length) {
-      finishHighlight(draft);
-      delete draft.anchor;
-      delete draft.axis;
-      delete draft.baseSize;
-      delete draft.rows;
-      const stroke = draft;
+    const stroke = draft;
+    draft = null;
+    if (stroke.points.length) {
+      finishHighlight(stroke);
+      delete stroke.anchor;
+      delete stroke.axis;
+      delete stroke.baseSize;
+      delete stroke.rows;
       strokes.push(stroke);
       pushHistory({ type: "add", stroke });
+      commit(stroke);
       scheduleSave();
     }
-    const page = draft.page;
-    draft = null;
-    redraw(sheetByKey(page));
+    paintLive();
   }
 
   function undo() {
@@ -674,6 +753,16 @@ export function createInk() {
     world.addEventListener("pointermove", onMove, true);
     world.addEventListener("pointerup", onUp, true);
     world.addEventListener("pointercancel", onUp, true);
+    // Without this, Safari holds back quick successive Pencil strokes while it
+    // checks for a double-tap, scroll or text-selection gesture.
+    const claimStylus = (event) => {
+      if (tool.type === "read" || tool.type === "hand") return;
+      if (event.target.closest?.("button, input, a, select, textarea, .ctl")) return;
+      if ([...event.changedTouches].some((t) => t.touchType === "stylus")) event.preventDefault();
+    };
+    world.addEventListener("touchstart", claimStylus, { passive: false });
+    world.addEventListener("touchmove", claimStylus, { passive: false });
+    world.addEventListener("touchend", claimStylus, { passive: false });
     // iPadOS can discard a backgrounded tab without warning, so save at once.
     const flush = () => {
       if (!saveTimer) return;
