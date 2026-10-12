@@ -1,0 +1,4 @@
+# Source PDFs and authoring references are not needed by the web app.
+*.pdf
+reference/
+__pycache__/
