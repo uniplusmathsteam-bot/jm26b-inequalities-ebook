@@ -1,0 +1,317 @@
+{
+  "id": "jm27a",
+  "form": "S3",
+  "code": "JM27 (A)",
+  "title": "Percentages II",
+  "topic": "Percentages",
+  "year": 2026,
+  "status": "live",
+  "storage": "jm27a",
+  "source": {
+    "que": "source/S3 JM27 (A)  Percentages II - 2026 (QUE) (1).pdf",
+    "ans": "source/S3 JM27 (A)  Percentages II - 2026 (ANS) (1).pdf",
+    "ansPageOffset": -1
+  },
+  "sections": [
+    {
+      "id": "change",
+      "label": "Change"
+    },
+    {
+      "id": "growth",
+      "label": "Growth & decay"
+    },
+    {
+      "id": "challenge",
+      "label": "Challenge"
+    }
+  ],
+  "continuation": {
+    "top": 96,
+    "x": 48,
+    "width": 499,
+    "bottom": 812
+  },
+  "extract": {
+    "zoom": 3,
+    "regionX": [
+      66,
+      546
+    ],
+    "footer": 822,
+    "questions": [
+      {
+        "id": "ex1",
+        "page": 2,
+        "label": "Example 1",
+        "section": "change"
+      },
+      {
+        "id": "ex2",
+        "page": 2,
+        "label": "Example 2",
+        "section": "change"
+      },
+      {
+        "id": "ex3",
+        "page": 2,
+        "label": "Example 3",
+        "section": "change"
+      },
+      {
+        "id": "p3",
+        "page": 3,
+        "label": "Practice 3",
+        "section": "change"
+      },
+      {
+        "id": "q1",
+        "page": 3,
+        "label": "1",
+        "section": "change"
+      },
+      {
+        "id": "q2",
+        "page": 3,
+        "label": "2",
+        "section": "change"
+      },
+      {
+        "id": "q3",
+        "page": 3,
+        "label": "3",
+        "section": "change"
+      },
+      {
+        "id": "q4",
+        "page": 3,
+        "label": "4",
+        "section": "change"
+      },
+      {
+        "id": "q5",
+        "page": 4,
+        "label": "5",
+        "section": "change"
+      },
+      {
+        "id": "q6",
+        "page": 4,
+        "label": "6",
+        "section": "change"
+      },
+      {
+        "id": "q7",
+        "page": 4,
+        "label": "7",
+        "section": "change"
+      },
+      {
+        "id": "q8",
+        "page": 5,
+        "label": "8",
+        "section": "change"
+      },
+      {
+        "id": "q9",
+        "page": 5,
+        "label": "9",
+        "section": "change"
+      },
+      {
+        "id": "q10",
+        "page": 5,
+        "label": "10",
+        "section": "change"
+      },
+      {
+        "id": "ex4",
+        "page": 6,
+        "label": "Example 4",
+        "section": "growth"
+      },
+      {
+        "id": "p4",
+        "page": 6,
+        "label": "Practice 4",
+        "section": "growth"
+      },
+      {
+        "id": "ex5",
+        "page": 7,
+        "label": "Example 5",
+        "section": "growth"
+      },
+      {
+        "id": "p5",
+        "page": 7,
+        "label": "Practice 5",
+        "section": "growth"
+      },
+      {
+        "id": "ex6",
+        "page": 7,
+        "label": "Example 6",
+        "section": "growth"
+      },
+      {
+        "id": "p6",
+        "page": 7,
+        "label": "Practice 6",
+        "section": "growth"
+      },
+      {
+        "id": "q11",
+        "page": 8,
+        "label": "11",
+        "section": "growth"
+      },
+      {
+        "id": "q12",
+        "page": 8,
+        "label": "12",
+        "section": "growth"
+      },
+      {
+        "id": "q13",
+        "page": 8,
+        "label": "13",
+        "section": "growth"
+      },
+      {
+        "id": "q14",
+        "page": 8,
+        "label": "14",
+        "section": "growth"
+      },
+      {
+        "id": "q15",
+        "page": 9,
+        "label": "15",
+        "section": "growth"
+      },
+      {
+        "id": "q16",
+        "page": 9,
+        "label": "16",
+        "section": "growth"
+      },
+      {
+        "id": "q17",
+        "page": 9,
+        "label": "17",
+        "section": "growth"
+      },
+      {
+        "id": "q18",
+        "page": 9,
+        "label": "18",
+        "section": "growth"
+      },
+      {
+        "id": "q19",
+        "page": 10,
+        "label": "19",
+        "section": "growth"
+      },
+      {
+        "id": "q20",
+        "page": 10,
+        "label": "20",
+        "section": "growth"
+      },
+      {
+        "id": "q21",
+        "page": 10,
+        "label": "21",
+        "section": "growth"
+      },
+      {
+        "id": "q22",
+        "page": 11,
+        "label": "22",
+        "section": "growth"
+      },
+      {
+        "id": "q23",
+        "page": 11,
+        "label": "23",
+        "section": "growth"
+      },
+      {
+        "id": "q24",
+        "page": 12,
+        "label": "24",
+        "section": "growth"
+      },
+      {
+        "id": "q25",
+        "page": 12,
+        "label": "25",
+        "section": "growth"
+      },
+      {
+        "id": "q26",
+        "page": 13,
+        "label": "26",
+        "section": "growth"
+      },
+      {
+        "id": "q27",
+        "page": 13,
+        "label": "27",
+        "section": "growth"
+      },
+      {
+        "id": "q28",
+        "page": 13,
+        "label": "28",
+        "section": "growth"
+      },
+      {
+        "id": "q29",
+        "page": 14,
+        "label": "29",
+        "section": "growth"
+      },
+      {
+        "id": "q30",
+        "page": 14,
+        "label": "30",
+        "section": "challenge"
+      },
+      {
+        "id": "q31",
+        "page": 15,
+        "label": "31",
+        "section": "challenge"
+      },
+      {
+        "id": "q32",
+        "page": 16,
+        "label": "32",
+        "section": "challenge"
+      }
+    ],
+    "anchors": {
+      "ex1": "Example\\s*1:",
+      "ex2": "Example\\s*2:",
+      "ex3": "Example\\s*3:",
+      "p3": "Practice\\s*3:",
+      "ex4": "Example\\s*4:",
+      "p4": "Practice\\s*4:",
+      "ex5": "Example\\s*5:",
+      "p5": "Practice\\s*5:",
+      "ex6": "Example\\s*6:",
+      "p6": "Practice\\s*6:"
+    },
+    "fixedAnchors": {},
+    "overrides": {
+      "p3": { "region": [44, 119.7, 550, 213] },
+      "p4": { "region": [44, 479.8, 502, 564] },
+      "p5": { "region": [44, 263.7, 505, 353] },
+      "p6": { "region": [44, 672.4, 505, 801] },
+      "q29": { "region": [66, 116.7, 546, 274] }
+    }
+  }
+}

@@ -165,7 +165,7 @@ The engine calls `mountGraphic(id, root)` with an empty drawer body each time th
 | `pin(svg, x, y, color, text, { up, level })` | A labelled marker on an axis; `level` stacks labels. |
 | `bar`, `dashed`, `sector`, `regular(n, cx, cy, R)` | Bars, dashed guides, angle sectors, regular polygon points. |
 | `slider({ label, min, max, step, value })` | Slider with − / + / ▶. Methods: `.el`, `.get()`, `.set(v)`, `.on(fn)`. |
-| `readout()` | Live check. `.set(latex, ok, caption)` shows ✓ satisfies or ✗ fails. |
+| `readout()` | Live check. `.set(latex, ok, caption, labels)` shows ✓ satisfies or ✗ fails; `ok` null hides the chip, and `labels: { yes, no }` changes its words. |
 | `question(text, lets)`, `intro(text)` | Question card with "Let …" lines; an intro paragraph. |
 | `tabs(names, onChange)`, `buttonRow([[label, fn], …])` | Part tabs and quick-value buttons. |
 | `tex(latex, display)`, `fmt(n, dp)`, `P(n)`, `niceStep(span)` | KaTeX span, number formatting, brackets for negatives, tick spacing. |
@@ -175,3 +175,5 @@ For a full example of each kind of graphic, see `books/jm26b/widgets.js`:
 - number lines with pins: Example 1, Q5–Q8;
 - x–y range pictures: Q19–Q22;
 - MC statement checkers: the `MC` table.
+
+For percentages, growth and decay, see `books/jm27a/widgets.js`: `timeline()` (bars per period, unknown slider, target or threshold line), `change()` (original vs new bar), and the area pictures in Q9 and Q10.

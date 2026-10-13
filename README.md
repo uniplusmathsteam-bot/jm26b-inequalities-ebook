@@ -15,6 +15,7 @@ Live site: <https://uniplusmathsteam-bot.github.io/jm26b-inequalities-ebook/>. I
 | Book id | Chapter | Status |
 | --- | --- | --- |
 | `jm26b` | S3 JM26 (B) Inequalities I | live |
+| `jm27a` | S3 JM27 (A) Percentages II | live |
 
 The library lists the books in `books/catalog.json`; each book's details are in `books/<id>/book.json`.
 

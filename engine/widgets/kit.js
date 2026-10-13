@@ -239,10 +239,12 @@ export function readout() {
   const el = H("div", { class: "g-read" }, [H("div", { class: "g-read-row" }, [expr, chip]), cap]);
   return {
     el,
-    set(latex, ok, caption) {
+    /** `ok` null hides the check chip; `labels` replaces "satisfies" / "fails". */
+    set(latex, ok, caption, labels = {}) {
       expr.replaceChildren(tex(latex, true));
+      chip.hidden = ok == null;
       chip.className = `g-chip ${ok ? "ok" : "bad"}`;
-      chip.textContent = ok ? "✓ satisfies" : "✗ fails";
+      chip.textContent = ok ? `✓ ${labels.yes || "satisfies"}` : `✗ ${labels.no || "fails"}`;
       cap.textContent = caption || "";
     },
   };

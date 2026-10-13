@@ -96,6 +96,10 @@ A graphic should make the reasoning visible, not just repeat the algebra.
   | Angles | An n-gon with angle arcs |
   | Two related variables | The x–y range picture |
   | MC | Sliders for the variables, a live true/false for each statement, and a "find a counterexample" search |
+  | Percentage change | Original bar vs new bar, with the change marked |
+  | Successive changes, growth and decay | A bar per period with the factor between bars (JM27 (A) `timeline()`) |
+  | Reverse percentage ("… ago", "original") | The same timeline, with a slider for the start until the given bar matches |
+  | Threshold ("less than half", "double") | The timeline with an amber threshold line |
 - **No overlaps.** Labels, pins and legends must never collide. Check every graphic's QA screenshot at the default value and at the extremes.
 
 ## 6. Ink and tools
