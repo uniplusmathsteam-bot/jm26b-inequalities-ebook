@@ -1,0 +1,9 @@
+{
+  "name": "ebook-qa",
+  "private": true,
+  "type": "module",
+  "description": "Emulated-iPad checks for one book: node check_book.mjs <book-id>",
+  "dependencies": {
+    "puppeteer-core": "^23.11.1"
+  }
+}

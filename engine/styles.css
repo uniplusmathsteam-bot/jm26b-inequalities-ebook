@@ -67,7 +67,7 @@ button:disabled { opacity: 0.5; }
 .topbar select option { color: #111; }
 #show-all { background: #fff; color: var(--navy); font-weight: 600; }
 
-.brand { display: flex; flex-direction: column; line-height: 1.1; margin-right: 4px; }
+.brand { display: flex; flex-direction: column; line-height: 1.1; margin-right: 4px; color: inherit; text-decoration: none; }
 .brand span { font-size: 12px; opacity: 0.8; }
 .sections, .pager, .top-actions { display: flex; gap: 6px; align-items: center; }
 .top-actions { margin-left: auto; }

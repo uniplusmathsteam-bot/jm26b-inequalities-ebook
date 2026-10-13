@@ -1,0 +1,93 @@
+{
+  "id": "jm26b",
+  "form": "S3",
+  "code": "JM26 (B)",
+  "title": "Inequalities I",
+  "topic": "Inequalities",
+  "year": 2026,
+  "status": "live",
+  "storage": "jm26b",
+  "source": {
+    "que": "source/S3 JM26 (B)  Inequalities I - 2026 (QUE).pdf",
+    "ans": "source/S3 JM26 (B)  Inequalities I - 2026 (ANS).pdf",
+    "ansPageOffset": -1
+  },
+  "sections": [
+    { "id": "practical", "label": "Practical" },
+    { "id": "mc", "label": "MC" },
+    { "id": "challenge", "label": "Challenge" }
+  ],
+  "continuation": { "top": 96, "x": 48, "width": 499, "bottom": 812 },
+  "extract": {
+    "zoom": 3,
+    "regionX": [66, 546],
+    "footer": 822,
+    "questions": [
+      { "id": "ex1", "page": 2, "label": "Example 1", "section": "practical" },
+      { "id": "p1a", "page": 2, "label": "Practice 1a", "section": "practical" },
+      { "id": "p1b", "page": 2, "label": "Practice 1b", "section": "practical" },
+      { "id": "q1", "page": 3, "label": "1", "section": "practical" },
+      { "id": "q2", "page": 3, "label": "2", "section": "practical" },
+      { "id": "q3", "page": 3, "label": "3", "section": "practical" },
+      { "id": "q4", "page": 3, "label": "4", "section": "practical" },
+      { "id": "q5", "page": 4, "label": "5", "section": "practical" },
+      { "id": "q6", "page": 4, "label": "6", "section": "practical" },
+      { "id": "q7", "page": 4, "label": "7", "section": "practical" },
+      { "id": "q8", "page": 4, "label": "8", "section": "practical" },
+      { "id": "q9", "page": 5, "label": "9", "section": "practical" },
+      { "id": "q10", "page": 5, "label": "10", "section": "practical" },
+      { "id": "q11", "page": 5, "label": "11", "section": "practical" },
+      { "id": "q12", "page": 6, "label": "12", "section": "practical" },
+      { "id": "q13", "page": 6, "label": "13", "section": "practical" },
+      { "id": "q14", "page": 7, "label": "14", "section": "practical" },
+      { "id": "q15", "page": 7, "label": "15", "section": "practical" },
+      { "id": "q16", "page": 8, "label": "16", "section": "practical" },
+      { "id": "q17", "page": 8, "label": "17", "section": "practical" },
+      { "id": "q18", "page": 9, "label": "18", "section": "practical" },
+      { "id": "q19", "page": 9, "label": "19", "section": "practical" },
+      { "id": "q20", "page": 10, "label": "20", "section": "practical" },
+      { "id": "q21", "page": 10, "label": "21", "section": "practical" },
+      { "id": "q22", "page": 10, "label": "22", "section": "practical" },
+      { "id": "ex2", "page": 11, "label": "Example 2", "section": "mc" },
+      { "id": "ex2lq", "page": 11, "label": "Example 2 (LQ method)", "section": "mc" },
+      { "id": "p2", "page": 11, "label": "Practice 2", "section": "mc" },
+      { "id": "q23", "page": 12, "label": "23", "section": "mc" },
+      { "id": "q24", "page": 12, "label": "24", "section": "mc" },
+      { "id": "q25", "page": 12, "label": "25", "section": "mc" },
+      { "id": "q26", "page": 12, "label": "26", "section": "mc" },
+      { "id": "q27", "page": 13, "label": "27", "section": "mc" },
+      { "id": "q28", "page": 13, "label": "28", "section": "mc" },
+      { "id": "q29", "page": 13, "label": "29", "section": "mc" },
+      { "id": "q30", "page": 13, "label": "30", "section": "mc" },
+      { "id": "q31", "page": 14, "label": "31", "section": "challenge" },
+      { "id": "q32", "page": 15, "label": "32", "section": "challenge" },
+      { "id": "q33", "page": 16, "label": "33", "section": "challenge" }
+    ],
+    "anchors": {
+      "ex1": "Example\\s*1",
+      "p1a": "Practice\\s*1a",
+      "p1b": "Practice\\s*1b",
+      "ex2": "Example\\s*2",
+      "p2": "Practice\\s*2"
+    },
+    "fixedAnchors": {
+      "ex2lq": [327.0, 340.0]
+    },
+    "overrides": {
+      "ex1": { "region": [48, 194, 512, 336] },
+      "p1a": { "region": [48, 390, 512, 478] },
+      "p1b": { "region": [48, 588, 512, 812] },
+      "ex2": { "region": [200, 140, 516, 316] },
+      "ex2lq": { "region": [44, 356, 478, 592] },
+      "p2": { "region": [160, 648, 536, 806], "ring": [38, 707, 131, 727] },
+      "q23": { "region": [174, 80, 500, 228], "square": [504, 128, 532, 156] },
+      "q24": { "region": [180, 247, 500, 420], "square": [504, 365, 532, 393] },
+      "q25": { "region": [198, 441, 500, 614], "square": [504, 565, 533, 594] },
+      "q26": { "region": [190, 636, 500, 822], "square": [504, 753, 532, 781] },
+      "q27": { "region": [174, 80, 500, 240], "square": [504, 145, 532, 173] },
+      "q28": { "region": [248, 261, 500, 395], "square": [504, 299, 533, 328] },
+      "q29": { "region": [178, 470, 500, 614], "square": [504, 526, 533, 554] },
+      "q30": { "region": [174, 634, 500, 822], "square": [504, 680, 533, 708] }
+    }
+  }
+}

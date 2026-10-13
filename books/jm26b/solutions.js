@@ -1,25 +1,13 @@
 /**
- * Worked solutions laid out like the JM26 (B) answer key: each question is a
- * set of answer boxes, and every non-heading line is one revealable step.
+ * Worked solutions laid out like the JM26 (B) answer key. Field reference:
+ * docs/02-book-format.md.
  *
- * Line kinds: { m } display maths, { t } text with $inline$ maths (\$ is a
- * dollar sign), { h } part label, { note } teacher margin note, { nl } number
- * line. Any line may carry r, a short side reason. `printed` marks worked
- * examples already shown on the page: they get no overlay, only a graphic.
- *
- * `links` pair question wording (q phrases, matched against the page text)
- * with answer components: a whole line via lk(key, step), or part of the
- * maths via L(key, tex). Start a part with {} when it begins with a relation
- * or operator so KaTeX keeps the binary spacing.
+ * `printed` marks worked examples already shown on the page: they get no
+ * overlay, only a graphic. In L(key, tex), start a part with {} when it
+ * begins with a relation or operator so KaTeX keeps the binary spacing.
  */
 
-const m = (m, r) => ({ m, r });
-const t = (t, r) => ({ t, r });
-const h = (h) => ({ h });
-const note = (note) => ({ note });
-const nl = (spec) => ({ nl: spec, optional: true });
-const L = (key, tex) => `\\htmlClass{lk-${key}}{${tex}}`;
-const lk = (key, step) => ({ ...step, lk: key });
+import { m, t, h, note, nl, L, lk } from "../../engine/authoring.js";
 
 export const SOLUTIONS = [
   {
@@ -1020,5 +1008,3 @@ export const SOLUTIONS = [
     ],
   },
 ];
-
-export const SOLUTION_BY_ID = Object.fromEntries(SOLUTIONS.map((s) => [s.id, s]));

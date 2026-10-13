@@ -1,4 +1,6 @@
 # Source PDFs and authoring references are not needed by the web app.
 *.pdf
-reference/
+books/*/source/
+books/*/reference/
 __pycache__/
+node_modules/

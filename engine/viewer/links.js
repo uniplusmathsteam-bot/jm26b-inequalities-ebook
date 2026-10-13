@@ -1,4 +1,4 @@
-import { SOLUTION_BY_ID } from "../data/solutions.js";
+import { SOLUTION_BY_ID } from "../book.js";
 
 const COLORS = {
   pink: { stroke: "#e0609a", fill: "rgba(251, 224, 236, 0.34)" },

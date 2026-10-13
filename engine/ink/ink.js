@@ -1,7 +1,6 @@
 import { paintStroke } from "./render.js";
 import { linePoints, recognise, snapAngle, snapToText, straightHighlight } from "./shapes.js";
 
-const DB_NAME = "jm26b-ebook";
 const STORE = "kv";
 const HOLD_MS = 520;
 const HOLD_SLOP = 5;
@@ -55,16 +54,17 @@ function pointInPoly(p, poly) {
   return inside;
 }
 
-function openDB() {
+function openDB(name) {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
+    const req = indexedDB.open(name, 1);
     req.onupgradeneeded = () => req.result.createObjectStore(STORE);
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
 }
 
-export function createInk() {
+/** `dbName` keeps each book's ink apart; never rename it for a book in use. */
+export function createInk({ dbName }) {
   const strokes = [];
   let tool = { type: "read", color: "#1c1c1c", size: 2.4, snapShapes: true, snapText: true };
   const textRows = new Map();
@@ -168,7 +168,7 @@ export function createInk() {
 
   async function save() {
     try {
-      const db = await (dbPromise ??= openDB());
+      const db = await (dbPromise ??= openDB(dbName));
       await new Promise((resolve, reject) => {
         const tx = db.transaction(STORE, "readwrite");
         tx.objectStore(STORE).put(strokes, "strokes");
@@ -182,7 +182,7 @@ export function createInk() {
 
   async function load() {
     try {
-      const db = await (dbPromise ??= openDB());
+      const db = await (dbPromise ??= openDB(dbName));
       const saved = await new Promise((resolve, reject) => {
         const tx = db.transaction(STORE, "readonly");
         const req = tx.objectStore(STORE).get("strokes");

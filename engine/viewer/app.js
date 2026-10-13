@@ -1,5 +1,4 @@
-import { SOLUTION_BY_ID } from "../data/solutions.js";
-import { mountGraphic } from "../widgets/widgets.js";
+import { BOOK, BOOK_DIR, BOOK_ID, BOOK_NAME, STORAGE, SOLUTION_BY_ID, mountGraphic, pageImage } from "../book.js";
 import { createInk } from "../ink/ink.js";
 import { exportAnnotations, exportPdf } from "../export/export.js";
 import { buildOverlay, layoutAnswers, paint, totalSteps } from "./answers.js";
@@ -8,13 +7,13 @@ import { renderLinks, clearLinks } from "./links.js";
 const PAGE_W = 595.32;
 const PAGE_H = 841.92;
 const GAP = 22;
-const UI_KEY = "jm26b-ui";
+const UI_KEY = `${STORAGE}-ui`;
 const UI_SELECTOR = "button, input, select, textarea, a, label, .ctl, .drawer";
 
 const world = document.getElementById("world");
 const viewport = document.getElementById("viewport");
 const toolbar = document.getElementById("toolbar");
-const ink = createInk();
+const ink = createInk({ dbName: `${STORAGE}-ebook` });
 
 const state = {
   scale: 1,
@@ -30,8 +29,6 @@ const state = {
 
 let lastPointer = "mouse";
 let suppressClickUntil = 0;
-
-const pad = (n) => String(n).padStart(2, "0");
 
 /* ---------- persistence ---------- */
 
@@ -162,7 +159,7 @@ function buildPages() {
     img.className = "bg";
     img.alt = "";
     img.draggable = false;
-    img.src = `assets/pages/p${pad(page.page)}.jpg`;
+    img.src = pageImage(page.page);
     const overlay = document.createElement("div");
     overlay.className = "overlay";
     buildOverlay(page, overlay);
@@ -182,7 +179,7 @@ function makeContinuation(pageNo) {
   sheet.style.height = `${PAGE_H}px`;
   const band = document.createElement("div");
   band.className = "band";
-  band.style.backgroundImage = `url("assets/pages/p${pad(pageNo)}.jpg")`;
+  band.style.backgroundImage = `url("${pageImage(pageNo)}")`;
   const foot = document.createElement("div");
   foot.className = "cont-foot";
   foot.textContent = `Answers continued from page ${pageNo}`;
@@ -872,7 +869,7 @@ function buildThumbs() {
       btn.classList.add("cont");
     } else {
       const img = document.createElement("img");
-      img.src = `assets/pages/p${pad(page)}.jpg`;
+      img.src = pageImage(page);
       img.alt = `Page ${page}`;
       const cap = document.createElement("span");
       cap.textContent = page;
@@ -932,6 +929,14 @@ function bindChrome() {
   document.getElementById("thumbs-toggle").onclick = () => {
     document.getElementById("sidebar").classList.toggle("open");
   };
+  const nav = document.querySelector(".sections");
+  for (const section of BOOK.sections || []) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.dataset.section = section.id;
+    btn.textContent = section.label;
+    nav.append(btn);
+  }
   document.querySelectorAll("[data-section]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const item = questions().find((q) => q.section === btn.dataset.section);
@@ -951,12 +956,12 @@ function bindChrome() {
     btn.disabled = true;
     toast("Building the PDF…");
     try {
-      await exportPdf(sheets(), ink.toJSON());
+      await exportPdf(sheets(), ink.toJSON(), `${BOOK_NAME.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "")}-solutions.pdf`);
     } finally {
       btn.disabled = false;
     }
   };
-  document.getElementById("export-json").onclick = () => exportAnnotations(ink.toJSON());
+  document.getElementById("export-json").onclick = () => exportAnnotations(ink.toJSON(), `${STORAGE}-annotations.json`);
   document.getElementById("import-json").onclick = () => document.getElementById("import-file").click();
   document.getElementById("import-file").onchange = async (event) => {
     const file = event.target.files[0];
@@ -1037,9 +1042,19 @@ function bindChrome() {
 
 /* ---------- start ---------- */
 
+function showBookName() {
+  document.title = `${BOOK_NAME} — Solution Ebook`;
+  document.querySelector(".brand strong").textContent = BOOK.code || BOOK_ID;
+  document.querySelector(".brand span").textContent = BOOK.title || "";
+  try {
+    localStorage.setItem("library-last", BOOK_ID);
+  } catch { /* private mode */ }
+}
+
 async function main() {
+  showBookName();
   loadUI();
-  state.layout = await fetch("src/data/layout.json").then((r) => r.json());
+  state.layout = await fetch(`${BOOK_DIR}layout.json`).then((r) => r.json());
   placeChrome();
   buildPages();
   buildJump();

@@ -1,0 +1,26 @@
+{
+  "id": "",
+  "form": "",
+  "code": "",
+  "title": "",
+  "topic": "",
+  "year": 2026,
+  "status": "draft",
+  "storage": "",
+  "source": {
+    "que": "source/QUE.pdf",
+    "ans": "source/ANS.pdf",
+    "ansPageOffset": -1
+  },
+  "sections": [],
+  "continuation": { "top": 96, "x": 48, "width": 499, "bottom": 812 },
+  "extract": {
+    "zoom": 3,
+    "regionX": [66, 546],
+    "footer": 822,
+    "questions": [],
+    "anchors": {},
+    "fixedAnchors": {},
+    "overrides": {}
+  }
+}

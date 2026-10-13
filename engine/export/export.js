@@ -136,7 +136,7 @@ async function deliver(bytes, name, type, label) {
   download(file);
 }
 
-export async function exportPdf(sheets, strokes) {
+export async function exportPdf(sheets, strokes, fileName) {
   const { PDFDocument } = await import("../../vendor/pdf-lib/pdf-lib.min.js");
   const pdf = await PDFDocument.create();
   for (const sheet of sheets) {
@@ -152,9 +152,9 @@ export async function exportPdf(sheets, strokes) {
     page.drawImage(image, { x: 0, y: 0, width: PAGE_W, height });
   }
   const out = await pdf.save();
-  await deliver(out, "JM26-B-Inequalities-I-solutions.pdf", "application/pdf", "PDF");
+  await deliver(out, fileName, "application/pdf", "PDF");
 }
 
-export function exportAnnotations(strokes) {
-  return deliver(JSON.stringify(strokes, null, 2), "jm26b-annotations.json", "application/json", "Ink file");
+export function exportAnnotations(strokes, fileName) {
+  return deliver(JSON.stringify(strokes, null, 2), fileName, "application/json", "Ink file");
 }

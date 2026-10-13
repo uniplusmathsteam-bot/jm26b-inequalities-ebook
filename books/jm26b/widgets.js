@@ -1,7 +1,7 @@
 import {
   C, S, T, H, tex, fmt, P, scene, marker, clear, niceStep, axis, ray, RAY_RISE, pin, bar, dashed,
   slider, readout, tabs, buttonRow, intro, question, sector, regular,
-} from "./kit.js";
+} from "../../engine/widgets/kit.js";
 
 const sign = (ok, yes, no) => (ok ? yes : no);
 
@@ -1346,6 +1346,5 @@ export function hasGraphic(id) {
 }
 
 export function mountGraphic(id, root) {
-  root.replaceChildren();
   REGISTRY[id]?.(root);
 }

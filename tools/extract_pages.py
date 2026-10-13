@@ -1,87 +1,30 @@
-"""Render QUE pages and write blank-region layout for the ebook overlays."""
+"""Render a book's QUE pages and write the blank-region layout for its overlays.
+
+Usage:
+    python tools/extract_pages.py <book-id>          # pages/*.jpg + layout.json
+    python tools/extract_pages.py <book-id> --scan   # draft the question list
+
+Everything chapter-specific (question list, anchors, region overrides) is in
+books/<book-id>/book.json under "extract". See docs/02-book-format.md.
+"""
 
 import json
 import re
+import sys
 import unicodedata
 from pathlib import Path
 
 import fitz
 
 ROOT = Path(__file__).resolve().parents[1]
-QUE = ROOT / "S3 JM26 (B)  Inequalities I - 2026 (QUE).pdf"
-PAGES = ROOT / "assets" / "pages"
-LAYOUT = ROOT / "src" / "data" / "layout.json"
-ZOOM = 3
 
-# (id, page index 0-based, label shown in the jump list, section)
-QUESTIONS = [
-    ("ex1", 1, "Example 1", "practical"),
-    ("p1a", 1, "Practice 1a", "practical"),
-    ("p1b", 1, "Practice 1b", "practical"),
-    ("q1", 2, "1", "practical"),
-    ("q2", 2, "2", "practical"),
-    ("q3", 2, "3", "practical"),
-    ("q4", 2, "4", "practical"),
-    ("q5", 3, "5", "practical"),
-    ("q6", 3, "6", "practical"),
-    ("q7", 3, "7", "practical"),
-    ("q8", 3, "8", "practical"),
-    ("q9", 4, "9", "practical"),
-    ("q10", 4, "10", "practical"),
-    ("q11", 4, "11", "practical"),
-    ("q12", 5, "12", "practical"),
-    ("q13", 5, "13", "practical"),
-    ("q14", 6, "14", "practical"),
-    ("q15", 6, "15", "practical"),
-    ("q16", 7, "16", "practical"),
-    ("q17", 7, "17", "practical"),
-    ("q18", 8, "18", "practical"),
-    ("q19", 8, "19", "practical"),
-    ("q20", 9, "20", "practical"),
-    ("q21", 9, "21", "practical"),
-    ("q22", 9, "22", "practical"),
-    ("ex2", 10, "Example 2", "mc"),
-    ("ex2lq", 10, "Example 2 (LQ method)", "mc"),
-    ("p2", 10, "Practice 2", "mc"),
-    ("q23", 11, "23", "mc"),
-    ("q24", 11, "24", "mc"),
-    ("q25", 11, "25", "mc"),
-    ("q26", 11, "26", "mc"),
-    ("q27", 12, "27", "mc"),
-    ("q28", 12, "28", "mc"),
-    ("q29", 12, "29", "mc"),
-    ("q30", 12, "30", "mc"),
-    ("q31", 13, "31", "challenge"),
-    ("q32", 14, "32", "challenge"),
-    ("q33", 15, "33", "challenge"),
-]
 
-# Answer areas that cannot be inferred from the gap below a question: framed
-# examples, the MC working space beside the options, and the MC answer squares.
-OVERRIDES = {
-    "ex1": {"region": [48, 194, 512, 336]},
-    "p1a": {"region": [48, 390, 512, 478]},
-    "p1b": {"region": [48, 588, 512, 812]},
-    "ex2": {"region": [200, 140, 516, 316]},
-    "ex2lq": {"region": [44, 356, 478, 592]},
-    "p2": {"region": [160, 648, 536, 806], "ring": [38, 707, 131, 727]},
-    "q23": {"region": [174, 80, 500, 228], "square": [504, 128, 532, 156]},
-    "q24": {"region": [180, 247, 500, 420], "square": [504, 365, 532, 393]},
-    "q25": {"region": [198, 441, 500, 614], "square": [504, 565, 533, 594]},
-    "q26": {"region": [190, 636, 500, 822], "square": [504, 753, 532, 781]},
-    "q27": {"region": [174, 80, 500, 240], "square": [504, 145, 532, 173]},
-    "q28": {"region": [248, 261, 500, 395], "square": [504, 299, 533, 328]},
-    "q29": {"region": [178, 470, 500, 614], "square": [504, 526, 533, 554]},
-    "q30": {"region": [174, 634, 500, 822], "square": [504, 680, 533, 708]},
-}
-
-ANCHOR = {
-    "ex1": re.compile(r"Example\s*1"),
-    "p1a": re.compile(r"Practice\s*1a"),
-    "p1b": re.compile(r"Practice\s*1b"),
-    "ex2": re.compile(r"Example\s*2"),
-    "p2": re.compile(r"Practice\s*2"),
-}
+def load_book(book_id):
+    folder = ROOT / "books" / book_id
+    path = folder / "book.json"
+    if not path.exists():
+        sys.exit(f"No {path}; create the book first with tools/new_book.py")
+    return folder, json.loads(path.read_text(encoding="utf-8"))
 
 
 def words_of(page):
@@ -121,8 +64,8 @@ def text_lines(page):
     return out
 
 
-def find_anchor(words, qid, label):
-    if qid in ANCHOR:
+def find_anchor(words, label, pattern):
+    if pattern:
         line = {}
         for w in words:
             key = round(w["y0"], 0)
@@ -130,7 +73,7 @@ def find_anchor(words, qid, label):
         for key in sorted(line):
             ws = sorted(line[key], key=lambda w: w["x0"])
             text = " ".join(w["t"] for w in ws)
-            if ANCHOR[qid].search(text):
+            if pattern.search(text):
                 return min(w["y0"] for w in ws), max(w["y1"] for w in ws)
         return None
     # Numbered question: a lone "12." or "12" near the left margin.
@@ -167,16 +110,63 @@ def question_bottom(words, y_start, y_limit):
     return max(bottoms) if bottoms else y_start + 40
 
 
+def scan(folder, book):
+    """Print a draft "questions" list: numbered items and Example/Practice headings per page."""
+    doc = fitz.open(folder / book["source"]["que"])
+    heading = re.compile(r"^(Example|Practice|Exercise|Class\s*work|Challenge|Revision)\b", re.I)
+    draft = []
+    for i, page in enumerate(doc):
+        big = set()
+        for block in page.get_text("dict")["blocks"]:
+            for line in block.get("lines", []):
+                text = "".join(s["text"] for s in line["spans"]).strip()
+                size = max((s["size"] for s in line["spans"]), default=0)
+                if size >= 14 and re.fullmatch(r"[A-Za-z][A-Za-z ()&'!?,-]{3,}", text):
+                    big.add(text)
+        for text in sorted(big):
+            print(f"  page {i + 1}: possible section title: {text!r}")
+        rows = {}
+        for w in words_of(page):
+            rows.setdefault(round(w["y0"]), []).append(w)
+        for y in sorted(rows):
+            ws = sorted(rows[y], key=lambda w: w["x0"])
+            text = " ".join(w["t"] for w in ws)
+            first = ws[0]
+            m = re.match(r"^(\d+)\.?$", first["t"])
+            if m and first["x0"] < 80:
+                draft.append({"id": f"q{m.group(1)}", "page": i + 1, "label": m.group(1), "section": ""})
+            elif heading.match(text):
+                label = " ".join(text.split()[:2])
+                qid = re.sub(r"[^a-z0-9]", "", label.lower().replace("example", "ex").replace("practice", "p"))
+                draft.append({"id": qid, "page": i + 1, "label": label, "section": "", "anchor": re.escape(label).replace("\\ ", "\\s*")})
+    print(json.dumps(draft, indent=2, ensure_ascii=False))
+    print("Check the list, fill in each section, move any 'anchor' into extract.anchors, then paste into book.json.")
+
+
 def main():
-    PAGES.mkdir(parents=True, exist_ok=True)
-    LAYOUT.parent.mkdir(parents=True, exist_ok=True)
-    doc = fitz.open(QUE)
-    mat = fitz.Matrix(ZOOM, ZOOM)
+    if len(sys.argv) < 2:
+        sys.exit(__doc__)
+    folder, book = load_book(sys.argv[1])
+    if "--scan" in sys.argv:
+        scan(folder, book)
+        return
+    cfg = book["extract"]
+    zoom = cfg.get("zoom", 3)
+    region_x = cfg.get("regionX", [66, 546])
+    footer = cfg.get("footer", 822)
+    anchors_cfg = {k: re.compile(v) for k, v in cfg.get("anchors", {}).items()}
+    fixed = {k: tuple(v) for k, v in cfg.get("fixedAnchors", {}).items()}
+    overrides = cfg.get("overrides", {})
+
+    pages_dir = folder / "pages"
+    pages_dir.mkdir(parents=True, exist_ok=True)
+    doc = fitz.open(folder / book["source"]["que"])
+    mat = fitz.Matrix(zoom, zoom)
     page_meta = []
     for i, page in enumerate(doc):
         pix = page.get_pixmap(matrix=mat, alpha=False)
         # MuPDF here cannot write WebP; JPEG keeps the page sharp at a smaller size.
-        out = PAGES / f"p{i+1:02d}.jpg"
+        out = pages_dir / f"p{i+1:02d}.jpg"
         pix.save(str(out), jpg_quality=86)
         page_meta.append({
             "page": i + 1,
@@ -186,31 +176,25 @@ def main():
         print("rendered", out.name, pix.width, pix.height)
 
     by_page = {}
-    for qid, pidx, label, section in QUESTIONS:
-        by_page.setdefault(pidx, []).append((qid, label, section))
+    for q in cfg["questions"]:
+        by_page.setdefault(q["page"], []).append(q)
 
     layout_pages = []
     for i, page in enumerate(doc):
         words = words_of(page)
-        meta = page_meta[i]
-        items = []
-        qs = by_page.get(i, [])
         anchors = []
-        for qid, label, section in qs:
-            if qid == "ex2lq":
-                anchors.append((qid, label, section, (327.0, 340.0)))
-                continue
-            found = find_anchor(words, qid, label)
-            anchors.append((qid, label, section, found))
+        for q in by_page.get(i + 1, []):
+            found = fixed.get(q["id"]) or find_anchor(words, q["label"], anchors_cfg.get(q["id"]))
+            anchors.append((q, found))
             if not found:
-                print("MISSING ANCHOR", qid, "page", i + 1)
-        footer = 822
-        for n, (qid, label, section, found) in enumerate(anchors):
+                print("MISSING ANCHOR", q["id"], "page", i + 1)
+        items = []
+        for n, (q, found) in enumerate(anchors):
             if not found:
                 continue
             y0, y1 = found
             next_y = footer
-            for _, _, _, nxt in anchors[n + 1:]:
+            for _, nxt in anchors[n + 1:]:
                 if nxt:
                     next_y = nxt[0] - 6
                     break
@@ -220,25 +204,26 @@ def main():
             if blank_bottom - blank_top < 36:
                 blank_top = min(blank_top, next_y - 40)
             item = {
-                "id": qid,
-                "label": label,
-                "section": section,
+                "id": q["id"],
+                "label": q["label"],
+                "section": q["section"],
                 "anchor": [round(y0, 1), round(y1, 1)],
-                "region": [66, round(blank_top, 1), 546, round(blank_bottom, 1)],
+                "region": [region_x[0], round(blank_top, 1), region_x[1], round(blank_bottom, 1)],
             }
-            item.update(OVERRIDES.get(qid, {}))
+            item.update(overrides.get(q["id"], {}))
             items.append(item)
-        layout_pages.append({**meta, "questions": items, "text": text_lines(page)})
+        layout_pages.append({**page_meta[i], "questions": items, "text": text_lines(page)})
 
-    text = json.dumps({"zoom": ZOOM, "pages": layout_pages}, indent=2, ensure_ascii=False)
+    text = json.dumps({"zoom": zoom, "pages": layout_pages}, indent=2, ensure_ascii=False)
     text = re.sub(r"\[\s+([-\d.]+),\s+([-\d.]+)\s+\]", r"[\1, \2]", text)
     text = re.sub(
         r'\[\s+([-\d.]+),\s+([-\d.]+),\s+("(?:\\.|[^"\\])*")\s+\]',
         r"[\1, \2, \3]",
         text,
     )
-    LAYOUT.write_text(text, encoding="utf-8")
-    print("wrote", LAYOUT)
+    layout = folder / "layout.json"
+    layout.write_text(text, encoding="utf-8")
+    print("wrote", layout)
 
 
 if __name__ == "__main__":

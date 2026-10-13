@@ -1,12 +1,9 @@
-import { SOLUTION_BY_ID } from "../data/solutions.js";
-import { hasGraphic } from "../widgets/widgets.js";
+import { BOOK, SOLUTION_BY_ID, hasGraphic } from "../book.js";
 
 const GAP = 7;
 const CTL = 30;
-const CONT_TOP = 96;
-const CONT_X = 48;
-const CONT_W = 499;
-const CONT_BOTTOM = 812;
+// Writable area of a continuation sheet, below the page's header band.
+const CONT = { top: 96, x: 48, width: 499, bottom: 812, ...BOOK.continuation };
 
 /** Per-question step metadata: global reveal index of every line (headings get -1). */
 export const META = {};
@@ -385,27 +382,27 @@ export function layoutAnswers(world, layout, makeSheet) {
   for (const [pageNo, items] of rest) {
     const sheet = makeSheet(pageNo);
     const overlay = sheet.querySelector(".overlay");
-    let y = CONT_TOP;
+    let y = CONT.top;
     for (const { q, tail } of items) {
       const sol = SOLUTION_BY_ID[q.id];
       const title = document.createElement("div");
       title.className = "cont-title";
       title.textContent = `${q.label} (continued)`;
-      Object.assign(title.style, { left: `${CONT_X}px`, top: `${y}px` });
+      Object.assign(title.style, { left: `${CONT.x}px`, top: `${y}px` });
       overlay.append(title);
       y += 20;
       const qa = document.createElement("div");
       qa.className = "qa cont";
       qa.dataset.q = q.id;
       qa.innerHTML = `<div class="qa-in"></div>${ctlHTML(q.id, true)}`;
-      const W = CONT_W - CTL - 2;
-      Object.assign(qa.style, { left: `${CONT_X}px`, top: `${y}px`, width: `${CONT_W}px`, height: `${CONT_BOTTOM - y}px` });
+      const W = CONT.width - CTL - 2;
+      Object.assign(qa.style, { left: `${CONT.x}px`, top: `${y}px`, width: `${CONT.width}px`, height: `${CONT.bottom - y}px` });
       overlay.append(qa);
       const inner = qa.querySelector(".qa-in");
       inner.style.width = `${W}px`;
       inner.style.setProperty("--k", 1);
       const els = renderPlan(inner, tail, q.id);
-      place(els, tail, W, CONT_BOTTOM - y, sol.flow === "col" ? "row" : sol.flow, 0);
+      place(els, tail, W, CONT.bottom - y, sol.flow === "col" ? "row" : sol.flow, 0);
       const used = Math.max(70, usedHeight(els));
       qa.style.height = `${used}px`;
       placeCtl(qa, els);

@@ -2,182 +2,128 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Inequalities I">
+  <meta name="apple-mobile-web-app-title" content="Maths Ebooks">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="format-detection" content="telephone=no">
   <link rel="apple-touch-icon" href="assets/icon-180.png">
   <link rel="icon" type="image/png" href="assets/icon-180.png">
   <meta name="theme-color" content="#163a86">
-  <title>S3 JM26 (B) Inequalities I — Solution Ebook</title>
+  <title>Maths Solution Ebooks</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="styles.css">
+  <style>
+    :root { --navy: #163a86; --paper: #f3efe6; --ink: #1c1c1c; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 15px/1.4 -apple-system, "Segoe UI", Calibri, sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) 24px env(safe-area-inset-left);
+    }
+    header { background: var(--navy); color: #fff; padding: 18px 24px 16px; }
+    header h1 { margin: 0; font-size: 22px; }
+    header p { margin: 4px 0 0; opacity: 0.8; font-size: 13px; }
+    .bar { display: flex; gap: 10px; align-items: center; padding: 14px 24px 0; flex-wrap: wrap; }
+    .bar input {
+      flex: 1; min-width: 200px; max-width: 420px; font: inherit; padding: 9px 12px;
+      border: 1px solid #cfc8b8; border-radius: 10px; background: #fff;
+    }
+    .continue { color: var(--navy); font-weight: 600; text-decoration: none; padding: 8px 12px; border-radius: 10px; background: #fff; border: 1px solid #d8d1c2; }
+    .continue[hidden] { display: none; }
+    main { padding: 4px 24px; }
+    h2 { font-size: 15px; color: #5b6170; margin: 22px 0 10px; letter-spacing: 0.02em; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px; }
+    .card {
+      display: flex; flex-direction: column; text-decoration: none; color: inherit; background: #fff;
+      border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); transition: transform 0.12s;
+    }
+    .card:active { transform: scale(0.98); }
+    .card img { width: 100%; aspect-ratio: 595 / 842; object-fit: cover; background: #eee; display: block; }
+    .card div { padding: 8px 10px 10px; }
+    .card strong { display: block; font-size: 14px; }
+    .card span { font-size: 12.5px; color: #5b6170; }
+    .card em { font-style: normal; font-size: 11px; color: #b04a00; }
+    .empty { color: #5b6170; padding: 20px 0; }
+  </style>
 </head>
-<body data-mode="read">
-  <header class="topbar">
-    <div class="brand">
-      <strong>JM26 (B)</strong>
-      <span>Inequalities I</span>
-    </div>
-    <nav class="sections">
-      <button type="button" data-section="practical">Practical</button>
-      <button type="button" data-section="mc">MC</button>
-      <button type="button" data-section="challenge">Challenge</button>
-    </nav>
-    <select id="jump" title="Go to a question"><option value="">Go to…</option></select>
-    <div class="pager">
-      <button type="button" id="prev-page" title="Previous page">‹</button>
-      <span id="page-label">Page 1</span>
-      <button type="button" id="next-page" title="Next page">›</button>
-    </div>
-    <div class="top-actions">
-      <button type="button" id="zoom-out" title="Zoom out (Ctrl + wheel)">−</button>
-      <button type="button" id="fit" title="Fit width">Fit</button>
-      <button type="button" id="zoom-in" title="Zoom in (Ctrl + wheel)">+</button>
-      <button type="button" id="present" title="Presentation mode: full screen, one page at a time (F5)">Present</button>
-      <button type="button" id="show-all" title="Reveal every step of every answer">Show all answers</button>
-      <button type="button" id="hide-all" title="Hide every step again">Hide all</button>
-      <button type="button" id="thumbs-toggle">Pages</button>
-      <details id="more" class="more">
-        <summary>More</summary>
-        <div class="menu">
-          <button type="button" id="hints-toggle">Hide link hints</button>
-          <button type="button" id="replay">Replay this page's ink</button>
-          <button type="button" id="export-pdf">Export PDF with ink</button>
-          <button type="button" id="print">Print / Save as PDF</button>
-          <button type="button" id="export-json">Save ink file</button>
-          <button type="button" id="import-json">Load ink file</button>
-          <p class="keys">Touch: tap ink to edit it · two-finger tap undo · three-finger tap redo.<br>Keys: Esc / V read · P pen · H highlighter · E eraser · K laser · L select · F5 present · Ctrl+Z undo · Ctrl+wheel zoom</p>
-        </div>
-      </details>
-      <input id="import-file" type="file" accept="application/json,.json" hidden>
-    </div>
+<body>
+  <header>
+    <h1>Maths Solution Ebooks</h1>
+    <p>Step-by-step solutions on the original notes, with Apple Pencil ink.</p>
   </header>
-
-  <aside id="sidebar" class="sidebar">
-    <div id="thumbs" class="thumbs"></div>
-  </aside>
-
-  <main id="viewport">
-    <div id="world"></div>
-  </main>
-
-  <aside id="graphic" class="drawer" aria-hidden="true">
-    <header>
-      <strong id="graphic-title">Graphic</strong>
-      <button type="button" id="graphic-close" title="Close (Esc)">Close ✕</button>
-    </header>
-    <div id="graphic-body" class="drawer-body"></div>
-  </aside>
-
-  <div id="toolbar" class="toolbar dock-right">
-    <button type="button" class="tool" data-tool="read" title="Read and scroll (Esc or V)">
-      <svg viewBox="0 0 24 24"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12m0-1.5v-6a1.5 1.5 0 0 1 3 0V12m0-5.5a1.5 1.5 0 0 1 3 0V12m0-3.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1.5a6 6 0 0 1-4.6-2.2L4.6 15a1.6 1.6 0 0 1 2.4-2.1L8 14"/></svg>
-      <span>Read</span>
-    </button>
-    <button type="button" class="tool" data-tool="pen" title="Pen (P)">
-      <svg viewBox="0 0 24 24"><path d="M4 20l1.2-4.4L16.6 4.2a2 2 0 0 1 2.8 0l.4.4a2 2 0 0 1 0 2.8L8.4 18.8 4 20z"/><path d="M14.5 6.3l3.2 3.2"/></svg>
-      <span>Pen</span>
-    </button>
-    <div class="opts" data-for="pen" hidden>
-      <div class="swatches">
-        <button type="button" data-color="#1c1c1c" style="--c:#1c1c1c" title="Black"></button>
-        <button type="button" data-color="#163a86" style="--c:#163a86" title="Blue"></button>
-        <button type="button" data-color="#d92d20" style="--c:#d92d20" title="Red"></button>
-        <button type="button" data-color="#1d8a4a" style="--c:#1d8a4a" title="Green"></button>
-      </div>
-      <div class="widths">
-        <button type="button" data-size="1.5" title="Thin"><i style="--d:4px"></i></button>
-        <button type="button" data-size="2.4" title="Medium"><i style="--d:7px"></i></button>
-        <button type="button" data-size="4.2" title="Thick"><i style="--d:10px"></i></button>
-      </div>
-      <div class="snaps">
-        <button type="button" data-snap="snapShapes" title="Draw, then hold still: lines, circles and boxes become perfect">Hold to snap</button>
-      </div>
-    </div>
-    <button type="button" class="tool" data-tool="highlighter" title="Highlighter (H)">
-      <svg viewBox="0 0 24 24"><path d="M9 15l-3 3v2h5l2-2"/><path d="M9 15l7.8-9.6a2 2 0 0 1 2.9-.2l.1.1a2 2 0 0 1-.2 2.9L13 18"/><path d="M4 22h16" class="hl-bar"/></svg>
-      <span>Mark</span>
-    </button>
-    <div class="opts" data-for="highlighter" hidden>
-      <div class="swatches">
-        <button type="button" data-color="#ffe14a" style="--c:#ffe14a" title="Yellow"></button>
-        <button type="button" data-color="#ff8ad4" style="--c:#ff8ad4" title="Pink"></button>
-        <button type="button" data-color="#8ee08a" style="--c:#8ee08a" title="Green"></button>
-        <button type="button" data-color="#8eb4f0" style="--c:#8eb4f0" title="Blue"></button>
-      </div>
-      <div class="snaps">
-        <button type="button" data-snap="snapText" title="Straighten swipes and fit them onto the line of text">Snap to text</button>
-        <button type="button" data-snap="snapShapes" title="Draw, then hold still to make a perfect line">Hold to snap</button>
-      </div>
-    </div>
-    <button type="button" class="tool" data-tool="eraser" title="Eraser (E)">
-      <svg viewBox="0 0 24 24"><path d="M16.2 3.8l4 4a2 2 0 0 1 0 2.8L11 19.8H6.8l-3-3a2 2 0 0 1 0-2.8L13.4 3.8a2 2 0 0 1 2.8 0z"/><path d="M8.5 9.5l6 6M11 19.8h9"/></svg>
-      <span>Erase</span>
-    </button>
-    <div class="opts" data-for="eraser" hidden>
-      <div class="snaps">
-        <button type="button" data-flag="erasePartial" title="Rub out only the part you touch, like a real eraser">Partial erase</button>
-        <button type="button" data-flag="eraseHighlights" title="Erase highlights and leave pen ink alone">Marks only</button>
-      </div>
-    </div>
-    <button type="button" class="tool" data-tool="laser" title="Laser pointer (K)">
-      <svg viewBox="0 0 24 24"><path d="M3 21l7.5-7.5"/><path d="M10.5 13.5l1.8-1.8"/><circle cx="16" cy="8" r="2.6" class="laser-dot"/><path d="M16 2.5v1.6M16 11.9v1.6M21.5 8h-1.6M12.1 8h-1.6M19.9 4.1l-1.1 1.1M13.2 10.8l-1.1 1.1M19.9 11.9l-1.1-1.1"/></svg>
-      <span>Laser</span>
-    </button>
-    <button type="button" class="tool" data-tool="lasso" title="Select strokes (L)">
-      <svg viewBox="0 0 24 24"><path d="M7 16.5C4.6 15.3 3 13.3 3 11c0-4 4-7 9-7s9 3 9 7-4 7-9 7c-1 0-1.9-.1-2.8-.3" stroke-dasharray="3 2.4"/><path d="M8 16a2 2 0 1 0 0 .1M8 18c0 1.7-1 3-3 3"/></svg>
-      <span>Select</span>
-    </button>
-    <div class="sep"></div>
-    <button type="button" id="undo" class="tool" title="Undo (Ctrl+Z)">
-      <svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
-      <span>Undo</span>
-    </button>
-    <button type="button" id="redo" class="tool" title="Redo (Ctrl+Shift+Z)">
-      <svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>
-      <span>Redo</span>
-    </button>
-    <button type="button" id="delete-selection" class="tool" title="Delete the selected strokes" hidden>
-      <svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3"/></svg>
-      <span>Delete</span>
-    </button>
-    <button type="button" id="clear-page" class="tool" title="Clear this page's ink">
-      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      <span>Clear</span>
-    </button>
-    <button type="button" id="dock" class="tool small" title="Move the toolbar">
-      <svg viewBox="0 0 24 24"><path d="M4 12h16M12 4v16M4 12l3-3M4 12l3 3M20 12l-3-3M20 12l-3 3"/></svg>
-      <span>Move bar</span>
-    </button>
+  <div class="bar">
+    <input id="filter" type="search" placeholder="Find a chapter, code or topic…" autocomplete="off">
+    <a id="continue" class="continue" hidden></a>
   </div>
+  <main id="shelf"></main>
+  <script type="module">
+    const shelf = document.getElementById("shelf");
+    const filter = document.getElementById("filter");
+    const { books: ids } = await fetch("books/catalog.json").then((r) => r.json());
+    const books = (await Promise.all(ids.map((id) =>
+      fetch(`books/${id}/book.json`).then((r) => (r.ok ? r.json() : null)).catch(() => null)))).filter(Boolean);
+    const name = (b) => [b.code, b.title].filter(Boolean).join(" ");
+    const href = (b) => `reader.html?book=${encodeURIComponent(b.id)}`;
 
-  <div id="sel-menu" class="sel-menu" hidden>
-    <div class="sel-colors"></div>
-    <button type="button" data-sel="thin" title="Thinner">−</button>
-    <button type="button" data-sel="thick" title="Thicker">+</button>
-    <button type="button" data-sel="shape" title="Turn rough lines, triangles, boxes and circles into neat shapes">Shape</button>
-    <button type="button" data-sel="copy" title="Duplicate">Copy</button>
-    <button type="button" data-sel="delete" title="Delete" class="danger">Delete</button>
-    <button type="button" data-sel="done" title="Done">✕</button>
-  </div>
+    let last = null;
+    try { last = localStorage.getItem("library-last"); } catch { /* private mode */ }
+    const lastBook = books.find((b) => b.id === last);
+    if (lastBook) {
+      const link = document.getElementById("continue");
+      link.href = href(lastBook);
+      link.textContent = `Continue: ${name(lastBook)}`;
+      link.hidden = false;
+    }
 
-  <div id="presenter" class="presenter" hidden>
-    <button type="button" id="pr-prev" title="Previous page">‹</button>
-    <span id="pr-label">1 / 16</span>
-    <button type="button" id="pr-next" title="Next page">›</button>
-    <button type="button" id="pr-fit" title="Switch between whole page and page width">Fit width</button>
-    <button type="button" id="pr-replay" title="Replay the ink on this page">Replay ink</button>
-    <button type="button" id="pr-tools" title="Show or hide the drawing tools">Hide tools</button>
-    <button type="button" id="pr-exit" title="Leave presentation mode (Esc)">Exit</button>
-  </div>
-
-  <div id="toast" class="toast" role="status"></div>
-
-  <script src="vendor/katex/katex.min.js"></script>
-  <script type="module" src="src/viewer/app.js"></script>
+    function render() {
+      const words = filter.value.toLowerCase().split(/\s+/).filter(Boolean);
+      const shown = books.filter((b) => {
+        const hay = [b.form, b.code, b.title, b.topic, b.year].join(" ").toLowerCase();
+        return words.every((w) => hay.includes(w));
+      });
+      shelf.replaceChildren();
+      if (!shown.length) {
+        shelf.innerHTML = '<p class="empty">No chapters match.</p>';
+        return;
+      }
+      const forms = [...new Set(shown.map((b) => b.form || "Other"))].sort();
+      for (const form of forms) {
+        const h = document.createElement("h2");
+        h.textContent = form;
+        const grid = document.createElement("div");
+        grid.className = "grid";
+        for (const b of shown.filter((x) => (x.form || "Other") === form).sort((a, c) => name(a).localeCompare(name(c)))) {
+          const card = document.createElement("a");
+          card.className = "card";
+          card.href = href(b);
+          const img = document.createElement("img");
+          img.src = `books/${b.id}/pages/p01.jpg`;
+          img.alt = "";
+          img.loading = "lazy";
+          const text = document.createElement("div");
+          const title = document.createElement("strong");
+          title.textContent = b.title;
+          const meta = document.createElement("span");
+          meta.textContent = [b.code, b.year].filter(Boolean).join(" · ");
+          text.append(title, meta);
+          if (b.status && b.status !== "live") {
+            const tag = document.createElement("em");
+            tag.textContent = ` ${b.status}`;
+            meta.append(tag);
+          }
+          card.append(img, text);
+          grid.append(card);
+        }
+        shelf.append(h, grid);
+      }
+    }
+    filter.addEventListener("input", render);
+    render();
+    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    }
+  </script>
 </body>
 </html>
