@@ -48,7 +48,7 @@ For **ranges of two related variables** (e.g. "given $x > 0$, find the range of 
 
 ## 4. Review links
 
-Review links connect the wording of a question to the part of the answer it becomes. They show as faint dashed boxes; tapping one opens a solid coloured box on both sides, with a remark tag and a short leader line.
+Review links connect the wording of a question to the part of the answer it becomes. On the question they show as faint dashed boxes; in the answer they show as coloured dotted underlines (so neighbouring pieces in a formula do not clash). Tapping one opens a solid box on the question and a solid underline (with a light tint) on the answer, with a remark tag and a short leader line. Nested answer links stack their underlines downwards.
 
 - **Link every word problem.** Skip printed worked examples, and questions where no phrase maps to a step (e.g. pure-algebra MC).
 - **What to link:**

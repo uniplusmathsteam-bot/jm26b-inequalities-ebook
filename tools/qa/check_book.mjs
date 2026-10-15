@@ -108,7 +108,9 @@ try {
           for (const phrase of link.q || []) {
             if (!questionRects(pg, q, phrase).length) out.push(`${q.id}: link "${link.key}" phrase not found on the page: "${phrase}"`);
           }
-          if (!document.querySelector(`.qa[data-q="${q.id}"] .lk-${link.key}`)) out.push(`${q.id}: link "${link.key}" has no marked answer part (L() or lk())`);
+          if (!document.querySelector(`.qa[data-q="${q.id}"] .lk-${link.key}`)) {
+            out.push(`${q.id}: link "${link.key}" has no marked answer part (L() or lk())`);
+          }
         }
       }
     }
@@ -119,6 +121,25 @@ try {
   /* ---------- layout fit ---------- */
   await page.tap("#show-all");
   await sleep(500);
+
+  /* Answer underlines only appear once the marked steps are revealed. */
+  const underlineReport = await page.evaluate(async () => {
+    const { SOLUTION_BY_ID, BOOK_DIR } = await import("/engine/book.js");
+    const lay = await fetch(`${BOOK_DIR}layout.json`).then((r) => r.json());
+    const out = [];
+    for (const pg of lay.pages) {
+      for (const q of pg.questions) {
+        for (const link of SOLUTION_BY_ID[q.id]?.links || []) {
+          if (!document.querySelector(`.qa[data-q="${q.id}"] .lk-${link.key}`)) continue;
+          if (!document.querySelector(`.rev[data-q="${q.id}"] .lk-u-g[data-link="${link.key}"]`)) {
+            out.push(`${q.id}: link "${link.key}" has no answer-side underline`);
+          }
+        }
+      }
+    }
+    return out;
+  });
+  underlineReport.forEach(fail);
   const fit = await page.evaluate(() => ({
     continued: [...new Set([...document.querySelectorAll(".sheet.continuation .qa[data-q]")].map((el) => el.dataset.q))],
     small: [...document.querySelectorAll(".qa")].map((qa) => {

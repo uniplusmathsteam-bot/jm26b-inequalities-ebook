@@ -253,7 +253,13 @@ body:not([data-mode="read"]) .ln.hid.next::after { content: "▸"; }
 .rev svg { width: 100%; height: 100%; display: block; overflow: visible; }
 .lk-r { stroke-width: 1.2; pointer-events: all; cursor: pointer; transition: opacity 0.15s ease; }
 .lk-r.hint { stroke-width: 0.9; stroke-dasharray: 2.4 2; stroke-opacity: 0.7; fill-opacity: 0.55; }
-.no-hints .lk-r.hint { opacity: 0; pointer-events: none; }
+.lk-u-g { pointer-events: none; }
+.lk-hit { fill: transparent; pointer-events: all; cursor: pointer; }
+.lk-tint { pointer-events: none; }
+.lk-u { stroke-width: 1.8; stroke-linecap: round; pointer-events: none; transition: opacity 0.15s ease; }
+.lk-u.hint { stroke-width: 1.3; stroke-dasharray: 1.6 2.2; stroke-opacity: 0.75; }
+.no-hints .lk-r.hint,
+.no-hints .lk-u-g.hint { opacity: 0; pointer-events: none; }
 .lk-tag { pointer-events: none; }
 .lk-tag {
   position: absolute;
@@ -488,6 +494,7 @@ body:not([data-mode="read"]) .ln.hid.next::after { content: "▸"; }
   .more .menu button:hover { background: #e3e9f6; }
   .ctl button:hover { filter: brightness(0.95); }
   .lk-r.hint:hover { stroke-opacity: 1; fill-opacity: 1; }
+  .lk-u-g.hint:hover .lk-u { stroke-opacity: 1; }
   .tool:hover { background: #eef2fa; }
   .tool.on:hover { background: var(--ink); }
   .tool[data-tool="read"].on:hover { background: #1d8a4a; }

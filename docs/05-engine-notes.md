@@ -25,7 +25,7 @@ flowchart TD
   1. try scales from 1 down to `minScale` in steps of 0.06;
   2. then drop the optional number lines;
   3. then split the answer onto a continuation sheet (`c<page>-1`).
-- `links.js` finds `q` phrases in `layout.json` text, measures the marked answer parts, and draws the dashed hints, solid boxes, tags and leaders.
+- `links.js` finds `q` phrases in `layout.json` text, measures the marked answer parts, and draws the markers, tags and leaders. Question-side markers are dashed (then solid) boxes; answer-side markers are coloured dotted underlines (solid when open), with a transparent hit area so a tap still toggles the link. Nested `.lk-*` pieces drop each underline by 2.6 pt so they stay readable.
 
 ## Coordinates
 

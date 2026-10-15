@@ -101,6 +101,56 @@ function makeRect(box, link, open, id) {
   return { rect, area: box.w * box.h };
 }
 
+/**
+ * Answer-side marker: a coloured underline (dotted when closed) with a
+ * transparent hit area. Nested links drop the line by 2.6 pt per enclosing
+ * `.lk-*` so neighbouring pieces never draw overlapping boxes.
+ */
+function makeUnderline(box, link, open, id, depth = 0) {
+  const c = COLORS[link.color] || COLORS.blue;
+  const g = svgEl("g", {
+    class: open ? "lk-u-g" : "lk-u-g hint",
+    "data-link": link.key,
+    "data-q": id,
+  });
+  if (open) {
+    g.append(svgEl("rect", {
+      x: box.x,
+      y: box.y,
+      width: Math.max(1, box.w),
+      height: Math.max(1, box.h),
+      class: "lk-tint",
+      fill: c.fill,
+    }));
+  }
+  g.append(svgEl("rect", {
+    x: box.x,
+    y: box.y,
+    width: Math.max(1, box.w),
+    height: Math.max(1, box.h + 1.2 + depth * 2.6 + 2),
+    class: "lk-hit",
+  }));
+  const y = box.y + box.h + 1.2 + depth * 2.6;
+  g.append(svgEl("line", {
+    x1: box.x,
+    y1: y,
+    x2: box.x + Math.max(1, box.w),
+    y2: y,
+    stroke: c.stroke,
+    class: open ? "lk-u" : "lk-u hint",
+  }));
+  return { rect: g, area: box.w * box.h };
+}
+
+/** How many enclosing `.lk-*` ancestors sit inside the same answer box. */
+function linkDepth(node) {
+  let depth = 0;
+  for (let el = node.parentElement; el && !el.classList.contains("abox") && !el.classList.contains("qa"); el = el.parentElement) {
+    if ([...el.classList].some((c) => /^lk-/.test(c))) depth++;
+  }
+  return depth;
+}
+
 function answerNodes(qa, key) {
   return [...qa.querySelectorAll(`.lk-${key}`)].filter((n) => !n.closest(".ln.hid"));
 }
@@ -117,9 +167,10 @@ export function clearLinks(sheet, id) {
 
 /**
  * Draws faint dashed hints for every link of one question; links in `open`
- * get the solid rectangles, a remark tag and a leader. Returns the control
- * column left (relative to the answer region) when tags sit right of the
- * boxes, so the step buttons can slide clear of them.
+ * get solid markers (boxes on the question, underlines in the answer), a
+ * remark tag and a leader. Returns the control column left (relative to the
+ * answer region) when tags sit right of the boxes, so the step buttons can
+ * slide clear of them.
  */
 export function renderLinks(sheet, id, page, q, open) {
   clearLinks(sheet, id);
@@ -145,9 +196,10 @@ export function renderLinks(sheet, id, page, q, open) {
     }
     const nodes = answerNodes(qa, link.key);
     for (const n of nodes) {
+      const depth = linkDepth(n);
       for (const cr of n.getClientRects()) {
         if (cr.width < 0.4 || cr.height < 0.4) continue;
-        rects.push(makeRect(sheetPoint(sheet, cr), link, isOpen, id));
+        rects.push(makeUnderline(sheetPoint(sheet, cr), link, isOpen, id, depth));
       }
     }
     if (!isOpen || !nodes.length) continue;
