@@ -61,6 +61,7 @@ These cost real debugging time on JM26 (B). Keep them in mind when touching `eng
 - **Canvas memory.**
   - iPad Safari limits each canvas to about 16.7 MP, and limits all canvases together by memory.
   - Only pages near the screen that have ink get full-size canvases (`MAX_PIXELS` = 5e6). Pages far away are released to 1 × 1 and repainted on return.
+  - Zoomed past that, a canvas covers only the screen plus a margin (`VIEW_MARGIN`, `VIEW_PIXELS`), positioned in page units with `right` and `bottom` set to `auto` so `inset: 0` does not stretch it. Panning keeps the current view while it still covers the screen, then repaints.
   - The stroke in progress is drawn on its own `live` layer; lifting the Pencil adds just that stroke to the page.
 - **Saving.** Saves are debounced by 1.5 s and never run mid-stroke. Ink is flushed immediately on `visibilitychange` (hidden) and `pagehide`.
 - **Smoothing and pressure.**

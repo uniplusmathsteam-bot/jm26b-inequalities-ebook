@@ -8,6 +8,10 @@ const LASER_FADE = 700;
 // iPad Safari caps each canvas near 16.7 MP and all canvases together by memory,
 // so only pages near the screen with ink on them get full-size canvases.
 const MAX_PIXELS = 5e6;
+// Zoomed in past MAX_PIXELS, canvases cover only the screen plus this margin
+// (a fraction of the window), so ink stays as sharp as the display.
+const VIEW_MARGIN = 0.1;
+const VIEW_PIXELS = 7e6;
 const CLOSED = new Set(["rect", "ellipse", "triangle"]);
 const DRAW_TOOLS = new Set(["pen", "highlighter", "eraser"]);
 
@@ -198,21 +202,86 @@ export function createInk({ dbName }) {
 
   /* ---------- canvases ---------- */
 
-  function targetSize(sheet) {
+  /* Each sheet's canvases cover one view of it, in page units: the whole sheet
+     while that fits in MAX_PIXELS at near screen sharpness, otherwise only the
+     part on screen plus a margin, so zoomed-in ink is not drawn blurred. */
+  const views = new WeakMap();
+  const placed = new WeakMap();
+
+  function onScreen(rect, k, pad) {
+    const mx = window.innerWidth * pad;
+    const my = window.innerHeight * pad * 2;
+    const left = Math.max(rect.left, -mx);
+    const right = Math.min(rect.right, window.innerWidth + mx);
+    const top = Math.max(rect.top, -my);
+    const bottom = Math.min(rect.bottom, window.innerHeight + my);
+    if (right - left < 1 || bottom - top < 1) return null;
+    return { x: (left - rect.left) / k, y: (top - rect.top) / k, w: (right - left) / k, h: (bottom - top) / k };
+  }
+
+  function makeView(box, density, want, partial) {
+    const pw = Math.max(1, Math.round(box.w * density));
+    const ph = Math.max(1, Math.round(box.h * density));
+    const key = `${pw}x${ph}@${box.x.toFixed(1)},${box.y.toFixed(1)}`;
+    return { ...box, pw, ph, sx: pw / box.w, sy: ph / box.h, want, partial, key };
+  }
+
+  function targetView(sheet) {
     const rect = sheet.getBoundingClientRect();
     if (rect.width < 8 || rect.height < 8) return null;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(MAX_PIXELS / (rect.width * rect.height)));
-    return { w: Math.max(1, Math.round(rect.width * dpr)), h: Math.max(1, Math.round(rect.height * dpr)) };
+    const W = sheet.offsetWidth;
+    const H = sheet.offsetHeight;
+    const k = rect.width / W;
+    const want = Math.min(window.devicePixelRatio || 1, 2) * k;
+    const whole = Math.min(want, Math.sqrt(MAX_PIXELS / (W * H)));
+    if (whole >= want * 0.75) return makeView({ x: 0, y: 0, w: W, h: H }, whole, want, false);
+    const seen = onScreen(rect, k, 0);
+    if (!seen) return null;
+    // Keep the current view while it still covers the screen, so panning does not repaint every frame.
+    const old = views.get(sheet);
+    if (old?.partial && Math.abs(old.want - want) < want * 1e-3
+      && old.x <= seen.x + 0.5 && old.y <= seen.y + 0.5
+      && old.x + old.w >= seen.x + seen.w - 0.5 && old.y + old.h >= seen.y + seen.h - 0.5) return old;
+    const box = onScreen(rect, k, VIEW_MARGIN);
+    return makeView(box, Math.min(want, Math.sqrt(VIEW_PIXELS / (box.w * box.h))), want, true);
   }
 
-  function fit(canvas, size) {
-    if (canvas.width !== size.w || canvas.height !== size.h) {
-      canvas.width = size.w;
-      canvas.height = size.h;
+  const TINY = { x: 0, y: 0, w: 1, h: 1, pw: 1, ph: 1, sx: 1, sy: 1, partial: false, key: "tiny" };
+
+  /** Sizes and positions a canvas for `view`, leaving it blank. */
+  function fit(canvas, view) {
+    if (canvas.width !== view.pw || canvas.height !== view.ph) {
+      canvas.width = view.pw;
+      canvas.height = view.ph;
     } else canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+    place(canvas, view);
   }
 
-  const TINY = { w: 1, h: 1 };
+  function place(canvas, view) {
+    placed.set(canvas, view);
+    if (canvas.dataset.view === view.key) return;
+    canvas.dataset.view = view.key;
+    const s = canvas.style;
+    // `.sheet canvas` uses inset: 0, so right and bottom must be auto or the
+    // canvas is stretched between the view origin and the page edge.
+    if (view.partial) {
+      s.left = `${view.x}px`;
+      s.top = `${view.y}px`;
+      s.right = "auto";
+      s.bottom = "auto";
+      s.width = `${view.w}px`;
+      s.height = `${view.h}px`;
+    } else s.left = s.top = s.right = s.bottom = s.width = s.height = "";
+  }
+
+  /** A context drawing in page units for the view the canvas is placed at. */
+  function pageContext(canvas) {
+    const v = placed.get(canvas) || TINY;
+    const ctx = canvas.getContext("2d");
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, -v.x * v.sx, -v.y * v.sy);
+    return { ctx, v };
+  }
 
   function release(sheet) {
     if (sheet.dataset.inkSize === "") return;
@@ -220,41 +289,49 @@ export function createInk({ dbName }) {
     sheet.dataset.inkSize = "";
   }
 
-  function drawList(canvas, list, sheet, size) {
-    fit(canvas, list.length ? size : TINY);
+  function drawList(canvas, list, view) {
+    fit(canvas, list.length ? view : TINY);
     if (!list.length) return;
-    const ctx = canvas.getContext("2d");
-    ctx.save();
-    const sx = canvas.width / sheet.offsetWidth;
-    const sy = canvas.height / sheet.offsetHeight;
-    for (const stroke of list) paintStroke(ctx, stroke, sx, sy);
+    const { ctx, v } = pageContext(canvas);
+    for (const stroke of list) paintStroke(ctx, stroke, v.sx, v.sy);
     ctx.restore();
   }
 
-  function redraw(sheet) {
-    if (!sheet) return;
-    const size = targetSize(sheet);
-    if (!size) return;
+  function redraw(sheet, view = sheet && targetView(sheet)) {
+    if (!sheet || !view) return;
     const key = sheet.dataset.key;
     const mine = strokes.filter((s) => s.page === key && !replayHidden.has(s.id));
-    drawList(sheet.querySelector('canvas[data-layer="hl"]'), mine.filter((s) => s.tool === "highlighter"), sheet, size);
-    drawList(sheet.querySelector('canvas[data-layer="ink"]'), mine.filter((s) => s.tool !== "highlighter"), sheet, size);
-    sheet.dataset.inkSize = `${size.w}x${size.h}`;
+    drawList(sheet.querySelector('canvas[data-layer="hl"]'), mine.filter((s) => s.tool === "highlighter"), view);
+    drawList(sheet.querySelector('canvas[data-layer="ink"]'), mine.filter((s) => s.tool !== "highlighter"), view);
+    // The live stroke and laser must follow the same view, or they sit at the
+    // place the page was when the stroke started.
+    for (const layer of ["live", "laser"]) {
+      const canvas = sheet.querySelector(`canvas[data-layer="${layer}"]`);
+      if (!canvas || canvas.dataset.view === view.key) continue;
+      if (canvas.width !== view.pw || canvas.height !== view.ph) {
+        canvas.width = view.pw;
+        canvas.height = view.ph;
+      } else canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+      dirty.delete(canvas);
+      place(canvas, view);
+    }
+    views.set(sheet, view);
+    sheet.dataset.inkSize = view.key;
   }
 
   /** Adds one finished stroke to its layer without repainting the page. */
   function commit(stroke) {
     const sheet = sheetByKey(stroke.page);
     if (!sheet) return;
-    const size = targetSize(sheet);
+    const view = targetView(sheet);
     const canvas = sheet.querySelector(`canvas[data-layer="${stroke.tool === "highlighter" ? "hl" : "ink"}"]`);
-    if (!size || sheet.dataset.inkSize !== `${size.w}x${size.h}` || canvas.width !== size.w || canvas.height !== size.h) {
-      redraw(sheet);
+    if (!view || sheet.dataset.inkSize !== view.key || canvas.dataset.view !== view.key) {
+      redraw(sheet, view);
       return;
     }
-    const ctx = canvas.getContext("2d");
-    paintStroke(ctx, stroke, canvas.width / sheet.offsetWidth, canvas.height / sheet.offsetHeight);
-    ctx.globalAlpha = 1;
+    const { ctx, v } = pageContext(canvas);
+    paintStroke(ctx, stroke, v.sx, v.sy);
+    ctx.restore();
   }
 
   /* The stroke being drawn (and the lasso) live on their own canvas, painted
@@ -262,36 +339,62 @@ export function createInk({ dbName }) {
   let liveFrame = 0;
   let livePage = null;
 
-  function liveCanvas(sheet) {
-    let canvas = sheet.querySelector('canvas[data-layer="live"]');
+  /** A scratch layer (live stroke or laser) placed at the sheet's current view. */
+  function layerCanvas(sheet, layer) {
+    let canvas = sheet.querySelector(`canvas[data-layer="${layer}"]`);
     if (!canvas) {
       canvas = document.createElement("canvas");
-      canvas.dataset.layer = "live";
+      canvas.dataset.layer = layer;
       sheet.append(canvas);
     }
-    const size = targetSize(sheet) || TINY;
-    if (canvas.width !== size.w || canvas.height !== size.h) {
-      canvas.width = size.w;
-      canvas.height = size.h;
+    const view = targetView(sheet) || TINY;
+    if (canvas.width !== view.pw || canvas.height !== view.ph) {
+      canvas.width = view.pw;
+      canvas.height = view.ph;
+      dirty.delete(canvas);
     }
+    place(canvas, view);
     return canvas;
+  }
+
+  /* Canvas-pixel box last painted on each live layer, so a frame clears only
+     that box instead of the whole screen-sized canvas. */
+  const dirty = new WeakMap();
+
+  function wipe(canvas, next = null) {
+    const prev = dirty.get(canvas);
+    const ctx = canvas.getContext("2d");
+    if (prev === undefined) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    else if (prev) ctx.clearRect(prev.x, prev.y, prev.w, prev.h);
+    dirty.set(canvas, next);
   }
 
   function clearLive(page) {
     const canvas = page && sheetByKey(page)?.querySelector('canvas[data-layer="live"]');
-    canvas?.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+    if (canvas) wipe(canvas);
   }
 
-  /** Paints one temporary stroke on the live layer of its page. */
-  function paintTemp(sheet, stroke) {
-    const canvas = liveCanvas(sheet);
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  /** Paints one temporary stroke (and the lasso) on the live layer of its page. */
+  function paintTemp(sheet, stroke, lassoPoints = []) {
+    const canvas = layerCanvas(sheet, "live");
+    const v = placed.get(canvas);
+    const items = [];
+    if (stroke?.points.length) items.push({ size: stroke.size * 1.5, points: stroke.points });
+    if (lassoPoints.length) items.push({ size: 4, points: lassoPoints });
+    const b = bounds(items);
+    wipe(canvas, b && {
+      x: Math.floor((b.x0 - v.x) * v.sx) - 2,
+      y: Math.floor((b.y0 - v.y) * v.sy) - 2,
+      w: Math.ceil((b.x1 - b.x0) * v.sx) + 4,
+      h: Math.ceil((b.y1 - b.y0) * v.sy) + 4,
+    });
     canvas.classList.toggle("hl", stroke?.tool === "highlighter");
     if (stroke && stroke.points.length) {
-      paintStroke(ctx, stroke, canvas.width / sheet.offsetWidth, canvas.height / sheet.offsetHeight);
-      ctx.globalAlpha = 1;
+      const { ctx } = pageContext(canvas);
+      paintStroke(ctx, stroke, v.sx, v.sy);
+      ctx.restore();
     }
+    if (lassoPoints.length) paintLasso(canvas, lassoPoints);
     return canvas;
   }
 
@@ -307,8 +410,7 @@ export function createInk({ dbName }) {
     if (!sheet) return;
     // Predicted points (where supported) close the gap between the ink and the Pencil tip.
     const shown = item?.predicted?.length ? { ...item, points: item.points.concat(item.predicted) } : item;
-    const canvas = paintTemp(sheet, shown);
-    if (lasso) paintLasso(canvas, lasso.points, sheet);
+    paintTemp(sheet, shown, lasso?.points);
   }
 
   function scheduleLive() {
@@ -324,8 +426,9 @@ export function createInk({ dbName }) {
         release(sheet);
         continue;
       }
-      const size = targetSize(sheet);
-      if (size && (force || sheet.dataset.inkSize !== `${size.w}x${size.h}`)) redraw(sheet);
+      const view = targetView(sheet);
+      if (!view) release(sheet);
+      else if (force || sheet.dataset.inkSize !== view.key) redraw(sheet, view);
     }
   }
 
@@ -333,12 +436,10 @@ export function createInk({ dbName }) {
     refresh(true);
   }
 
-  function paintLasso(canvas, points, sheet) {
+  function paintLasso(canvas, points) {
     if (!points.length) return;
-    const ctx = canvas.getContext("2d");
-    const sx = canvas.width / sheet.offsetWidth;
-    const sy = canvas.height / sheet.offsetHeight;
-    ctx.save();
+    const { ctx, v } = pageContext(canvas);
+    const { sx, sy } = v;
     ctx.strokeStyle = "#163a86";
     ctx.setLineDash([6, 4]);
     ctx.lineWidth = 1.5 * sx;
@@ -722,18 +823,7 @@ export function createInk({ dbName }) {
   /* ---------- laser ---------- */
 
   function laserCanvas(sheet) {
-    let canvas = sheet.querySelector('canvas[data-layer="laser"]');
-    if (!canvas) {
-      canvas = document.createElement("canvas");
-      canvas.dataset.layer = "laser";
-      sheet.append(canvas);
-    }
-    const size = targetSize(sheet) || TINY;
-    if (canvas.width !== size.w || canvas.height !== size.h) {
-      canvas.width = size.w;
-      canvas.height = size.h;
-    }
-    return canvas;
+    return layerCanvas(sheet, "laser");
   }
 
   function laserFrame() {
@@ -749,9 +839,10 @@ export function createInk({ dbName }) {
     const now = performance.now();
     laser.points = laser.points.filter((p) => now - p.t < LASER_FADE);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const k = canvas.width / sheet.offsetWidth;
+    const v = placed.get(canvas) || TINY;
+    const k = v.sx;
     ctx.save();
-    ctx.scale(k, k);
+    ctx.setTransform(k, 0, 0, v.sy, -v.x * k, -v.y * v.sy);
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.shadowColor = "rgba(255, 40, 40, 0.9)";
