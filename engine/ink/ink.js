@@ -262,16 +262,12 @@ export function createInk({ dbName }) {
     if (canvas.dataset.view === view.key) return;
     canvas.dataset.view = view.key;
     const s = canvas.style;
-    // `.sheet canvas` uses inset: 0, so right and bottom must be auto or the
-    // canvas is stretched between the view origin and the page edge.
     if (view.partial) {
       s.left = `${view.x}px`;
       s.top = `${view.y}px`;
-      s.right = "auto";
-      s.bottom = "auto";
       s.width = `${view.w}px`;
       s.height = `${view.h}px`;
-    } else s.left = s.top = s.right = s.bottom = s.width = s.height = "";
+    } else s.left = s.top = s.width = s.height = "";
   }
 
   /** A context drawing in page units for the view the canvas is placed at. */
@@ -303,18 +299,6 @@ export function createInk({ dbName }) {
     const mine = strokes.filter((s) => s.page === key && !replayHidden.has(s.id));
     drawList(sheet.querySelector('canvas[data-layer="hl"]'), mine.filter((s) => s.tool === "highlighter"), view);
     drawList(sheet.querySelector('canvas[data-layer="ink"]'), mine.filter((s) => s.tool !== "highlighter"), view);
-    // The live stroke and laser must follow the same view, or they sit at the
-    // place the page was when the stroke started.
-    for (const layer of ["live", "laser"]) {
-      const canvas = sheet.querySelector(`canvas[data-layer="${layer}"]`);
-      if (!canvas || canvas.dataset.view === view.key) continue;
-      if (canvas.width !== view.pw || canvas.height !== view.ph) {
-        canvas.width = view.pw;
-        canvas.height = view.ph;
-      } else canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
-      dirty.delete(canvas);
-      place(canvas, view);
-    }
     views.set(sheet, view);
     sheet.dataset.inkSize = view.key;
   }
