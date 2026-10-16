@@ -330,10 +330,15 @@ function stepPage(dir) {
 
 /* ---------- presentation mode ---------- */
 
-const present = { fit: "page", fullscreen: false, idle: 0 };
+const present = { fit: "page", fullscreen: false, idle: 0, base: 1 };
 
 function presenting() {
   return document.body.classList.contains("present");
+}
+
+/** Pinched in past the fitted page: drags pan instead of turning or resetting the page. */
+function presentZoomed() {
+  return presenting() && state.scale > present.base * 1.03;
 }
 
 /** In presentation mode: the whole page (or its width) centred on the screen. */
@@ -348,6 +353,7 @@ function showPage(sheet = currentSheet()) {
   const top = parseFloat(sheet.style.top) || 0;
   state.scale = present.fit === "page" ? Math.min(availW / PAGE_W, (vh - 20) / h) : Math.min(2.4, availW / PAGE_W);
   state.scale = Math.max(0.3, state.scale);
+  present.base = state.scale;
   state.tx = reservedLeft() + (availW - PAGE_W * state.scale) / 2;
   state.ty = present.fit === "page" ? (vh - h * state.scale) / 2 - top * state.scale : 10 - top * state.scale;
   state.currentKey = sheet.dataset.key;
@@ -378,7 +384,7 @@ function setPresent(on) {
     }
     wakePresenter();
     requestAnimationFrame(() => showPage(sheet));
-    toast("Presentation mode: ‹ › or swipe to change page, Esc to leave");
+    toast("Presentation mode: ‹ › or swipe to change page, pinch to zoom, double-tap to return, Esc to leave");
   } else {
     document.body.classList.remove("tools-hidden");
     document.getElementById("pr-tools").textContent = "Hide tools";
@@ -766,13 +772,31 @@ function bindViewport() {
     applyTransform();
   });
 
+  // Presentation mode: a one-finger double tap returns a pinched page to its fitted view.
+  let lastTap = null;
+  const presentTap = (event) => {
+    if (event.pointerType !== "touch" || !presenting()) return;
+    const now = performance.now();
+    const near = lastTap && now - lastTap.t < 320 && Math.hypot(event.clientX - lastTap.x, event.clientY - lastTap.y) < 40;
+    if (near && presentZoomed()) {
+      lastTap = null;
+      suppressClickUntil = now + 400;
+      showPage();
+      return;
+    }
+    lastTap = { t: now, x: event.clientX, y: event.clientY };
+  };
+
   const end = (event) => {
     fingerUp(event);
+    const wasPinch = Boolean(pinch);
     touches.delete(event.pointerId);
     if (touches.size < 2) pinch = null;
+    if (wasPinch && !pinch && presenting() && !presentZoomed()) showPage();
     if (!drag || drag.id !== event.pointerId) return;
     document.body.classList.remove("dragging");
-    if (drag.moved && presenting() && present.fit === "page") {
+    if (!drag.moved && !wasPinch) presentTap(event);
+    if (drag.moved && presenting() && present.fit === "page" && !presentZoomed()) {
       // Presenting a whole page: a swipe turns the page, a small drag springs back.
       suppressClickUntil = performance.now() + 350;
       const dx = event.clientX - drag.x;
@@ -1037,7 +1061,14 @@ function bindChrome() {
     else if (key === "end") scrollToY(state.worldH);
     else if (key === "delete" || key === "backspace") ink.deleteSelection();
   });
-  window.addEventListener("resize", () => (presenting() ? showPage() : fitWidth()));
+  // Safari fires resize when its bars slide in and out; keep a pinch zoom unless the width really changed.
+  let lastWidth = window.innerWidth;
+  window.addEventListener("resize", () => {
+    const rotated = window.innerWidth !== lastWidth;
+    lastWidth = window.innerWidth;
+    if (!presenting()) fitWidth();
+    else if (rotated || !presentZoomed()) showPage();
+  });
 }
 
 /* ---------- start ---------- */
