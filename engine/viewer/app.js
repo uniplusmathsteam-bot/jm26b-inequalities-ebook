@@ -367,6 +367,12 @@ function wakePresenter() {
   present.idle = setTimeout(() => bar.classList.add("idle"), 2600);
 }
 
+/* Safari's full screen on iPad and iPhone adds "Swipe down to exit" and takes
+   every downward drag for itself, so a zoomed page could not be scrolled. There
+   presentation mode only fills the page; desktop browsers still go full screen. */
+const APPLE_TOUCH = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+
 function setPresent(on) {
   if (on === presenting()) return;
   const bar = document.getElementById("presenter");
@@ -378,7 +384,7 @@ function setPresent(on) {
   if (on) {
     const sheet = currentSheet();
     const request = root.requestFullscreen || root.webkitRequestFullscreen;
-    if (request && !document.fullscreenElement && !document.webkitFullscreenElement) {
+    if (request && !APPLE_TOUCH && !document.fullscreenElement && !document.webkitFullscreenElement) {
       present.fullscreen = true;
       Promise.resolve(request.call(root)).catch(() => { present.fullscreen = false; });
     }
@@ -418,8 +424,8 @@ function bindPresenter() {
   window.addEventListener("pointermove", () => {
     if (presenting() && bar.classList.contains("idle")) wakePresenter();
   }, { passive: true });
-  // Only the Exit button leaves presentation mode. Leaving full screen (the
-  // iPad swipe down, or Esc) keeps presenting, and the next tap restores it.
+  // Only the Exit button leaves presentation mode. Leaving full screen (Esc)
+  // keeps presenting, and the next tap restores it.
   const onFullscreen = () => {
     if (presenting()) requestAnimationFrame(() => showPage());
   };

@@ -61,7 +61,7 @@ Run this on the live link after release, or on the local Wi-Fi preview.
 - [ ] Holding still at the end of a stroke snaps it to a line, circle, rectangle or triangle.
 - [ ] Tapping ink opens the edit menu (colour, size, Shape, Copy, Delete, move, resize).
 - [ ] A two-finger tap undoes and a three-finger tap redoes.
-- [ ] Present mode works: full screen, swipe between pages. Only the Exit button leaves; the iPad swipe down (or Esc) only drops full screen, and the next tap restores it. After a two-finger pinch, one-finger drags pan without leaving the zoom; a double tap returns to the whole page.
+- [ ] Present mode works: swipe between pages, and only the Exit button leaves. On iPad it does not use Safari full screen (no "Swipe down to exit"), so a zoomed page scrolls up and down with one finger; desktop browsers go full screen, and Esc there only drops full screen. After a two-finger pinch, one-finger drags pan without leaving the zoom; a double tap returns to the whole page.
 - [ ] Export PDF opens the share sheet.
 - [ ] Rotate the iPad, then close and reopen the app: the ink is still there.
 
