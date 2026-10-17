@@ -384,7 +384,7 @@ function setPresent(on) {
     }
     wakePresenter();
     requestAnimationFrame(() => showPage(sheet));
-    toast("Presentation mode: ‹ › or swipe to change page, pinch to zoom, double-tap to return, Esc to leave");
+    toast("Presentation mode: ‹ › or swipe to change page, pinch to zoom, double-tap to return, Exit to leave");
   } else {
     document.body.classList.remove("tools-hidden");
     document.getElementById("pr-tools").textContent = "Hide tools";
@@ -418,12 +418,20 @@ function bindPresenter() {
   window.addEventListener("pointermove", () => {
     if (presenting() && bar.classList.contains("idle")) wakePresenter();
   }, { passive: true });
+  // Only the Exit button leaves presentation mode. Leaving full screen (the
+  // iPad swipe down, or Esc) keeps presenting, and the next tap restores it.
   const onFullscreen = () => {
-    const full = document.fullscreenElement || document.webkitFullscreenElement;
-    if (!full && present.fullscreen && presenting()) setPresent(false);
+    if (presenting()) requestAnimationFrame(() => showPage());
   };
   document.addEventListener("fullscreenchange", onFullscreen);
   document.addEventListener("webkitfullscreenchange", onFullscreen);
+  window.addEventListener("click", (event) => {
+    if (!presenting() || !present.fullscreen || event.target.closest?.("#pr-exit")) return;
+    if (document.fullscreenElement || document.webkitFullscreenElement) return;
+    const root = document.documentElement;
+    const request = root.requestFullscreen || root.webkitRequestFullscreen;
+    if (request) Promise.resolve(request.call(root)).catch(() => {});
+  }, true);
 }
 
 function replayCurrent() {
@@ -1025,7 +1033,7 @@ function bindChrome() {
     if (event.metaKey || event.ctrlKey || event.altKey) return;
     if (key === "f5") {
       event.preventDefault();
-      setPresent(!presenting());
+      setPresent(true);
       return;
     }
     if (presenting()) {
@@ -1034,10 +1042,6 @@ function bindChrome() {
       if (turn) {
         event.preventDefault();
         stepPage(event.shiftKey && key === " " ? -1 : turn);
-        return;
-      }
-      if (key === "escape" && !document.body.classList.contains("drawer-open")) {
-        setPresent(false);
         return;
       }
     }
