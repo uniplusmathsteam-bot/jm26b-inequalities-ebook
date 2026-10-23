@@ -1,0 +1,46 @@
+{
+  "id": "jm27c",
+  "form": "S3",
+  "code": "JM27 (C)",
+  "title": "Percentages II",
+  "topic": "Percentages",
+  "year": 2026,
+  "status": "live",
+  "storage": "jm27c",
+  "source": {
+    "que": "source/S3 JM27 (C)  Percentages II - 2026 (QUE).pdf",
+    "ans": "source/S3 JM27 (C)  Percentages II - 2026 (ANS).pdf",
+    "ansPageOffset": -1
+  },
+  "sections": [
+    { "id": "tax", "label": "Salaries tax" },
+    { "id": "challenge", "label": "Challenge" }
+  ],
+  "continuation": { "top": 96, "x": 48, "width": 499, "bottom": 812 },
+  "extract": {
+    "zoom": 3,
+    "regionX": [66, 546],
+    "footer": 822,
+    "questions": [
+      { "id": "ex1", "page": 2, "label": "Example 1", "section": "tax" },
+      { "id": "p1", "page": 2, "label": "Practice 1", "section": "tax" },
+      { "id": "q1", "page": 3, "label": "1", "section": "tax" },
+      { "id": "q2", "page": 3, "label": "2", "section": "tax" },
+      { "id": "q3", "page": 3, "label": "3", "section": "tax" },
+      { "id": "q4", "page": 4, "label": "4", "section": "tax" },
+      { "id": "q5", "page": 4, "label": "5", "section": "tax" },
+      { "id": "q6", "page": 4, "label": "6", "section": "tax" },
+      { "id": "q7", "page": 4, "label": "7", "section": "tax" },
+      { "id": "q8", "page": 5, "label": "8", "section": "tax" },
+      { "id": "q9", "page": 6, "label": "9", "section": "tax" },
+      { "id": "q10", "page": 7, "label": "10", "section": "tax" },
+      { "id": "q11", "page": 8, "label": "11", "section": "challenge" }
+    ],
+    "anchors": {
+      "ex1": "Example\\s*1:",
+      "p1": "Practice\\s*1:"
+    },
+    "fixedAnchors": {},
+    "overrides": {}
+  }
+}

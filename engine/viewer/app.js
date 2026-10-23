@@ -1111,9 +1111,12 @@ async function main() {
   const openHash = () => {
     const hash = location.hash.slice(1);
     if (!hash) return;
-    const sheet = world.querySelector(`.sheet[data-key="${hash}"]`);
-    if (sheet) scrollToSheet(sheet);
-    else if (SOLUTION_BY_ID[hash]) scrollToQuestion(hash);
+    // Question ids like p1 collide with sheet keys p1 (= page 1). Prefer the question.
+    if (SOLUTION_BY_ID[hash]) scrollToQuestion(hash);
+    else {
+      const sheet = world.querySelector(`.sheet[data-key="${hash}"]`);
+      if (sheet) scrollToSheet(sheet);
+    }
   };
   openHash();
   window.addEventListener("hashchange", openHash);
