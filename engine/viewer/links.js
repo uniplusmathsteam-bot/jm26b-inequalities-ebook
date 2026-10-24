@@ -151,6 +151,48 @@ function linkDepth(node) {
   return depth;
 }
 
+/**
+ * Screen boxes to underline for one answer node. A KaTeX span's own box is
+ * only its baseline row, so fractions, powers and roots are measured from
+ * their glyphs and rules instead. Wrapped prose keeps one box per line.
+ */
+function inkRects(node) {
+  const lines = [];
+  for (const r of node.getClientRects()) {
+    if (r.width < 0.4 || r.height < 0.4) continue;
+    const row = lines.find((l) => r.top < l.bottom - 1 && l.top < r.bottom - 1);
+    if (!row) {
+      lines.push({ left: r.left, top: r.top, right: r.right, bottom: r.bottom });
+      continue;
+    }
+    row.left = Math.min(row.left, r.left);
+    row.top = Math.min(row.top, r.top);
+    row.right = Math.max(row.right, r.right);
+    row.bottom = Math.max(row.bottom, r.bottom);
+  }
+  for (const l of lines) Object.assign(l, { width: l.right - l.left, height: l.bottom - l.top });
+  if (lines.length > 1 || !node.closest(".katex")) return lines;
+  let box = null;
+  const add = (r) => {
+    if (r.width < 0.4 && r.height < 0.4) return;
+    box = box
+      ? { left: Math.min(box.left, r.left), top: Math.min(box.top, r.top), right: Math.max(box.right, r.right), bottom: Math.max(box.bottom, r.bottom) }
+      : { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+  };
+  const range = document.createRange();
+  const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+  for (let t = walker.nextNode(); t; t = walker.nextNode()) {
+    if (!t.data.trim() || t.parentElement.closest(".katex-mathml")) continue;
+    range.selectNodeContents(t);
+    for (const r of range.getClientRects()) add(r);
+  }
+  for (const el of node.querySelectorAll(".frac-line, .overline-line, .underline-line, .hide-tail, svg")) {
+    for (const r of el.getClientRects()) add(r);
+  }
+  if (!box) return lines;
+  return [{ left: box.left, top: box.top, width: box.right - box.left, height: box.bottom - box.top }];
+}
+
 function answerNodes(qa, key) {
   return [...qa.querySelectorAll(`.lk-${key}`)].filter((n) => !n.closest(".ln.hid"));
 }
@@ -197,15 +239,13 @@ export function renderLinks(sheet, id, page, q, open) {
     const nodes = answerNodes(qa, link.key);
     for (const n of nodes) {
       const depth = linkDepth(n);
-      for (const cr of n.getClientRects()) {
-        if (cr.width < 0.4 || cr.height < 0.4) continue;
-        rects.push(makeUnderline(sheetPoint(sheet, cr), link, isOpen, id, depth));
-      }
+      for (const cr of inkRects(n)) rects.push(makeUnderline(sheetPoint(sheet, cr), link, isOpen, id, depth));
     }
     if (!isOpen || !nodes.length) continue;
     const spots = nodes.map((n) => {
       const hostEl = n.closest(".abox") || boxes[0];
-      return { anchor: sheetPoint(sheet, n.getBoundingClientRect()), hostEl };
+      const ink = inkRects(n);
+      return { anchor: sheetPoint(sheet, ink.length === 1 ? ink[0] : n.getBoundingClientRect()), hostEl };
     });
     tags.push({ link, spots, pick: Math.min(link.at ?? 0, nodes.length - 1) });
   }

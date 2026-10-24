@@ -29,6 +29,7 @@ The script serves the site itself, and opens the book in Chrome emulating an iPa
 | FAIL no entry in solutions.js | A question has no solution. | Add it, or remove it from `book.json`. |
 | FAIL phrase not found | A link's `q` phrase doesn't match the printed words. | Copy the words exactly as printed; a phrase may wrap across lines. |
 | FAIL no marked answer part | A link has nothing to point to. | Add `L()`, `lk()` or `[[key|…]]`. |
+| FAIL underline does not sit under all of … | An answer underline is shorter than, or cuts through, the maths it marks (fractions, powers, roots). | A measuring bug in `inkRects()` in `engine/viewer/links.js`; the book content is fine. |
 | FAIL graphic threw / drew nothing | A widget crashed. | Fix it in `widgets.js`. |
 | FAIL page error / HTTP 404 | Broken code or a missing file. | Read the message. |
 | FAIL Pencil stroke / finger tap | An input regression in the engine. | See [05-engine-notes.md](05-engine-notes.md). |

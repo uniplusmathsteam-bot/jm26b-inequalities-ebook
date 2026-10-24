@@ -140,6 +140,35 @@ try {
     return out;
   });
   underlineReport.forEach(fail);
+
+  /* Each marked maths piece needs an underline as wide as its glyphs and below them (fractions, powers, roots). */
+  const inkReport = await page.evaluate(() => {
+    const out = [];
+    const range = document.createRange();
+    for (const n of document.querySelectorAll('.qa[data-q] .katex [class*="lk-"]')) {
+      if (n.closest(".ln.hid")) continue;
+      const qa = n.closest(".qa");
+      const sheet = qa.closest(".sheet");
+      for (const key of [...n.classList].filter((c) => /^lk-[\w-]+$/.test(c)).map((c) => c.slice(3))) {
+        let lo = Infinity, hi = -Infinity, l = Infinity, r = -Infinity;
+        const walker = document.createTreeWalker(n, NodeFilter.SHOW_TEXT);
+        for (let t = walker.nextNode(); t; t = walker.nextNode()) {
+          if (!t.data.trim() || t.parentElement.closest(".katex-mathml")) continue;
+          range.selectNodeContents(t);
+          for (const g of range.getClientRects()) {
+            lo = Math.min(lo, g.top); hi = Math.max(hi, g.bottom); l = Math.min(l, g.left); r = Math.max(r, g.right);
+          }
+        }
+        if (!isFinite(lo) || (n.getClientRects().length > 1 && hi - lo > 40)) continue;
+        const own = [...sheet.querySelectorAll(`.lk-u-g[data-q="${qa.dataset.q}"][data-link="${key}"] .lk-u`)]
+          .map((ln) => ln.getBoundingClientRect())
+          .some((b) => b.left <= l + 2 && b.right >= r - 2 && b.top >= hi - 1 && b.top < hi + 14);
+        if (!own) out.push(`${qa.dataset.q}: link "${key}" underline does not sit under all of "${n.textContent.slice(0, 30)}"`);
+      }
+    }
+    return out;
+  });
+  inkReport.forEach(fail);
   const fit = await page.evaluate(() => ({
     continued: [...new Set([...document.querySelectorAll(".sheet.continuation .qa[data-q]")].map((el) => el.dataset.q))],
     small: [...document.querySelectorAll(".qa")].map((qa) => {
