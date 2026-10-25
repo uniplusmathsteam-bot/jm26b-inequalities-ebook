@@ -18,6 +18,11 @@ Live site: <https://uniplusmathsteam-bot.github.io/jm26b-inequalities-ebook/>. I
 | `jm27a` | S3 JM27 (A) Percentages II | live |
 | `jm27b` | S3 JM27 (B) Percentages II | live |
 | `jm27c` | S3 JM27 (C) Percentages II | live |
+| `jm29a` | S3 JM29 (A) Quadrilaterals | live |
+| `jm29b` | S3 JM29 (B) Quadrilaterals | live |
+| `jm29c` | S3 JM29 (C) Quadrilaterals | live |
+| `jm29d` | S3 JM29 (D) Quadrilaterals | live |
+| `jm29e` | S3 JM29 (E) Quadrilaterals | live |
 
 The library lists the books in `books/catalog.json`; each book's details are in `books/<id>/book.json`.
 

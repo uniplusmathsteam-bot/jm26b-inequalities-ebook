@@ -1,0 +1,753 @@
+/**
+ * Worked solutions for JM29 (C) Quadrilaterals, following the teacher's ANS.
+ * Field reference: docs/02-book-format.md. House style: docs/03-authoring-style.md.
+ */
+
+import { m, t, h, note, L, lk } from "../../engine/authoring.js";
+
+export const SOLUTIONS = [
+  {
+    id: "q1",
+    nowrap: true,
+    minScale: 0.62,
+    links: [
+      { key: "trap", color: "blue", note: "int. ∠s, AD // BC", q: ["the trapezium"] },
+    ],
+    boxes: [
+      {
+        steps: [
+          h("(a)"),
+          lk("trap", m("x + 2x = 180^\\circ", "int. ∠s, AD // BC")),
+          m("3x = 180^\\circ"),
+          m("x = \\underline{60^\\circ}"),
+        ],
+      },
+      {
+        steps: [
+          h("(b)"),
+          m("10^2 = y^2 + (18 - 12)^2"),
+          m("100 = y^2 + 36"),
+          m("y^2 = 64"),
+          m("y = \\underline{8}"),
+        ],
+      },
+    ],
+  },
+
+  {
+    id: "q2",
+    minScale: 0.62,
+    links: [
+      { key: "iso", color: "blue", note: "isosceles trapezium", q: ["PS = QR"] },
+      { key: "psq", color: "pink", note: "$\\angle PSQ = 27^\\circ$", q: ["∠PSQ"] },
+      { key: "sqr", color: "green", note: "$\\angle SQR = 93^\\circ$", q: ["∠SQR"] },
+    ],
+    boxes: [{
+      steps: [
+        t("Let $\\angle QSR = x$."),
+        lk("iso", t("$\\because$ $PQRS$ is an isosceles trapezium.", "given")),
+        m("\\therefore \\angle QRS = \\angle PSR"),
+        m(`= x + ${L("psq", "27^\\circ")}`),
+        t("In $\\triangle QRS$,"),
+        m(`\\angle QSR + \\angle QRS + \\angle RQS = 180^\\circ`, "∠ sum of △"),
+        m(`x + (x + 27^\\circ) + ${L("sqr", "93^\\circ")} = 180^\\circ`),
+        m("2x = 60^\\circ"),
+        m("x = 30^\\circ"),
+        m("\\angle PSR = x + 27^\\circ"),
+        m("= 30^\\circ + 27^\\circ"),
+        m("= \\underline{57^\\circ}"),
+      ],
+    }],
+  },
+
+  {
+    id: "q3",
+    nowrap: true,
+    minScale: 0.62,
+    links: [
+      { key: "rhom", color: "blue", note: "prop. of rhombus", q: ["the rhombus"] },
+    ],
+    boxes: [
+      {
+        steps: [
+          h("(a)"),
+          lk("rhom", m("\\angle BOC = 90^\\circ", "prop. of rhombus")),
+          m("2a + 3a = 90^\\circ"),
+          m("a = \\underline{18^\\circ}"),
+          m("BC = CD", "prop. of rhombus"),
+          m("2a = b", "base ∠ isos. △"),
+          m("2(18^\\circ) = b"),
+          m("b = \\underline{36^\\circ}"),
+        ],
+      },
+      {
+        steps: [
+          h("(b)"),
+          lk("rhom", m("AB = BC", "prop. of rhombus")),
+          note("四邊相等。"),
+          m("2y - 1 = 8 - y"),
+          m("3y = 9"),
+          m("y = \\underline{3}"),
+          m("BP = DP", "diags. bisect each other"),
+          m("x + 2 = y + 4"),
+          m("x + 2 = 3 + 4"),
+          m("x = \\underline{5}"),
+        ],
+      },
+    ],
+  },
+
+  {
+    id: "q4",
+    minScale: 0.62,
+    links: [
+      { key: "side", color: "blue", note: "$AB = 17$ cm", q: ["side 17 cm"] },
+      { key: "ac", color: "green", note: "$AC = 30$ cm", q: ["AC = 30 cm"] },
+      { key: "rhom", color: "pink", note: "property of rhombus", q: ["ABCD is a rhombus"] },
+    ],
+    boxes: [{
+      steps: [
+        lk("side", m("AB = 17\\text{ cm}")),
+        lk("rhom", m("AO = \\dfrac{1}{2}AC", "property of rhombus")),
+        m(`= \\dfrac{1}{2} \\times ${L("ac", "30")}\\text{ cm}`),
+        m("= 15\\text{ cm}"),
+        t("In $\\triangle AOB$,"),
+        m("\\angle AOB = 90^\\circ", "property of rhombus"),
+        m("AO^2 + BO^2 = AB^2", "Pyth. theorem"),
+        m("BO = \\sqrt{17^2 - 15^2}\\text{ cm}"),
+        m("= \\underline{8\\text{ cm}}"),
+      ],
+    }],
+  },
+
+  {
+    id: "q5",
+    minScale: 0.62,
+    links: [
+      { key: "ab", color: "blue", note: "base ∠s, isos. △", q: ["AB = AC"] },
+      { key: "bac", color: "pink", note: "$\\angle BAC = 42^\\circ$", q: ["∠BAC"] },
+      { key: "rhom", color: "green", note: "property of rhombus", q: ["CDEF is a rhombus"] },
+    ],
+    boxes: [{
+      steps: [
+        t("In $\\triangle ABC$,"),
+        lk("ab", m("\\because AB = AC")),
+        m("\\therefore \\angle ABC = \\angle ACB", "base ∠s, isos. △"),
+        m("\\angle ABC + \\angle ACB + \\angle BAC = 180^\\circ", "∠ sum of △"),
+        m(`2\\angle ACB + ${L("bac", "42^\\circ")} = 180^\\circ`),
+        m("2\\angle ACB = 138^\\circ"),
+        m("\\angle ACB = 69^\\circ"),
+        lk("rhom", m("\\angle DFC = \\angle DFE", "property of rhombus")),
+        m("\\angle EFC = \\angle ACB", "alt. ∠s, FE // BC"),
+        m("\\angle DFE + \\angle DFC = 69^\\circ"),
+        m("2\\angle DFE = 69^\\circ"),
+        m("\\angle DFE = \\underline{34.5^\\circ}"),
+      ],
+    }],
+  },
+
+  {
+    id: "q6",
+    nowrap: true,
+    minScale: 0.62,
+    links: [
+      { key: "rect", color: "blue", note: "property of rectangle", q: ["rectangle"] },
+    ],
+    boxes: [
+      {
+        steps: [
+          h("(a)"),
+          lk("rect", m("\\angle BCD = 90^\\circ", "definition of rectangle")),
+          t("In $\\triangle BCD$,"),
+          m("\\angle BDC + \\angle DBC + \\angle BCD = 180^\\circ", "∠ sum of △"),
+          m("x + 22^\\circ + 90^\\circ = 180^\\circ"),
+          m("x = \\underline{68^\\circ}"),
+        ],
+      },
+      {
+        steps: [
+          h("(b)"),
+          lk("rect", m("OD = OB", "property of rectangle")),
+          m("x = \\underline{5}"),
+          m("AC = BD", "property of rectangle"),
+          m("y = 5 + 5"),
+          m("= \\underline{10}"),
+        ],
+      },
+    ],
+  },
+
+  {
+    id: "q7",
+    minScale: 0.62,
+    links: [
+      { key: "rect", color: "blue", note: "definition of rectangle", q: ["ABCD is a rectangle"] },
+      { key: "diag", color: "pink", note: "diagonals bisect each other", q: ["diagonals AC and BD"] },
+      { key: "od", color: "purple", note: "$OD = 41$ cm", q: ["length of OD"] },
+    ],
+    boxes: [{
+      steps: [
+        t("In $\\triangle ABC$,"),
+        lk("rect", m("\\angle ABC = 90^\\circ", "definition of rectangle")),
+        m("AC^2 = AB^2 + BC^2", "Pyth. theorem"),
+        m("AC = \\sqrt{18^2 + 80^2}\\text{ cm}"),
+        m("= 82\\text{ cm}"),
+        m("\\because OD = OA = OC", "property of rectangle"),
+        lk("diag", m("\\therefore OD = \\dfrac{1}{2}AC")),
+        m("= \\dfrac{1}{2} \\times 82\\text{ cm}"),
+        lk("od", m("= \\underline{41\\text{ cm}}")),
+      ],
+    }],
+  },
+
+  {
+    id: "q8",
+    minScale: 0.62,
+    links: [
+      { key: "rect", color: "blue", note: "definition of rectangle", q: ["ABCD is a rectangle"] },
+      { key: "be", color: "pink", note: "base ∠s, isos. △", q: ["BE = BA"] },
+      { key: "cbe", color: "green", note: "$\\angle CBE = 24^\\circ$", q: ["∠CBE"] },
+    ],
+    boxes: [{
+      steps: [
+        lk("rect", m("\\angle ABC = \\angle BAD = 90^\\circ", "definition of rectangle")),
+        m("\\angle ABE = \\angle ABC - \\angle CBE"),
+        m(`= 90^\\circ - ${L("cbe", "24^\\circ")}`),
+        m("= 66^\\circ"),
+        t("In $\\triangle ABE$,"),
+        lk("be", m("\\because BE = BA")),
+        m("\\therefore \\angle BEA = \\angle BAE", "base ∠s, isos. △"),
+        m("\\angle ABE + \\angle BAE + \\angle BEA = 180^\\circ", "∠ sum of △"),
+        m("66^\\circ + 2\\angle BAE = 180^\\circ"),
+        m("2\\angle BAE = 114^\\circ"),
+        m("\\angle BAE = 57^\\circ"),
+        m("\\angle DAC = \\angle BAD - \\angle BAE"),
+        m("= 90^\\circ - 57^\\circ"),
+        m("= \\underline{33^\\circ}"),
+      ],
+    }],
+  },
+
+  {
+    id: "q9",
+    nowrap: true,
+    minScale: 0.62,
+    links: [
+      { key: "sq", color: "blue", note: "property of square", q: ["square"] },
+    ],
+    boxes: [
+      {
+        steps: [
+          h("(a)"),
+          lk("sq", m("\\angle HGO = 45^\\circ", "property of square")),
+          m("\\phi = \\underline{45^\\circ}"),
+          m("\\angle EOH = 90^\\circ", "property of square"),
+          m("2x - 10^\\circ = 90^\\circ"),
+          m("2x = 100^\\circ"),
+          m("x = \\underline{50^\\circ}"),
+        ],
+      },
+      {
+        steps: [
+          h("(b)"),
+          lk("sq", m("\\angle ACD = 45^\\circ", "property of square")),
+          t("In $\\triangle CDF$,"),
+          m("\\angle CDF + \\angle DCF = \\angle AFD", "ext. ∠ of △"),
+          m("x + 45^\\circ = 74^\\circ"),
+          m("x = \\underline{29^\\circ}"),
+          m("\\angle DCE = 90^\\circ", "definition of square"),
+          t("In $\\triangle CDE$,"),
+          m("\\angle CDE + \\angle DCE + \\angle DEC = 180^\\circ", "∠ sum of △"),
+          m("29^\\circ + 90^\\circ + y = 180^\\circ"),
+          m("y = \\underline{61^\\circ}"),
+        ],
+      },
+    ],
+  },
+
+  {
+    id: "q10",
+    minScale: 0.62,
+    links: [
+      { key: "sq", color: "blue", note: "property of square", q: ["ABCD is a square"] },
+      { key: "oe", color: "pink", note: "$OE = CE$, so $OD = 2CE$", q: ["OE = CE"] },
+      { key: "ce", color: "green", note: "$CE = 3$ cm", q: ["CE = 3 cm"] },
+      { key: "de", color: "purple", note: "$DE = 6.71$ cm", q: ["length of DE"] },
+    ],
+    boxes: [{
+      steps: [
+        lk("sq", m("OD = OC", "property of square")),
+        lk("oe", m("= 2CE")),
+        m(`= 2 \\times ${L("ce", "3")}\\text{ cm}`),
+        m("= 6\\text{ cm}"),
+        t("In $\\triangle DOE$,"),
+        m("\\angle DOE = 90^\\circ", "property of square"),
+        m("DE^2 = OE^2 + OD^2", "Pyth. theorem"),
+        m("DE = \\sqrt{3^2 + 6^2}\\text{ cm}"),
+        lk("de", m("= \\underline{6.71\\text{ cm}}", "cor. to 3 sig. fig.")),
+      ],
+    }],
+  },
+
+  {
+    id: "q11",
+    minScale: 0.62,
+    links: [
+      { key: "sq", color: "blue", note: "property of square", q: ["ABCD is a square"] },
+      { key: "eq", color: "pink", note: "equilateral triangle", q: ["equilateral triangle"] },
+      { key: "ade", color: "green", note: "$\\angle ADE = 150^\\circ$", q: ["Find ∠ADE"] },
+    ],
+    boxes: [{
+      steps: [
+        h("(a)"),
+        m(`\\angle ADE = ${L("sq", "90^\\circ")} + ${L("eq", "60^\\circ")}`),
+        lk("ade", m("= \\underline{150^\\circ}")),
+        h("(b)"),
+        lk("eq", m("AD = DE", "given")),
+        m("\\angle DAE = \\angle DEA", "base ∠s, isos. △"),
+        m("= \\dfrac{1}{2}(180^\\circ - 150^\\circ)", "∠ sum of △"),
+        m("= 15^\\circ"),
+        m("\\angle CAD = 45^\\circ", "property of square"),
+        m("\\angle CAE = 45^\\circ - 15^\\circ"),
+        m("= \\underline{30^\\circ}"),
+      ],
+    }],
+  },
+
+  {
+    id: "q12",
+    minScale: 0.62,
+    links: [
+      { key: "rhom", color: "blue", note: "property of rhombus", q: ["ABCE is a rhombus"] },
+      { key: "ang", color: "green", note: "$\\angle ABC = 60^\\circ$", q: ["∠ABC"] },
+    ],
+    boxes: [{
+      steps: [
+        h("(a)"),
+        m("\\angle ECD = \\angle ABC", "corr. ∠s, AB // EC"),
+        m(`= ${L("ang", "60^\\circ")}`),
+        lk("rhom", m("\\because AB = CE", "property of rhombus")),
+        m(`\\text{and } AB = DE`),
+        m("\\therefore DE = CE"),
+        m("\\therefore \\angle EDC = \\angle ECD", "base ∠s, isos. △"),
+        m("= 60^\\circ"),
+        t("In $\\triangle CDE$,"),
+        m("\\angle CED + \\angle ECD + \\angle EDC = 180^\\circ", "∠ sum of △"),
+        m("\\angle CED + 60^\\circ + 60^\\circ = 180^\\circ"),
+        m("\\angle CED = 60^\\circ"),
+        m("\\because \\angle CED = \\angle ECD = \\angle EDC = 60^\\circ"),
+        t("$\\therefore$ $\\triangle CDE$ is an equilateral triangle."),
+        h("(b)"),
+        t("$\\because$ $\\triangle CDE$ is an equilateral triangle.", "proved in (a)"),
+        m("\\therefore CD = DE"),
+        m("= 8\\text{ cm}"),
+        m("BC = AB", "definition of rhombus"),
+        m("= 8\\text{ cm}"),
+        m("BD = BC + CD"),
+        m("= (8 + 8)\\text{ cm}"),
+        m("= \\underline{16\\text{ cm}}"),
+      ],
+    }],
+  },
+
+  {
+    id: "q13",
+    minScale: 0.62,
+    links: [
+      { key: "perp", color: "blue", note: "$BE \\perp EC$", q: ["BE⊥EC"] },
+      { key: "ecd", color: "pink", note: "$\\angle ECD = 45^\\circ$", q: ["∠ECD"] },
+      { key: "cd", color: "green", note: "$CD = 4$ cm", q: ["CD = 4 cm"] },
+    ],
+    boxes: [{
+      steps: [
+        m("\\angle CDE = \\angle BCD = 90^\\circ", "definition of rectangle"),
+        t("In $\\triangle CDE$,"),
+        m(`\\cos ${L("ecd", "45^\\circ")} = \\dfrac{CD}{CE}`),
+        m(`\\cos 45^\\circ = \\dfrac{${L("cd", "4")}\\text{ cm}}{CE}`),
+        m("CE = \\dfrac{4}{\\cos 45^\\circ}\\text{ cm}"),
+        m("\\angle BCE = \\angle BCD - \\angle ECD"),
+        m("= 90^\\circ - 45^\\circ"),
+        m("= 45^\\circ"),
+        t("In $\\triangle BCE$,"),
+        lk("perp", m("\\cos\\angle BCE = \\dfrac{CE}{BC}")),
+        m("\\cos 45^\\circ = \\dfrac{\\dfrac{4}{\\cos 45^\\circ}\\text{ cm}}{BC}"),
+        m("\\cos 45^\\circ = \\dfrac{4}{\\cos 45^\\circ \\cdot BC}"),
+        m("BC = \\dfrac{4}{(\\cos 45^\\circ)^2}\\text{ cm}"),
+        m("= 8\\text{ cm}"),
+        t("Perimeter of rectangle $ABCD$"),
+        m("= 2 \\times (BC + CD)"),
+        m("= 2 \\times (8 + 4)\\text{ cm}"),
+        m("= \\underline{24\\text{ cm}}"),
+      ],
+    }],
+  },
+
+  {
+    id: "q14",
+    minScale: 0.62,
+    links: [
+      { key: "per", color: "blue", note: "each side $= 4$ cm", q: ["perimeter of a rhombus is 16 cm"] },
+      { key: "ang", color: "pink", note: "an interior angle is $60^\\circ$", q: ["interior angles"] },
+      { key: "area", color: "purple", note: "area $= 13.9$ cm$^2$", q: ["area of the rhombus"] },
+    ],
+    boxes: [{
+      steps: [
+        lk("ang", m("\\angle ABD = 60^\\circ", "given")),
+        m("\\therefore \\angle ABE = \\angle DBE = 30^\\circ", "property of rhombus"),
+        m(`\\cos 30^\\circ = \\dfrac{BE}{${L("per", "4")}},\\ BE = 3.464\\text{ cm}`),
+        m("\\sin 30^\\circ = \\dfrac{AE}{4},\\ AE = 2\\text{ cm}"),
+        m("\\text{The area} = \\dfrac{1}{2}(2)(3.464) \\times 4", "corr. to 3 sig. fig."),
+        lk("area", m("= \\underline{13.9\\text{ cm}^2}")),
+      ],
+    }],
+  },
+
+  {
+    id: "q15",
+    minScale: 0.62,
+    links: [
+      { key: "sq", color: "blue", note: "property of square", q: ["ABCD is a square"] },
+      { key: "para", color: "pink", note: "opp. ∠s and opp. sides of // gram", q: ["AEFC is a parallelogram"] },
+    ],
+    boxes: [{
+      steps: [
+        lk("sq", m("\\angle ACB = 45^\\circ", "property of square")),
+        lk("para", m("\\angle ACF = \\angle AEF", "opp. ∠s of // gram")),
+        m("45^\\circ + x = 110^\\circ"),
+        m("x = \\underline{65^\\circ}"),
+        m("\\angle ADC = 90^\\circ", "definition of square"),
+        m("CD = AD = \\sqrt{2}\\text{ cm}", "definition of square"),
+        t("In $\\triangle ADC$,"),
+        m("AC^2 = AD^2 + CD^2", "Pyth. theorem"),
+        m("AC = \\sqrt{(\\sqrt{2})^2 + (\\sqrt{2})^2}\\text{ cm}"),
+        m("= 2\\text{ cm}"),
+        m("EF = AC", "opp. sides of // gram"),
+        m("y = \\underline{2}"),
+      ],
+    }],
+  },
+
+  {
+    id: "q16",
+    nowrap: true,
+    minScale: 0.62,
+    links: [
+      { key: "ms", color: "blue", note: "$MS = 8$ cm", q: ["MS = 8 cm"] },
+      { key: "mn", color: "pink", note: "$MN = 4$ cm", q: ["MN = 4 cm"] },
+      { key: "np", color: "green", note: "$NP = 5$ cm", q: ["NP = 5 cm"] },
+      { key: "rhom", color: "amber", note: "property of rhombus", q: ["PQRS is a rhombus"] },
+    ],
+    boxes: [
+      {
+        steps: [
+          h("(a)"),
+          m("ON = MS", "property of rectangle"),
+          lk("ms", m("= 8\\text{ cm}")),
+          m("OP = ON - NP"),
+          m(`= (8 - ${L("np", "5")})\\text{ cm}`),
+          m("= 3\\text{ cm}"),
+          lk("rhom", m("OR = OP", "property of rhombus")),
+          m("= 3\\text{ cm}"),
+          m(`\\therefore \\text{Area of trapezium } MNRS = \\dfrac{1}{2} \\times (8 + 8 + 3) \\times ${L("mn", "4")}\\text{ cm}^2`),
+          m("= \\underline{38\\text{ cm}^2}"),
+        ],
+      },
+      {
+        steps: [
+          h("(b)"),
+          m("SO = MN", "property of rectangle"),
+          m(`= ${L("mn", "4")}\\text{ cm}`),
+          m("\\angle SOR = 90^\\circ", "property of rhombus"),
+          t("In $\\triangle SOR$,"),
+          m("SR^2 = SO^2 + OR^2", "Pyth. theorem"),
+          m("SR = \\sqrt{4^2 + 3^2}\\text{ cm}"),
+          m("= 5\\text{ cm}"),
+          m("\\therefore \\text{Perimeter of trapezium } MNRS = MS + MN + NR + SR"),
+          m(`= [8 + 4 + (8 + 3) + 5]\\text{ cm}`),
+          m("= \\underline{28\\text{ cm}}"),
+        ],
+      },
+    ],
+  },
+
+  {
+    id: "q17",
+    minScale: 0.62,
+    links: [
+      { key: "sq", color: "blue", note: "property of square", q: ["ABCD is a square"] },
+      { key: "ce", color: "pink", note: "$CE = 10$ cm", q: ["CE = 10 cm"] },
+      { key: "sec", color: "green", note: "sector $BCD$", q: ["BCD is a sector"] },
+      { key: "len", color: "purple", note: "arc $= 22.2$ cm", q: ["correct to 3 significant figures"] },
+    ],
+    boxes: [{
+      steps: [
+        t("In $\\triangle BCE$,"),
+        lk("sq", m("\\angle BEC = 90^\\circ", "property of square")),
+        m("BE = CE", "property of square"),
+        lk("ce", m("= 10\\text{ cm}")),
+        m("BC^2 = BE^2 + CE^2", "Pyth. theorem"),
+        m("BC = \\sqrt{10^2 + 10^2}\\text{ cm}"),
+        m("= \\sqrt{200}\\text{ cm}"),
+        m("\\angle BCD = 90^\\circ", "definition of square"),
+        t("Length of $\\overset{\\frown}{BFD}$"),
+        lk("sec", m("= \\dfrac{\\angle BCD}{360^\\circ} \\times 2\\pi \\times BC")),
+        m("= \\dfrac{90^\\circ}{360^\\circ} \\times 2\\pi \\times \\sqrt{200}\\text{ cm}"),
+        lk("len", m("= \\underline{22.2\\text{ cm}}", "cor. to 3 sig. fig.")),
+      ],
+    }],
+  },
+
+  {
+    id: "q18",
+    minScale: 0.62,
+    links: [
+      { key: "sq", color: "blue", note: "property of square", q: ["ABCD is a square"] },
+      { key: "be", color: "pink", note: "$BE = 8$ cm", q: ["BE = 8 cm"] },
+      { key: "sec", color: "green", note: "area of sector $ABC$", q: ["area of sector ABC"] },
+      { key: "pi", color: "purple", note: "in terms of $\\pi$", q: ["in terms of"] },
+    ],
+    boxes: [{
+      steps: [
+        t("In $\\triangle BCE$,"),
+        lk("sq", m("\\angle BEC = 90^\\circ", "property of square")),
+        m("CE = BE", "property of square"),
+        lk("be", m("= 8\\text{ cm}")),
+        m("BC^2 = BE^2 + CE^2", "Pyth. theorem"),
+        m("BC = \\sqrt{8^2 + 8^2}\\text{ cm}"),
+        m("= \\sqrt{128}\\text{ cm}"),
+        m("\\angle ABC = 90^\\circ", "definition of square"),
+        t("Area of sector $ABC$"),
+        lk("sec", m("= \\dfrac{\\angle ABC}{360^\\circ} \\times \\pi \\times BC^2")),
+        m("= \\dfrac{90^\\circ}{360^\\circ} \\times \\pi \\times (\\sqrt{128})^2\\text{ cm}^2"),
+        lk("pi", m("= \\underline{32\\pi\\text{ cm}^2}")),
+      ],
+    }],
+  },
+
+  {
+    id: "q19",
+    minScale: 0.62,
+    links: [
+      { key: "sq", color: "blue", note: "definition of square", q: ["square ABCD"] },
+      { key: "side", color: "pink", note: "side $= 12$ cm", q: ["12 cm"] },
+      { key: "diam", color: "green", note: "radius $= \\dfrac{BD}{2}$", q: ["diameters"] },
+      { key: "sh", color: "purple", note: "shaded area $= 82.2$ cm$^2$", q: ["area of the shaded region"] },
+    ],
+    boxes: [{
+      steps: [
+        lk("sq", m("AB = AD", "definition of square")),
+        lk("side", m("= 12\\text{ cm}")),
+        t("In $\\triangle ABD$,"),
+        m("\\angle BAD = 90^\\circ", "definition of square"),
+        m("BD^2 = AB^2 + AD^2", "Pyth. theorem"),
+        m("BD = \\sqrt{12^2 + 12^2}\\text{ cm}"),
+        m("= \\sqrt{288}\\text{ cm}"),
+        lk("sh", t("Area of the shaded region")),
+        m("= \\text{area of the circle} - \\text{area of square } ABCD"),
+        lk("diam", m("= \\pi \\times \\left(\\dfrac{BD}{2}\\right)^2 - AD^2")),
+        m("= \\left[\\pi \\times \\left(\\dfrac{\\sqrt{288}}{2}\\right)^2 - 12^2\\right]\\text{ cm}^2"),
+        m("= \\underline{82.2\\text{ cm}^2}", "cor. to 3 sig. fig."),
+      ],
+    }],
+  },
+
+  {
+    id: "q20",
+    nowrap: true,
+    minScale: 0.62,
+    links: [
+      { key: "perp", color: "blue", note: "$AE \\perp BC$", q: ["AE⊥BC"] },
+      { key: "be", color: "pink", note: "$BE = EC$", q: ["BE = EC"] },
+      { key: "ab", color: "green", note: "$AB = 2$ cm", q: ["AB = 2 cm"], at: 1 },
+      { key: "rhom", color: "amber", note: "property of rhombus", q: ["ABCD is a rhombus"], at: 1 },
+    ],
+    boxes: [
+      {
+        steps: [
+          h("(a)"),
+          t("In $\\triangle ABE$ and $\\triangle ACE$,"),
+          m("AE = AE", "common side"),
+          lk("perp", m("\\angle AEB = \\angle AEC = 90^\\circ", "given")),
+          lk("be", m("BE = CE", "given")),
+          m("\\therefore \\underline{\\triangle ABE \\cong \\triangle ACE}", "SAS"),
+        ],
+      },
+      {
+        steps: [
+          h("(b)"),
+          m("\\because \\triangle ABE \\cong \\triangle ACE", "proved in (a)"),
+          m("\\therefore AC = AB", "corr. sides, ≅ △s"),
+          lk("ab", m("= \\underline{2\\text{ cm}}")),
+          lk("rhom", m("\\therefore AO = \\dfrac{1}{2}AC", "property of rhombus")),
+          m("= \\dfrac{1}{2} \\times 2\\text{ cm}"),
+          m("= 1\\text{ cm}"),
+          m("\\because \\angle AOB = 90^\\circ", "property of rhombus"),
+          m("\\therefore BO = \\sqrt{AB^2 - AO^2}", "Pyth. theorem"),
+          m("= \\sqrt{2^2 - 1^2}\\text{ cm}"),
+          m("= \\sqrt{3}\\text{ cm}"),
+          m("\\therefore BD = 2BO", "property of rhombus"),
+          m("= \\underline{2\\sqrt{3}\\text{ cm}}"),
+        ],
+      },
+    ],
+  },
+
+  {
+    id: "q21",
+    nowrap: true,
+    minScale: 0.62,
+    links: [
+      { key: "rect", color: "blue", note: "definition of rectangle", q: ["ABCD is a rectangle"] },
+      { key: "ab", color: "pink", note: "$AB = 13$ cm", q: ["AB = 13 cm"], at: 1 },
+      { key: "ec", color: "green", note: "$EC = 4$ cm", q: ["EC = 4 cm"], at: 1 },
+      { key: "area", color: "purple", note: "area of $\\triangle ABE = 39$ cm$^2$", q: ["area of △ABE"], at: 1 },
+    ],
+    boxes: [
+      {
+        steps: [
+          h("(a)"),
+          t("In $\\triangle ADE$ and $\\triangle ECB$,"),
+          lk("rect", m("\\angle ADE = \\angle ECB = 90^\\circ", "definition of rectangle")),
+          m("\\angle BED = \\angle BCE + \\angle CBE", "ext. ∠ of △"),
+          m("90^\\circ + \\angle DEA = 90^\\circ + \\angle CBE"),
+          m("\\angle DEA = \\angle CBE"),
+          m("\\angle DAE = 180^\\circ - \\angle ADE - \\angle DEA", "∠ sum of △"),
+          m("= 180^\\circ - \\angle ECB - \\angle CBE"),
+          m("= \\angle CEB", "∠ sum of △"),
+          m("\\therefore \\triangle ADE \\sim \\triangle ECB", "AAA"),
+        ],
+      },
+      {
+        steps: [
+          h("(b)"),
+          m("AD = CB", "property of rectangle"),
+          m("CD = AB", "property of rectangle"),
+          lk("ab", m("= 13\\text{ cm}")),
+          m("DE = CD - EC"),
+          m(`= (13 - ${L("ec", "4")})\\text{ cm}`),
+          m("= 9\\text{ cm}"),
+          m("\\because \\triangle ADE \\sim \\triangle ECB", "proved in (a)"),
+          m("\\therefore \\dfrac{DE}{CB} = \\dfrac{AD}{EC}", "corr. sides, ∼ △s"),
+          m("\\dfrac{9\\text{ cm}}{CB} = \\dfrac{CB}{4\\text{ cm}}"),
+          m("CB^2 = 36\\text{ cm}^2"),
+          m("CB = 6\\text{ cm}"),
+          m("\\text{Area of }\\triangle ABE = \\dfrac{1}{2} \\times AB \\times CB"),
+          m("= \\dfrac{1}{2} \\times 13 \\times 6\\text{ cm}^2"),
+          lk("area", m("= \\underline{39\\text{ cm}^2}")),
+        ],
+      },
+    ],
+  },
+
+  {
+    id: "q22",
+    minScale: 0.62,
+    links: [
+      { key: "sq", color: "blue", note: "definition of square", q: ["ABCD is a square"] },
+      { key: "bag", color: "pink", note: "$\\angle BAG = 15^\\circ$", q: ["∠BAG"] },
+      { key: "bg", color: "green", note: "$BG = DE$", q: ["BG = DE"] },
+      { key: "baf", color: "amber", note: "$\\angle BAF = 30^\\circ$", q: ["∠BAF"] },
+    ],
+    boxes: [{
+      steps: [
+        h("(a) (i)"),
+        t("In $\\triangle ABG$ and $\\triangle ADE$,"),
+        lk("sq", m("AB = AD", "definition of square")),
+        m("AB \\perp BC \\text{ and } AD \\perp CD", "definition of square"),
+        m("\\text{i.e. } \\angle ABG = \\angle ADE = 90^\\circ"),
+        lk("bg", m("BG = DE", "given")),
+        m("\\therefore \\triangle ABG \\cong \\triangle ADE", "SAS"),
+        h("(ii)"),
+        m("\\because \\triangle ABG \\cong \\triangle ADE", "proved in (a)(i)"),
+        m("\\therefore \\angle DAE = \\angle BAG", "corr. ∠s, ≅ △s"),
+        m(`= ${L("bag", "15^\\circ")}`),
+        m("\\text{and } AE = AG", "corr. sides, ≅ △s"),
+        m("\\angle BAD = 90^\\circ", "definition of square"),
+        m("\\angle BAF + \\angle EAF + \\angle DAE = 90^\\circ"),
+        m(`${L("baf", "30^\\circ")} + \\angle EAF + 15^\\circ = 90^\\circ`),
+        m("\\angle EAF = 45^\\circ"),
+        m("\\angle GAF = \\angle BAG + \\angle BAF"),
+        m("= 15^\\circ + 30^\\circ"),
+        m("= 45^\\circ"),
+        t("In $\\triangle AEF$ and $\\triangle AGF$,"),
+        m("AE = AG"),
+        m("\\angle EAF = \\angle GAF"),
+        m("AF = AF", "common side"),
+        m("\\therefore \\triangle AEF \\cong \\triangle AGF", "SAS"),
+        h("(b)"),
+        t("In $\\triangle ABF$,"),
+        m("\\angle ABF + \\angle AFB + \\angle BAF = 180^\\circ", "∠ sum of △"),
+        m("90^\\circ + \\angle AFB + 30^\\circ = 180^\\circ"),
+        m("\\angle AFB = 60^\\circ"),
+        m("\\text{i.e. } \\angle AFG = 60^\\circ"),
+        m("\\because \\triangle AEF \\cong \\triangle AGF", "proved in (a)(ii)"),
+        m("\\therefore \\angle AFE = \\angle AFG", "corr. ∠s, ≅ △s"),
+        m("= \\underline{60^\\circ}"),
+      ],
+    }],
+  },
+
+  {
+    id: "q23",
+    minScale: 0.62,
+    links: [
+      { key: "para", color: "blue", note: "int. ∠s, AD // BC", q: ["ABCD is a parallelogram"] },
+      { key: "eq", color: "pink", note: "$\\angle CDE = \\angle DCF$", q: ["∠CDE = ∠DCF"] },
+      { key: "rt", color: "green", note: "$\\angle CED = 90^\\circ$", q: ["∠CED"] },
+      { key: "rect", color: "purple", note: "$CEDF$ is a rectangle", q: ["CEDF is a rectangle"] },
+    ],
+    boxes: [{
+      steps: [
+        h("(a)"),
+        lk("para", m("\\angle ADC + \\angle BCD = 180^\\circ", "int. ∠s, AD // BC")),
+        lk("eq", m("2\\angle CDF + 2\\angle DCF = 180^\\circ")),
+        m("\\angle CDF + \\angle DCF = 90^\\circ"),
+        t("In $\\triangle CDF$,"),
+        m("\\angle CDF + \\angle DCF + \\angle CFD = 180^\\circ", "∠ sum of △"),
+        m("90^\\circ + \\angle CFD = 180^\\circ"),
+        m("\\angle CFD = \\underline{90^\\circ}"),
+        h("(b)"),
+        m("\\because \\angle CDE = \\angle DCF", "given"),
+        m("\\therefore DE \\parallel FC", "alt. ∠s equal"),
+        m("\\therefore \\angle DEC + \\angle ECF = 180^\\circ", "int. ∠s, DE // FC"),
+        lk("rt", m("90^\\circ + \\angle ECF = 180^\\circ", "given")),
+        m("\\angle ECF = 90^\\circ"),
+        m("\\angle EDF + \\angle DFC = 180^\\circ", "int. ∠s, DE // FC"),
+        m("\\angle EDF + 90^\\circ = 180^\\circ", "proved in (a)"),
+        m("\\angle EDF = 90^\\circ"),
+        m("\\therefore \\angle DEC = \\angle ECF = \\angle DFC = \\angle EDF = 90^\\circ"),
+        lk("rect", t("$\\therefore$ $\\underline{CEDF}$ is a rectangle.", "by definition")),
+      ],
+    }],
+  },
+
+  {
+    id: "q24",
+    minScale: 0.62,
+    links: [
+      { key: "rhom", color: "blue", note: "property of rhombus", q: ["ABCD is a rhombus"] },
+      { key: "giv", color: "pink", note: "$\\angle BAE = \\angle DAF = \\angle BCE = \\angle DCF$", q: ["∠BAE = ∠DAF"] },
+      { key: "ans", color: "purple", note: "$AECF$ is a rhombus", q: ["AECF is a rhombus"] },
+    ],
+    boxes: [{
+      steps: [
+        lk("rhom", m("\\because \\angle ABE = \\angle ADF = \\angle CBE = \\angle CDF", "property of rhombus")),
+        lk("giv", m("\\text{and } \\angle BAE = \\angle DAF = \\angle BCE = \\angle DCF", "given")),
+        m("\\therefore \\angle ABE + \\angle BAE = \\angle ADF + \\angle DAF"),
+        m("= \\angle CBE + \\angle BCE = \\angle CDF + \\angle DCF"),
+        m("\\text{i.e. } \\angle AEF = \\angle AFE = \\angle CEF = \\angle CFE", "ext. ∠ of △"),
+        m("\\because \\angle AEF = \\angle CFE"),
+        m("\\therefore AE \\parallel FC", "alt. ∠s equal"),
+        m("\\because \\angle AFE = \\angle CEF"),
+        m("\\therefore AF \\parallel EC", "alt. ∠s equal"),
+        m("\\because AE \\parallel FC \\text{ and } AF \\parallel EC"),
+        t("$\\therefore$ $AECF$ is a parallelogram."),
+        m("\\because \\angle AEF = \\angle AFE \\text{ and } \\angle CEF = \\angle CFE"),
+        m("\\therefore AE = AF \\text{ and } CE = CF", "sides opp. equal ∠s"),
+        m("\\because AE = CF"),
+        m("\\therefore AE = AF = CE = CF"),
+        lk("ans", t("$\\therefore$ $\\underline{AECF}$ is a rhombus.")),
+      ],
+    }],
+  },
+];

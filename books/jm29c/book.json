@@ -1,0 +1,394 @@
+{
+  "id": "jm29c",
+  "form": "S3",
+  "code": "JM29 (C)",
+  "title": "Quadrilaterals",
+  "topic": "Quadrilaterals",
+  "year": 2025,
+  "status": "live",
+  "storage": "jm29c",
+  "source": {
+    "que": "source/S3 JM29 (C) - Quadrilaterals - 2025 (QUE made).pdf",
+    "ans": "source/S3 JM29 (C) - Quadrilaterals - 2025 (ANS).pdf",
+    "ansPageOffset": 0
+  },
+  "sections": [
+    {
+      "id": "trap",
+      "label": "Trapezium"
+    },
+    {
+      "id": "rhombus",
+      "label": "Rhombus"
+    },
+    {
+      "id": "rect",
+      "label": "Rectangle"
+    },
+    {
+      "id": "square",
+      "label": "Square"
+    },
+    {
+      "id": "level2",
+      "label": "Level 2"
+    }
+  ],
+  "continuation": {
+    "top": 96,
+    "x": 48,
+    "width": 499,
+    "bottom": 812
+  },
+  "extract": {
+    "zoom": 3,
+    "regionX": [
+      66,
+      546
+    ],
+    "footer": 822,
+    "questions": [
+      {
+        "id": "q1",
+        "page": 1,
+        "label": "1",
+        "section": "trap"
+      },
+      {
+        "id": "q2",
+        "page": 1,
+        "label": "2",
+        "section": "trap"
+      },
+      {
+        "id": "q3",
+        "page": 2,
+        "label": "3",
+        "section": "rhombus"
+      },
+      {
+        "id": "q4",
+        "page": 2,
+        "label": "4",
+        "section": "rhombus"
+      },
+      {
+        "id": "q5",
+        "page": 2,
+        "label": "5",
+        "section": "rhombus"
+      },
+      {
+        "id": "q6",
+        "page": 3,
+        "label": "6",
+        "section": "rect"
+      },
+      {
+        "id": "q7",
+        "page": 3,
+        "label": "7",
+        "section": "rect"
+      },
+      {
+        "id": "q8",
+        "page": 3,
+        "label": "8",
+        "section": "rect"
+      },
+      {
+        "id": "q9",
+        "page": 4,
+        "label": "9",
+        "section": "square"
+      },
+      {
+        "id": "q10",
+        "page": 4,
+        "label": "10",
+        "section": "square"
+      },
+      {
+        "id": "q11",
+        "page": 4,
+        "label": "11",
+        "section": "square"
+      },
+      {
+        "id": "q12",
+        "page": 5,
+        "label": "12",
+        "section": "level2"
+      },
+      {
+        "id": "q13",
+        "page": 5,
+        "label": "13",
+        "section": "level2"
+      },
+      {
+        "id": "q14",
+        "page": 6,
+        "label": "14",
+        "section": "level2"
+      },
+      {
+        "id": "q15",
+        "page": 6,
+        "label": "15",
+        "section": "level2"
+      },
+      {
+        "id": "q16",
+        "page": 6,
+        "label": "16",
+        "section": "level2"
+      },
+      {
+        "id": "q17",
+        "page": 7,
+        "label": "17",
+        "section": "level2"
+      },
+      {
+        "id": "q18",
+        "page": 7,
+        "label": "18",
+        "section": "level2"
+      },
+      {
+        "id": "q19",
+        "page": 7,
+        "label": "19",
+        "section": "level2"
+      },
+      {
+        "id": "q20",
+        "page": 8,
+        "label": "20",
+        "section": "level2"
+      },
+      {
+        "id": "q21",
+        "page": 8,
+        "label": "21",
+        "section": "level2"
+      },
+      {
+        "id": "q22",
+        "page": 9,
+        "label": "22",
+        "section": "level2"
+      },
+      {
+        "id": "q23",
+        "page": 10,
+        "label": "23",
+        "section": "level2"
+      },
+      {
+        "id": "q24",
+        "page": 11,
+        "label": "24",
+        "section": "level2"
+      }
+    ],
+    "anchors": {},
+    "fixedAnchors": {},
+    "overrides": {
+      "q1": {
+        "region": [
+          74.6,
+          531.6,
+          482.4,
+          605.1
+        ]
+      },
+      "q2": {
+        "region": [
+          65.1,
+          655.1,
+          263.7,
+          804.4
+        ]
+      },
+      "q3": {
+        "region": [
+          70.1,
+          306.1,
+          548.1,
+          431.4
+        ]
+      },
+      "q4": {
+        "region": [
+          64.6,
+          468.1,
+          224.9,
+          607.5
+        ]
+      },
+      "q5": {
+        "region": [
+          64.6,
+          641.1,
+          256.8,
+          795.2
+        ]
+      },
+      "q6": {
+        "region": [
+          69.6,
+          304.1,
+          533.8,
+          406.0
+        ]
+      },
+      "q7": {
+        "region": [
+          65.6,
+          424.1,
+          258.8,
+          585.5
+        ]
+      },
+      "q8": {
+        "region": [
+          65.6,
+          622.1,
+          391.4,
+          791.9
+        ]
+      },
+      "q9": {
+        "region": [
+          71.1,
+          316.1,
+          522.4,
+          444.5
+        ]
+      },
+      "q10": {
+        "region": [
+          66.6,
+          482.1,
+          280.8,
+          628.2
+        ]
+      },
+      "q11": {
+        "region": [
+          166.1,
+          661.1,
+          377.4,
+          791.4
+        ]
+      },
+      "q12": {
+        "region": [
+          66.1,
+          294.6,
+          244.9,
+          523.8
+        ]
+      },
+      "q13": {
+        "region": [
+          65.6,
+          565.1,
+          343.9,
+          791.4
+        ]
+      },
+      "q14": {
+        "region": [
+          66.1,
+          83.4,
+          419.4,
+          221.6
+        ]
+      },
+      "q15": {
+        "region": [
+          66.1,
+          260.6,
+          261.3,
+          455.6
+        ]
+      },
+      "q16": {
+        "region": [
+          64.4,
+          629.5,
+          562.6,
+          785.7
+        ]
+      },
+      "q17": {
+        "region": [
+          65.6,
+          96.6,
+          256.3,
+          313.5
+        ]
+      },
+      "q18": {
+        "region": [
+          66.6,
+          347.1,
+          229.0,
+          534.0
+        ]
+      },
+      "q19": {
+        "region": [
+          65.6,
+          588.6,
+          239.9,
+          794.9
+        ]
+      },
+      "q20": {
+        "region": [
+          66.6,
+          200.6,
+          541.3,
+          428.7
+        ]
+      },
+      "q21": {
+        "region": [
+          67.5,
+          522.1,
+          527.4,
+          781.9
+        ]
+      },
+      "q22": {
+        "region": [
+          66.6,
+          178.6,
+          382.1,
+          743.9
+        ]
+      },
+      "q23": {
+        "region": [
+          66.9,
+          154.5,
+          388.7,
+          500.1
+        ]
+      },
+      "q24": {
+        "region": [
+          70.1,
+          230.1,
+          489.6,
+          555.8
+        ]
+      }
+    }
+  },
+  "widgets": false
+}
