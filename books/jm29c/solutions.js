@@ -230,7 +230,6 @@ export const SOLUTIONS = [
 
   {
     id: "q9",
-    nowrap: true,
     minScale: 0.62,
     links: [
       { key: "sq", color: "blue", note: "property of square", q: ["square"] },

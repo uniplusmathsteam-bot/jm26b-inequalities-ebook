@@ -9,6 +9,7 @@
  *   - questions in book.json with no solution, no layout entry or no anchor
  *   - review-link phrases that do not match the page text, or that have no
  *     marked answer part
+ *   - side reasons containing TeX ($…$ or \command), which they show raw
  *   - answers pushed onto continuation sheets or shrunk below 75 %
  *   - graphics that throw or draw nothing
  *   - Pencil writing, finger tap-to-reveal and page errors
@@ -169,6 +170,11 @@ try {
     return out;
   });
   inkReport.forEach(fail);
+  /* Side reasons are plain text, so TeX in them shows up raw. */
+  const rawTex = await page.evaluate(() => [...document.querySelectorAll(".qa[data-q] .rs")]
+    .filter((el) => /\\[a-zA-Z]+|\$[^$]+\$/.test(el.textContent))
+    .map((el) => `${el.closest(".qa").dataset.q}: side reason shows raw TeX "${el.textContent}" (use ∠ △ ≅ // instead)`));
+  [...new Set(rawTex)].forEach(fail);
   const fit = await page.evaluate(() => ({
     continued: [...new Set([...document.querySelectorAll(".sheet.continuation .qa[data-q]")].map((el) => el.dataset.q))],
     small: [...document.querySelectorAll(".qa")].map((qa) => {

@@ -90,7 +90,7 @@ Write `books/<id>/solutions.js`, one entry per question in `book.json`, in page 
 - [ ] Every **final answer checked** against the ANS, including MC letters.
 - [ ] Printed examples get `printed: true` and `ctlAt: [x, y]` for their graphic button.
 
-Preview as you go (`python -m http.server 8090`, then `http://127.0.0.1:8090/reader.html?book=<id>`). Tap through each question. If one doesn't fit its region, the engine shrinks the text (down to `minScale`, 0.82 by default), then drops `nl()` number lines, then continues the answer on an extra sheet. Prefer `flow: "col"`, explicit box `w`, or a lower `minScale` over continuation sheets.
+Preview as you go (`python -m http.server 8090`, then `http://127.0.0.1:8090/reader.html?book=<id>`). Tap through each question. If one doesn't fit its region, the engine shrinks the text, drops `nl()` number lines, and sets long boxes side by side in columns (order in [05-engine-notes.md](05-engine-notes.md)), and only then continues the answer on an extra sheet. Prefer `flow: "col"`, explicit box `w`, or a lower `minScale` over continuation sheets. If the regions came from a teacher's answer boxes (`extract.overrides`), first run `python tools/grow_regions.py <id> --write` to widen them into the blank space around them (check the previews in `reference/regions/`), then re-run `extract_pages.py`.
 
 ## Stage 4: Review links
 
@@ -108,6 +108,8 @@ Add a graphic wherever a picture makes the reasoning visible. Each graphic lives
 - a picture of the situation, a slider (− / + / ▶) for the unknown, and a live readout (✓ satisfies / ✗ fails);
 - quick buttons for the key values ("Least n: 8");
 - maths the students have learned; for example, no function graphs for S3 (see the style guide).
+
+Printed concept summaries can become animations instead (see `media` in [02-book-format.md](02-book-format.md)). Write a Manim scene in `tools/manim/` that draws in page points over the panel's region and ends on the complete panel. Check the layout with `python tools/render_media.py <id> --still` against the page, then render the videos. Keep each one under about 300 KB.
 
 ## Stage 6: QA
 

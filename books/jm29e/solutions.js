@@ -58,12 +58,10 @@ export const SOLUTIONS = [
     links: [
       { key: "diag", color: "blue", note: "two diagonals given", q: ["length of two diagonals"] },
     ],
-    boxes: [{
-      steps: [
-        lk("diag", t("The diagonals of a rhombus bisect each other at right angles, so each side can be found.")),
-        t("The answer is D."),
-      ],
-    }],
+    boxes: [
+      { steps: [lk("diag", t("The diagonals of a rhombus bisect each other at right angles, so each side can be found."))] },
+      { steps: [t("The answer is D.")] },
+    ],
   },
   {
     id: "q5",

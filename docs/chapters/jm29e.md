@@ -12,4 +12,4 @@ Multiple choice, q1–q36. Level 2 starts at q16. The question paper was not sup
 
 ## Known warnings
 
-Most answers continue on an extra sheet because the printed working space is a small box beside the options. Text often shrinks to 62%. Accepted.
+The working boxes beside the options are grown into the blank space around them, so nothing continues on an extra sheet. Text often shrinks to about 62% or sits in side-by-side columns. Accepted.

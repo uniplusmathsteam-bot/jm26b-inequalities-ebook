@@ -156,8 +156,11 @@ function renderPlan(inner, plan, id) {
   return [...inner.children];
 }
 
-/** Absolutely positions the boxes; returns true when everything fits in W × H. */
-function place(els, plan, W, H, flow, x0, nowrap = false) {
+/**
+ * Absolutely positions the boxes; returns true when everything fits in W × H.
+ * With `strict`, a column box that would have to wrap its lines does not fit.
+ */
+function place(els, plan, W, H, flow, x0, nowrap = false, strict = false) {
   let ok = true;
   if (flow === "col") {
     let colX = 0;
@@ -166,6 +169,8 @@ function place(els, plan, W, H, flow, x0, nowrap = false) {
     els.forEach((el, k) => {
       const want = plan[k].box.w;
       el.style.width = want ? `${want}px` : "max-content";
+      el.style.maxWidth = "none";
+      const natural = el.offsetWidth;
       el.style.maxWidth = `${Math.max(60, W - colX)}px`;
       let h = el.offsetHeight;
       if (y > 0 && y + h > H) {
@@ -174,6 +179,7 @@ function place(els, plan, W, H, flow, x0, nowrap = false) {
         el.style.maxWidth = `${Math.max(60, W - colX)}px`;
         h = el.offsetHeight;
       }
+      if (strict && colX + natural > W + 0.5) ok = false;
       el.style.left = `${colX}px`;
       el.style.top = `${y}px`;
       const w = el.offsetWidth;
@@ -307,6 +313,40 @@ function scales(min) {
   return list;
 }
 
+/**
+ * Cuts boxes taller than H into pieces that each fit H, using the rendered line
+ * heights in `els`, never leaving a part label at the bottom of a piece.
+ * Null when no box needs cutting.
+ */
+function split(plan, els, H) {
+  let any = false;
+  const out = [];
+  plan.forEach((b, k) => {
+    const el = els[k];
+    const lines = [...el.children];
+    const pad = el.offsetHeight - lines.reduce((s, ln) => s + ln.offsetHeight, 0);
+    const loose = { ...b.box, w: undefined, left: undefined };
+    let cut = false;
+    let piece = [];
+    let h = pad;
+    b.items.forEach((e, i) => {
+      const lh = lines[i].offsetHeight;
+      if (piece.some((p) => !p.step.h) && h + lh > H) {
+        const carry = [];
+        while (piece.length > 1 && piece[piece.length - 1].step.h) carry.unshift(piece.pop());
+        out.push({ box: loose, items: piece });
+        cut = any = true;
+        piece = carry;
+        h = pad + carry.reduce((s, c) => s + lines[b.items.indexOf(c)].offsetHeight, 0);
+      }
+      piece.push(e);
+      h += lh;
+    });
+    out.push({ box: cut ? loose : b.box, items: piece });
+  });
+  return any ? out : null;
+}
+
 /** Fits one question into its region; returns the plan that did not fit (or null). */
 function fit(q, qa) {
   const sol = SOLUTION_BY_ID[q.id];
@@ -321,12 +361,25 @@ function fit(q, qa) {
     inner.style.setProperty("--k", k);
     return place(renderPlan(inner, plan, q.id), plan, W, H, sol.flow, x0, sol.nowrap);
   };
-  for (const k of ks) if (attempt(full, k)) return null;
   const lean = full
     .map((b) => ({ ...b, items: b.items.filter((e) => !e.step.optional) }))
     .filter((b) => b.items.length);
-  if (lean.some((b, k) => b.items.length !== full[k]?.items.length) || lean.length !== full.length) {
-    for (const k of ks) if (attempt(lean, k)) return null;
+  const leaner = lean.some((b, k) => b.items.length !== full[k]?.items.length) || lean.length !== full.length;
+  const columns = (k) => {
+    if (sol.nowrap || sol.flow === "row") return false;
+    inner.style.setProperty("--k", k);
+    const els = renderPlan(inner, full, q.id);
+    for (const el of els) Object.assign(el.style, { width: "max-content", maxWidth: "none" });
+    const cols = split(full, els, H);
+    return !!cols && place(renderPlan(inner, cols, q.id), cols, W, H, "col", x0, false, true);
+  };
+  // Side-by-side columns read better than text below about 3/4 size, so they come first.
+  const big = ks.filter((k) => k >= 0.76);
+  for (const k of big) if (attempt(full, k)) return null;
+  if (leaner) for (const k of big) if (attempt(lean, k)) return null;
+  for (const k of big) if (columns(k)) return null;
+  for (const k of ks.filter((k) => k < 0.76)) {
+    if (attempt(full, k) || (leaner && attempt(lean, k)) || columns(k)) return null;
   }
   const kmin = ks[ks.length - 1];
   const count = lean.reduce((n, b) => n + b.items.length, 0);

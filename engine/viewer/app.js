@@ -3,6 +3,7 @@ import { createInk } from "../ink/ink.js";
 import { exportAnnotations, exportPdf } from "../export/export.js";
 import { buildOverlay, layoutAnswers, paint, totalSteps } from "./answers.js";
 import { renderLinks, clearLinks } from "./links.js";
+import { addMedia, toggleMedia } from "./media.js";
 
 const PAGE_W = 595.32;
 const PAGE_H = 841.92;
@@ -163,6 +164,7 @@ function buildPages() {
     const overlay = document.createElement("div");
     overlay.className = "overlay";
     buildOverlay(page, overlay);
+    addMedia(page.page, overlay);
     ink.setText(sheet.dataset.key, page.text);
     sheet.append(img, overlay, ...makeCanvases());
     world.append(sheet);
@@ -180,6 +182,7 @@ function makeContinuation(pageNo) {
   const band = document.createElement("div");
   band.className = "band";
   band.style.backgroundImage = `url("${pageImage(pageNo)}")`;
+  if (BOOK.continuation?.band) band.style.height = `${BOOK.continuation.band}px`;
   const foot = document.createElement("div");
   foot.className = "cont-foot";
   foot.textContent = `Answers continued from page ${pageNo}`;
@@ -862,6 +865,12 @@ function bindViewport() {
   }, { passive: false });
 
   world.addEventListener("click", (event) => {
+    const play = event.target.closest("[data-media]");
+    if (play) {
+      event.stopPropagation();
+      toggleMedia(play);
+      return;
+    }
     const button = event.target.closest("[data-act]");
     if (button) {
       event.stopPropagation();

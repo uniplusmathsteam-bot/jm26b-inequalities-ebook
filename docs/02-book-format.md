@@ -44,7 +44,8 @@ Coordinates are always in **PDF points**, measured from the top left of the page
 | `source.que`, `source.ans` | PDF paths relative to the book folder. |
 | `source.ansPageOffset` | ANS page minus QUE page. It is −1 when the ANS has no cover page. |
 | `sections` | Top-bar buttons, in order. Each jumps to the first question with that `section`. |
-| `continuation` | The writable area of an extra "answers continued" sheet, below the page's header band. Change it only if a chapter's header band has a different height. |
+| `continuation` | The writable area of an extra "answers continued" sheet, below the page's header band. Change it only if a chapter's header band has a different height: `band` is how much of the page top is copied (72 by default) and must end above the first question line. |
+| `media` | Optional animations laid over printed panels: `[{ "page", "region": [x0, y0, x1, y1], "scene": "module:Class", "src": "media/x.mp4", "poster": "media/x.jpg", "title" }]`. The scene is a Manim class in `tools/manim/<module>.py`; `python tools/render_media.py <id>` renders `src` and `poster` (its last frame), and `--still` saves layout previews to `reference/media/`. The poster covers the panel until the round ▶ button on its corner is tapped. |
 | `widgets` | Set to `false` if the book has no `widgets.js`. |
 | `extract.zoom` | Render scale for the page images. Keep 3: sharp on a Retina iPad at about 200 KB per page. |
 | `extract.regionX` | Left and right edges of a default answer region. |
