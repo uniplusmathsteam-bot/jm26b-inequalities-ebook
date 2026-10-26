@@ -220,7 +220,7 @@
       "q8": {
         "region": [
           60.0,
-          99.6,
+          193.6,
           550.0,
           319.6
         ]
@@ -235,9 +235,9 @@
       },
       "q10": {
         "region": [
-          116.0,
-          543.3,
-          550.0,
+          60.0,
+          625.3,
+          442.0,
           807.3
         ]
       },
@@ -245,7 +245,7 @@
         "region": [
           60.0,
           119.2,
-          550.0,
+          398.0,
           285.2
         ]
       },
@@ -253,7 +253,7 @@
         "region": [
           60.0,
           348.6,
-          550.0,
+          380.0,
           542.6
         ]
       },
@@ -261,7 +261,7 @@
         "region": [
           60.0,
           605.4,
-          550.0,
+          394.0,
           807.4
         ]
       },
@@ -269,7 +269,7 @@
         "region": [
           60.0,
           100.9,
-          550.0,
+          388.0,
           380.9
         ]
       },
@@ -324,8 +324,32 @@
     }
   },
   "media": [
-    { "page": 1, "region": [150, 181, 443, 375], "scene": "jm29:MidPointTheorem", "src": "media/midpoint.mp4", "poster": "media/midpoint.jpg", "title": "Animate the mid-point theorem" },
-    { "page": 3, "region": [34, 64, 580, 274], "scene": "jm29:InterceptTheorem", "src": "media/intercept.mp4", "poster": "media/intercept.jpg", "title": "Animate the intercept theorems" }
+    {
+      "page": 1,
+      "region": [
+        150,
+        181,
+        443,
+        375
+      ],
+      "scene": "jm29:MidPointTheorem",
+      "src": "media/midpoint.mp4",
+      "poster": "media/midpoint.jpg",
+      "title": "Animate the mid-point theorem"
+    },
+    {
+      "page": 3,
+      "region": [
+        34,
+        64,
+        580,
+        274
+      ],
+      "scene": "jm29:InterceptTheorem",
+      "src": "media/intercept.mp4",
+      "poster": "media/intercept.jpg",
+      "title": "Animate the intercept theorems"
+    }
   ],
   "widgets": false
 }

@@ -200,7 +200,7 @@
       "q1": {
         "region": [
           60.0,
-          478.6,
+          544.6,
           550.0,
           616.6
         ]
@@ -216,7 +216,7 @@
       "q3": {
         "region": [
           60.0,
-          299.0,
+          313.0,
           550.0,
           429.0
         ]
@@ -320,8 +320,8 @@
       "q16": {
         "region": [
           60.0,
-          580.5,
-          548.0,
+          588.5,
+          476.0,
           806.5
         ]
       },
@@ -352,7 +352,7 @@
       "q20": {
         "region": [
           60.0,
-          155.4,
+          205.4,
           550.0,
           431.4
         ]
@@ -360,7 +360,7 @@
       "q21": {
         "region": [
           60.0,
-          492.3,
+          598.3,
           548.0,
           806.3
         ]
@@ -376,7 +376,7 @@
       "q23": {
         "region": [
           60.0,
-          137.7,
+          231.7,
           544.0,
           807.7
         ]
@@ -392,11 +392,71 @@
     }
   },
   "media": [
-    { "page": 1, "region": [34, 213, 588, 441], "scene": "jm29:Trapezium", "src": "media/trapezium.mp4", "poster": "media/trapezium.jpg", "title": "Animate the trapezium" },
-    { "page": 2, "region": [34, 58, 580, 180], "scene": "jm29:Rhombus", "src": "media/rhombus.mp4", "poster": "media/rhombus.jpg", "title": "Animate the rhombus" },
-    { "page": 3, "region": [34, 56, 580, 178], "scene": "jm29:Rectangle", "src": "media/rectangle.mp4", "poster": "media/rectangle.jpg", "title": "Animate the rectangle" },
-    { "page": 4, "region": [34, 55, 580, 179], "scene": "jm29:Square", "src": "media/square.mp4", "poster": "media/square.jpg", "title": "Animate the square" },
-    { "page": 5, "region": [42, 85, 584, 214], "scene": "jm29:QuadrilateralFamily", "src": "media/family.mp4", "poster": "media/family.jpg", "title": "Animate the quadrilateral family" }
+    {
+      "page": 1,
+      "region": [
+        34,
+        213,
+        588,
+        441
+      ],
+      "scene": "jm29:Trapezium",
+      "src": "media/trapezium.mp4",
+      "poster": "media/trapezium.jpg",
+      "title": "Animate the trapezium"
+    },
+    {
+      "page": 2,
+      "region": [
+        34,
+        58,
+        580,
+        180
+      ],
+      "scene": "jm29:Rhombus",
+      "src": "media/rhombus.mp4",
+      "poster": "media/rhombus.jpg",
+      "title": "Animate the rhombus"
+    },
+    {
+      "page": 3,
+      "region": [
+        34,
+        56,
+        580,
+        178
+      ],
+      "scene": "jm29:Rectangle",
+      "src": "media/rectangle.mp4",
+      "poster": "media/rectangle.jpg",
+      "title": "Animate the rectangle"
+    },
+    {
+      "page": 4,
+      "region": [
+        34,
+        55,
+        580,
+        179
+      ],
+      "scene": "jm29:Square",
+      "src": "media/square.mp4",
+      "poster": "media/square.jpg",
+      "title": "Animate the square"
+    },
+    {
+      "page": 5,
+      "region": [
+        42,
+        85,
+        584,
+        214
+      ],
+      "scene": "jm29:QuadrilateralFamily",
+      "src": "media/family.mp4",
+      "poster": "media/family.jpg",
+      "title": "Animate the quadrilateral family"
+    }
   ],
   "widgets": false
 }

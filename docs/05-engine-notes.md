@@ -27,7 +27,7 @@ flowchart TD
   2. below 0.76, at each scale in turn: full, then lean, then columns;
   3. then split the answer onto a continuation sheet (`c<page>-1`), whose header band copies the top `continuation.band` points of the page.
 - `media.js` lays each `book.json` `media` entry over its page region: a `<video>` showing its poster (the last frame) plus a round button on the panel's corner. The button carries `data-media`, so the world click handler toggles play, pause and replay in every tool, as it does for `data-act` answer buttons.
-- `links.js` finds `q` phrases in `layout.json` text, measures the marked answer parts, and draws the markers, tags and leaders. Question-side markers are dashed (then solid) boxes; answer-side markers are coloured dotted underlines (solid when open), with a transparent hit area so a tap still toggles the link. Nested `.lk-*` pieces drop each underline by 2.6 pt so they stay readable.
+- `links.js` finds `q` phrases in `layout.json` text, measures the marked answer parts, and draws the markers, tags and leaders. Question-side markers are dashed (then solid) boxes; answer-side markers are coloured dotted underlines (solid when open), with a transparent hit area so a tap still toggles the link. Nested `.lk-*` pieces drop each underline by 2.6 pt so they stay readable. Steps that continue on an extra sheet get their underlines there too (`renderContLinks`); the question boxes, tags and leaders stay on the question's own sheet.
 
 ## Coordinates
 

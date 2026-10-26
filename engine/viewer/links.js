@@ -208,6 +208,33 @@ export function clearLinks(sheet, id) {
 }
 
 /**
+ * Answer-side underlines for the steps of a question that continue on an extra
+ * sheet. The question boxes, tags and leaders stay on the question's own sheet.
+ */
+export function renderContLinks(sheet, id, page, open) {
+  sheet.querySelector(`.rev[data-q="${id}"]`)?.remove();
+  const sol = SOLUTION_BY_ID[id];
+  const qa = sheet.querySelector(`.qa.cont[data-q="${id}"]`);
+  const overlay = sheet.querySelector(".overlay");
+  if (!sol?.links || !qa || !overlay) return;
+  const layer = document.createElement("div");
+  layer.className = "rev";
+  layer.dataset.q = id;
+  const svg = svgEl("svg", { viewBox: `0 0 ${page.width} ${page.height}` });
+  layer.append(svg);
+  overlay.append(layer);
+  const rects = [];
+  for (const link of sol.links) {
+    for (const n of answerNodes(qa, link.key)) {
+      const depth = linkDepth(n);
+      for (const cr of inkRects(n)) rects.push(makeUnderline(sheetPoint(sheet, cr), link, open.has(link.key), id, depth));
+    }
+  }
+  rects.sort((a, b) => b.area - a.area);
+  for (const r of rects) svg.append(r.rect);
+}
+
+/**
  * Draws faint dashed hints for every link of one question; links in `open`
  * get solid markers (boxes on the question, underlines in the answer), a
  * remark tag and a leader. Returns the control column left (relative to the

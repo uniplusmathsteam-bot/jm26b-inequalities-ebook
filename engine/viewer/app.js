@@ -2,7 +2,7 @@ import { BOOK, BOOK_DIR, BOOK_ID, BOOK_NAME, STORAGE, SOLUTION_BY_ID, mountGraph
 import { createInk } from "../ink/ink.js";
 import { exportAnnotations, exportPdf } from "../export/export.js";
 import { buildOverlay, layoutAnswers, paint, totalSteps } from "./answers.js";
-import { renderLinks, clearLinks } from "./links.js";
+import { renderLinks, renderContLinks, clearLinks } from "./links.js";
 import { addMedia, toggleMedia } from "./media.js";
 
 const PAGE_W = 595.32;
@@ -97,6 +97,9 @@ function syncLinks(id) {
   const sheet = world.querySelector(`.qa[data-q="${id}"]`)?.closest(".sheet");
   if (!found || !sheet) return;
   const pos = renderLinks(sheet, id, found.page, found.q, openSet(id));
+  for (const cont of world.querySelectorAll(`.sheet.continuation .qa.cont[data-q="${id}"]`)) {
+    renderContLinks(cont.closest(".sheet"), id, found.page, openSet(id));
+  }
   const ctl = sheet.querySelector(`.qa[data-q="${id}"] .ctl`);
   if (!pos || !ctl) return;
   const qaLeft = parseFloat(ctl.closest(".qa").style.left) || 0;

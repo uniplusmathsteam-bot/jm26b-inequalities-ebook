@@ -10,6 +10,8 @@
 
 Properties of a parallelogram (q1–q13), then Level 2 (q14–q22). The question paper was not supplied separately; the background is the answer PDF with the red working removed. Answer regions start from the teacher's red boxes, grown into the blank space around them (`tools/grow_regions.py`). The page 1 summary of the three properties is a Manim animation (`ParallelogramProperties`): each property is shown by turning a copy of a side, an angle or a half-diagonal half a turn about the centre.
 
+The background was rebuilt with `tools/make_que.py` (cache v17), like (C)–(E). The first version removed every image that touched a red box; that cost figures in (C), (D) and (E) but nothing visible here.
+
 ## Known warnings
 
 Nothing continues on an extra sheet. A few answers shrink to about 62–70% or are set in side-by-side columns. Accepted.

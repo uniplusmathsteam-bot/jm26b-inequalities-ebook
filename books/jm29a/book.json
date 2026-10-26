@@ -352,7 +352,19 @@
     }
   },
   "media": [
-    { "page": 1, "region": [44, 341, 566, 679], "scene": "jm29:ParallelogramProperties", "src": "media/properties.mp4", "poster": "media/properties.jpg", "title": "Animate the properties of a parallelogram" }
+    {
+      "page": 1,
+      "region": [
+        44,
+        341,
+        566,
+        679
+      ],
+      "scene": "jm29:ParallelogramProperties",
+      "src": "media/properties.mp4",
+      "poster": "media/properties.jpg",
+      "title": "Animate the properties of a parallelogram"
+    }
   ],
   "widgets": false
 }
