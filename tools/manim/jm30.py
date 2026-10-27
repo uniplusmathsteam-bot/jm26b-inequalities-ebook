@@ -344,3 +344,51 @@ class TreeVsTable(PrintScene):
         self.wipe(note[0], 1.0)
         self.wipe(note[1], 0.8)
         self.wait(1.5)
+
+
+class RemoveImpossible(PrintScene):
+    """Fill the table of two draws, strike out drawing the same ball twice, then count what is left."""
+
+    BOOK, PAGE = "jm30b", 4
+
+    def construct(self):
+        xs, ys = [119.9, 160.4, 201.2, 241.7], [418.9, 437.1, 455.8, 474.0]
+        final = self.covers((289.5, 486.5, 375.0, 514.0), (378.5, 487.0, 388.5, 502.4),
+                            (378.5, 502.4, 388.5, 514.0), (392.5, 486.5, 417.0, 514.0))
+        imply = self.cover(290.0, 446.5, 507.5, 459.5)
+        note = self.covers((289.5, 411.5, 527.0, 423.6), (289.5, 423.6, 527.0, 436.5))
+        arrow = self.cover(383.0, 348.6, 412.0, 410.5)
+        body = [[self.cover(*c) for c in row] for row in cells(xs, ys, 1.0)]
+        table = self.cover(43.0, 385.5, 244.0, 476.5)
+        lines = self.covers((35.5, 334.5, 486.0, 348.4), (36.0, 354.5, 321.0, 368.5))
+        self.wait(0.3)
+
+        self.wipe(lines[0], 1.8)
+        self.wipe(lines[1], 1.3)
+        self.wait(0.3)
+        self.play(FadeOut(table, run_time=0.8))
+        heads = [self.ring(89.5, 418.9, 119.9, 437.1, ORANGE, pad=0.2), self.ring(160.4, 400.5, 201.2, 418.9, ORANGE, pad=0.2)]
+        self.play(*[Create(r) for r in heads], run_time=0.6)
+        self.wipe(body[0][1], 0.6)
+        self.play(FadeOut(VGroup(*heads)), run_time=0.4)
+        for r, c in ((0, 2), (1, 0), (1, 2), (2, 0), (2, 1)):
+            self.wipe(body[r][c], 0.4)
+        self.wait(0.4)
+
+        self.wipe(arrow, 0.6, edge="top")
+        self.wipe(note[0], 1.4)
+        self.wipes([body[i][i] for i in range(3)], 0.8)
+        self.wipe(note[1], 1.2)
+        self.wipe(imply, 1.2)
+        self.wait(0.4)
+
+        self.wipe(final[0], 0.9)
+        reds = [self.ring(*c, BLUE, pad=-0.6) for c in (cells(xs, ys, 0)[0][1], cells(xs, ys, 0)[1][0])]
+        self.play(*[Create(r) for r in reds], run_time=0.6)
+        self.wipe(final[1], 0.4, edge="top")
+        left = [self.ring(*cells(xs, ys, 0)[r][c], GREEN, pad=-0.6) for r in range(3) for c in range(3) if r != c]
+        self.play(FadeOut(VGroup(*reds)), *[Create(r) for r in left], run_time=0.7)
+        self.wipe(final[2], 0.4, edge="top")
+        self.play(FadeOut(VGroup(*left)), run_time=0.4)
+        self.wipe(final[3], 0.8)
+        self.wait(1.5)
