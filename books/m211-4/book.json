@@ -1,0 +1,280 @@
+{
+  "id": "m211-4",
+  "form": "M2",
+  "code": "M211",
+  "title": "Introduction to Vectors (4)",
+  "topic": "Vectors",
+  "year": 2025,
+  "status": "live",
+  "storage": "m211-4",
+  "source": {
+    "que": "source/M211 Introduction to Vectors-4 - 2025 (QUE made).pdf",
+    "ans": "source/M211 Introduction to Vectors-4 - 2025 (ANS).pdf",
+    "ansPageOffset": 0
+  },
+  "sections": [
+    {
+      "id": "vp",
+      "label": "Vector Product"
+    }
+  ],
+  "continuation": {
+    "band": 60,
+    "top": 80,
+    "x": 48,
+    "width": 499,
+    "bottom": 812
+  },
+  "extract": {
+    "zoom": 3,
+    "regionX": [
+      66,
+      546
+    ],
+    "footer": 822,
+    "questions": [
+      {
+        "id": "q1",
+        "page": 2,
+        "label": "1",
+        "section": "vp"
+      },
+      {
+        "id": "q2",
+        "page": 2,
+        "label": "2",
+        "section": "vp"
+      },
+      {
+        "id": "q3",
+        "page": 2,
+        "label": "3",
+        "section": "vp"
+      },
+      {
+        "id": "q4",
+        "page": 3,
+        "label": "4",
+        "section": "vp"
+      },
+      {
+        "id": "q5",
+        "page": 3,
+        "label": "5",
+        "section": "vp"
+      },
+      {
+        "id": "q6",
+        "page": 4,
+        "label": "6",
+        "section": "vp"
+      },
+      {
+        "id": "q7",
+        "page": 5,
+        "label": "7",
+        "section": "vp"
+      },
+      {
+        "id": "q8",
+        "page": 5,
+        "label": "8",
+        "section": "vp"
+      },
+      {
+        "id": "q9",
+        "page": 6,
+        "label": "9",
+        "section": "vp"
+      },
+      {
+        "id": "q10",
+        "page": 7,
+        "label": "10",
+        "section": "vp"
+      },
+      {
+        "id": "q11",
+        "page": 8,
+        "label": "11",
+        "section": "vp"
+      },
+      {
+        "id": "q12",
+        "page": 9,
+        "label": "12",
+        "section": "vp"
+      },
+      {
+        "id": "q13",
+        "page": 10,
+        "label": "13",
+        "section": "vp"
+      },
+      {
+        "id": "q14",
+        "page": 11,
+        "label": "14",
+        "section": "vp"
+      }
+    ],
+    "anchors": {},
+    "fixedAnchors": {},
+    "overrides": {
+      "q1": {
+        "region": [
+          60.0,
+          93.1,
+          550.0,
+          261.1
+        ]
+      },
+      "q2": {
+        "region": [
+          60.0,
+          287.3,
+          550.0,
+          461.3
+        ]
+      },
+      "q3": {
+        "region": [
+          60.0,
+          523.9,
+          550.0,
+          807.9
+        ]
+      },
+      "q4": {
+        "region": [
+          60.0,
+          137.5,
+          550.0,
+          425.5
+        ]
+      },
+      "q5": {
+        "region": [
+          60.0,
+          506.2,
+          548.0,
+          806.2
+        ]
+      },
+      "q6": {
+        "region": [
+          60.0,
+          203.9,
+          548.0,
+          807.9
+        ]
+      },
+      "q7": {
+        "region": [
+          60.0,
+          142.9,
+          550.0,
+          424.9
+        ]
+      },
+      "q8": {
+        "region": [
+          60.0,
+          469.0,
+          548.0,
+          807.0
+        ]
+      },
+      "q9": {
+        "region": [
+          60.0,
+          151.1,
+          548.0,
+          807.1
+        ]
+      },
+      "q10": {
+        "region": [
+          60.0,
+          146.6,
+          548.0,
+          806.6
+        ]
+      },
+      "q11": {
+        "region": [
+          60.0,
+          237.1,
+          548.0,
+          807.1
+        ]
+      },
+      "q12": {
+        "region": [
+          60.0,
+          184.1,
+          548.0,
+          806.1
+        ]
+      },
+      "q13": {
+        "region": [
+          60.0,
+          161.0,
+          544.0,
+          582.0
+        ]
+      },
+      "q14": {
+        "region": [
+          60.0,
+          182.6,
+          544.0,
+          806.6
+        ]
+      }
+    }
+  },
+  "media": [
+    {
+      "page": 1,
+      "region": [
+        330,
+        550,
+        568,
+        765
+      ],
+      "scene": "m211:AreaOfFigures",
+      "src": "media/area.mp4",
+      "poster": "media/area.jpg",
+      "title": "Animate the area of a parallelogram and a triangle"
+    },
+    {
+      "page": 1,
+      "region": [
+        28,
+        511,
+        322,
+        779
+      ],
+      "scene": "m211:CrossDotIdentity",
+      "src": "media/identity.mp4",
+      "poster": "media/identity.jpg",
+      "title": "Animate why |a × b|² = |a|²|b|² − (a · b)²"
+    },
+    {
+      "page": 10,
+      "region": [
+        60,
+        590,
+        544,
+        806
+      ],
+      "scene": "m211:ProjectionOnNormal",
+      "src": "media/projection.mp4",
+      "poster": "media/projection.jpg",
+      "title": "Animate the projection of AD onto AB × AC"
+    }
+  ],
+  "widgets": false
+}
