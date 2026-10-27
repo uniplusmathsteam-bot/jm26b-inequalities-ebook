@@ -6,8 +6,10 @@ Usage:
 
 Each entry of "media" in book.json names a scene as "module:Class" from
 tools/manim/ and the page region it covers. The video goes to the entry's
-"src" and its last frame to "poster"; previews (--still) go to
-books/<id>/reference/media/. Needs Manim Community and ffmpeg.
+"src" and its last frame to "poster". --still writes the last frame to
+books/<id>/reference/media/<Class>.png and <Class>_cmp.png, the printed panel
+above the last frame, so the two can be compared line by line.
+Needs Manim Community, ffmpeg and Pillow.
 """
 
 import importlib
@@ -26,6 +28,21 @@ WORK = ROOT / "tools" / "_manim"
 
 def even(v):
     return int(round(v / 2)) * 2
+
+
+def compare(book_dir, item, still_png):
+    """Printed panel (cropped from the page image) above the last frame, saved as <Class>_cmp.png."""
+    from PIL import Image
+
+    page = Image.open(book_dir / "pages" / f"p{item['page']:02d}.jpg").convert("RGB")
+    s = page.width / 595.32
+    x0, y0, x1, y1 = item["region"]
+    crop = page.crop((round(x0 * s), round(y0 * s), round(x1 * s), round(y1 * s)))
+    frame = Image.open(still_png).convert("RGB").resize(crop.size)
+    sheet = Image.new("RGB", (crop.width, crop.height * 2 + 12), "#d33")
+    sheet.paste(crop, (0, 0))
+    sheet.paste(frame, (0, crop.height + 12))
+    sheet.save(still_png.with_name(f"{still_png.stem}_cmp.png"))
 
 
 def render(book_dir, item, still):
@@ -51,7 +68,8 @@ def render(book_dir, item, still):
         dest = book_dir / "reference" / "media" / f"{name}.png"
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(out, dest)
-        print("still", dest.relative_to(ROOT))
+        compare(book_dir, item, dest)
+        print("still", dest.relative_to(ROOT), "and", dest.with_name(f"{name}_cmp.png").name)
         return
     video = book_dir / item["src"]
     poster = book_dir / item["poster"]
