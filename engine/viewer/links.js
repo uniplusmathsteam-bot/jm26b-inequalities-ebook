@@ -47,7 +47,9 @@ export function questionRects(page, q, phrase) {
   if (!want.length || !page.text) return [];
   const idx = page.questions.findIndex((item) => item.id === q.id);
   const yLo = idx > 0 ? page.questions[idx - 1].region[3] - 1 : 0;
-  const yHi = q.region[1];
+  // A region grown up beside the parts of a question still leaves those parts linkable.
+  const next = page.questions[idx + 1];
+  const yHi = Math.max(q.region[1], next?.anchor ? next.anchor[0] - 1 : q.region[1]);
   const toks = [];
   for (const row of page.text) {
     if (row[0] < yLo || row[0] >= yHi) continue;

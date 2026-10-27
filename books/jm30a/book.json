@@ -1,0 +1,609 @@
+{
+  "id": "jm30a",
+  "form": "S3",
+  "code": "JM30 (A)",
+  "title": "Probabilities",
+  "topic": "Probabilities",
+  "year": 2026,
+  "status": "draft",
+  "storage": "jm30a",
+  "source": {
+    "que": "source/S3 JM30 (A) - Probabilities - 2026 (QUE).pdf",
+    "ans": "source/S3 JM30 (A) - Probabilities - 2026 (ANS).pdf",
+    "ansPageOffset": 0
+  },
+  "sections": [
+    {
+      "id": "basic",
+      "label": "Basic concepts"
+    },
+    {
+      "id": "exp",
+      "label": "Experimental probability"
+    },
+    {
+      "id": "level2",
+      "label": "Level 2"
+    }
+  ],
+  "continuation": {
+    "band": 60,
+    "top": 80,
+    "x": 48,
+    "width": 499,
+    "bottom": 812
+  },
+  "extract": {
+    "zoom": 3,
+    "regionX": [
+      66,
+      546
+    ],
+    "footer": 822,
+    "questions": [
+      {
+        "id": "q1",
+        "page": 1,
+        "label": "1",
+        "section": "basic"
+      },
+      {
+        "id": "q2",
+        "page": 1,
+        "label": "2",
+        "section": "basic"
+      },
+      {
+        "id": "q3",
+        "page": 1,
+        "label": "3",
+        "section": "basic"
+      },
+      {
+        "id": "q4",
+        "page": 2,
+        "label": "4",
+        "section": "basic"
+      },
+      {
+        "id": "q5",
+        "page": 2,
+        "label": "5",
+        "section": "basic"
+      },
+      {
+        "id": "q6",
+        "page": 2,
+        "label": "6",
+        "section": "basic"
+      },
+      {
+        "id": "q7",
+        "page": 2,
+        "label": "7",
+        "section": "basic"
+      },
+      {
+        "id": "q8",
+        "page": 3,
+        "label": "8",
+        "section": "basic"
+      },
+      {
+        "id": "q9",
+        "page": 3,
+        "label": "9",
+        "section": "basic"
+      },
+      {
+        "id": "q10",
+        "page": 3,
+        "label": "10",
+        "section": "basic"
+      },
+      {
+        "id": "q11",
+        "page": 4,
+        "label": "11",
+        "section": "exp"
+      },
+      {
+        "id": "q12",
+        "page": 4,
+        "label": "12",
+        "section": "exp"
+      },
+      {
+        "id": "q13",
+        "page": 4,
+        "label": "13",
+        "section": "exp"
+      },
+      {
+        "id": "q14",
+        "page": 5,
+        "label": "14",
+        "section": "exp"
+      },
+      {
+        "id": "q15",
+        "page": 5,
+        "label": "15",
+        "section": "exp"
+      },
+      {
+        "id": "q16",
+        "page": 5,
+        "label": "16",
+        "section": "exp"
+      },
+      {
+        "id": "q17",
+        "page": 6,
+        "label": "17",
+        "section": "level2"
+      },
+      {
+        "id": "q18",
+        "page": 6,
+        "label": "18",
+        "section": "level2"
+      },
+      {
+        "id": "q19",
+        "page": 6,
+        "label": "19",
+        "section": "level2"
+      },
+      {
+        "id": "q20",
+        "page": 7,
+        "label": "20",
+        "section": "level2"
+      },
+      {
+        "id": "q21",
+        "page": 7,
+        "label": "21",
+        "section": "level2"
+      },
+      {
+        "id": "q22",
+        "page": 8,
+        "label": "22",
+        "section": "level2"
+      },
+      {
+        "id": "q23",
+        "page": 8,
+        "label": "23",
+        "section": "level2"
+      },
+      {
+        "id": "q24",
+        "page": 9,
+        "label": "24",
+        "section": "level2"
+      },
+      {
+        "id": "q25",
+        "page": 9,
+        "label": "25",
+        "section": "level2"
+      },
+      {
+        "id": "q26",
+        "page": 10,
+        "label": "26",
+        "section": "level2"
+      },
+      {
+        "id": "q27",
+        "page": 10,
+        "label": "27",
+        "section": "level2"
+      },
+      {
+        "id": "q28",
+        "page": 11,
+        "label": "28",
+        "section": "level2"
+      },
+      {
+        "id": "q29",
+        "page": 11,
+        "label": "29",
+        "section": "level2"
+      },
+      {
+        "id": "q30",
+        "page": 11,
+        "label": "30",
+        "section": "level2"
+      },
+      {
+        "id": "q31",
+        "page": 11,
+        "label": "31",
+        "section": "level2"
+      },
+      {
+        "id": "q32",
+        "page": 12,
+        "label": "32",
+        "section": "level2"
+      },
+      {
+        "id": "q33",
+        "page": 12,
+        "label": "33",
+        "section": "level2"
+      },
+      {
+        "id": "q34",
+        "page": 13,
+        "label": "34",
+        "section": "level2"
+      },
+      {
+        "id": "q35",
+        "page": 13,
+        "label": "35",
+        "section": "level2"
+      },
+      {
+        "id": "q36",
+        "page": 14,
+        "label": "36",
+        "section": "level2"
+      },
+      {
+        "id": "q37",
+        "page": 14,
+        "label": "37",
+        "section": "level2"
+      }
+    ],
+    "anchors": {},
+    "fixedAnchors": {},
+    "overrides": {
+      "q1": {
+        "region": [
+          60.0,
+          497.4,
+          586,
+          545.4
+        ]
+      },
+      "q2": {
+        "region": [
+          60.0,
+          608.3,
+          586,
+          680.3
+        ]
+      },
+      "q3": {
+        "region": [
+          60.0,
+          725.0,
+          548,
+          814.0
+        ]
+      },
+      "q4": {
+        "region": [
+          60.0,
+          119.5,
+          586,
+          205.5
+        ]
+      },
+      "q5": {
+        "region": [
+          60,
+          267.0,
+          586,
+          369.0
+        ]
+      },
+      "q6": {
+        "region": [
+          60.0,
+          449.2,
+          586,
+          563.2
+        ]
+      },
+      "q7": {
+        "region": [
+          60.0,
+          643.6,
+          548,
+          807.6
+        ]
+      },
+      "q8": {
+        "region": [
+          60.0,
+          240,
+          586,
+          399
+        ]
+      },
+      "q9": {
+        "region": [
+          136.0,
+          508.4,
+          586,
+          590.4
+        ]
+      },
+      "q10": {
+        "region": [
+          60.0,
+          723.5,
+          570,
+          813.5
+        ]
+      },
+      "q11": {
+        "region": [
+          60.0,
+          388.2,
+          586,
+          429.9
+        ]
+      },
+      "q12": {
+        "region": [
+          60.0,
+          528.9,
+          586,
+          598.2
+        ]
+      },
+      "q13": {
+        "region": [
+          60.0,
+          711.6,
+          548,
+          826.4
+        ]
+      },
+      "q14": {
+        "region": [
+          60.0,
+          225.2,
+          586,
+          347.2
+        ]
+      },
+      "q15": {
+        "region": [
+          60.0,
+          391.4,
+          586,
+          495.4
+        ]
+      },
+      "q16": {
+        "region": [
+          60.0,
+          651.3,
+          548,
+          807.3
+        ]
+      },
+      "q17": {
+        "region": [
+          110.0,
+          138.1,
+          504.0,
+          302.1
+        ],
+        "square": [
+          510.3,
+          209.8,
+          538.6,
+          237.9
+        ]
+      },
+      "q18": {
+        "region": [
+          118.0,
+          347.8,
+          504.0,
+          503.8
+        ],
+        "square": [
+          510.5,
+          419.0,
+          538.8,
+          447.0
+        ]
+      },
+      "q19": {
+        "region": [
+          60.0,
+          566.8,
+          548,
+          807.0
+        ]
+      },
+      "q20": {
+        "region": [
+          60.0,
+          137.2,
+          586,
+          435.2
+        ]
+      },
+      "q21": {
+        "region": [
+          60.0,
+          571.4,
+          548,
+          807.4
+        ]
+      },
+      "q22": {
+        "region": [
+          60.0,
+          230.5,
+          586,
+          458.5
+        ]
+      },
+      "q23": {
+        "region": [
+          60.0,
+          648.6,
+          548,
+          830
+        ]
+      },
+      "q24": {
+        "region": [
+          60.0,
+          229.2,
+          586,
+          417.2
+        ]
+      },
+      "q25": {
+        "region": [
+          60.0,
+          571.2,
+          548,
+          807.2
+        ]
+      },
+      "q26": {
+        "region": [
+          60.0,
+          265.6,
+          586,
+          453.6
+        ]
+      },
+      "q27": {
+        "region": [
+          60.0,
+          553.1,
+          548,
+          807.1
+        ]
+      },
+      "q28": {
+        "region": [
+          60.0,
+          191.5,
+          586,
+          363.5
+        ]
+      },
+      "q29": {
+        "region": [
+          60.0,
+          423.2,
+          586,
+          509.2
+        ]
+      },
+      "q30": {
+        "region": [
+          60.0,
+          586.5,
+          586,
+          676.5
+        ]
+      },
+      "q31": {
+        "region": [
+          60.0,
+          734.0,
+          548,
+          822.4
+        ]
+      },
+      "q32": {
+        "region": [
+          102.0,
+          149.5,
+          586,
+          349.5
+        ]
+      },
+      "q33": {
+        "region": [
+          60.0,
+          461.8,
+          548,
+          807.8
+        ]
+      },
+      "q34": {
+        "region": [
+          60.0,
+          231.5,
+          586,
+          397.5
+        ]
+      },
+      "q35": {
+        "region": [
+          60.0,
+          497.3,
+          548,
+          807.3
+        ]
+      },
+      "q36": {
+        "region": [
+          60.0,
+          191.6,
+          586,
+          403.6
+        ]
+      },
+      "q37": {
+        "region": [
+          60.0,
+          517.6,
+          548,
+          807.6
+        ]
+      }
+    }
+  },
+  "widgets": false,
+  "media": [
+    {
+      "page": 1,
+      "region": [
+        27.5,
+        226.8,
+        566.7,
+        448.6
+      ],
+      "scene": "jm30:BasicProbability",
+      "src": "media/basic.mp4",
+      "poster": "media/basic.jpg",
+      "title": "Animate the probability formula"
+    },
+    {
+      "page": 4,
+      "region": [
+        36.0,
+        97.9,
+        392.6,
+        272.1
+      ],
+      "scene": "jm30:ExperimentalProbability",
+      "src": "media/experimental.mp4",
+      "poster": "media/experimental.jpg",
+      "title": "Animate experimental probability"
+    }
+  ]
+}

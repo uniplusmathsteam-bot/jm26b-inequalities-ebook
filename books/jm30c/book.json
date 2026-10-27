@@ -1,0 +1,434 @@
+{
+  "id": "jm30c",
+  "form": "S3",
+  "code": "JM30 (C)",
+  "title": "Probabilities",
+  "topic": "Probabilities",
+  "year": 2026,
+  "status": "draft",
+  "storage": "jm30c",
+  "source": {
+    "que": "source/S3 JM30 (C) - Probabilities - 2026 (QUE made).pdf",
+    "ans": "source/S3 JM30 (C) - Probabilities - 2026 (ANS).pdf",
+    "ansPageOffset": 0
+  },
+  "sections": [
+    {
+      "id": "eno",
+      "label": "Expected number"
+    },
+    {
+      "id": "ev",
+      "label": "Expected value"
+    },
+    {
+      "id": "level2",
+      "label": "Level 2"
+    }
+  ],
+  "continuation": {
+    "band": 60,
+    "top": 80,
+    "x": 48,
+    "width": 499,
+    "bottom": 812
+  },
+  "extract": {
+    "zoom": 3,
+    "regionX": [
+      66,
+      546
+    ],
+    "footer": 822,
+    "questions": [
+      {
+        "id": "q1",
+        "page": 1,
+        "label": "1",
+        "section": "eno"
+      },
+      {
+        "id": "q2",
+        "page": 1,
+        "label": "2",
+        "section": "eno"
+      },
+      {
+        "id": "q3",
+        "page": 1,
+        "label": "3",
+        "section": "eno"
+      },
+      {
+        "id": "q4",
+        "page": 2,
+        "label": "4",
+        "section": "ev"
+      },
+      {
+        "id": "q5",
+        "page": 2,
+        "label": "5",
+        "section": "ev"
+      },
+      {
+        "id": "q6",
+        "page": 3,
+        "label": "6",
+        "section": "ev"
+      },
+      {
+        "id": "q7",
+        "page": 3,
+        "label": "7",
+        "section": "ev"
+      },
+      {
+        "id": "q7b",
+        "page": 3,
+        "label": "7(b)",
+        "section": "ev"
+      },
+      {
+        "id": "q8",
+        "page": 3,
+        "label": "8",
+        "section": "ev"
+      },
+      {
+        "id": "q9",
+        "page": 3,
+        "label": "9",
+        "section": "ev"
+      },
+      {
+        "id": "q10",
+        "page": 4,
+        "label": "10",
+        "section": "level2"
+      },
+      {
+        "id": "q11",
+        "page": 4,
+        "label": "11",
+        "section": "level2"
+      },
+      {
+        "id": "q12",
+        "page": 4,
+        "label": "12",
+        "section": "level2"
+      },
+      {
+        "id": "q13",
+        "page": 4,
+        "label": "13",
+        "section": "level2"
+      },
+      {
+        "id": "q14",
+        "page": 5,
+        "label": "14",
+        "section": "level2"
+      },
+      {
+        "id": "q15",
+        "page": 5,
+        "label": "15",
+        "section": "level2"
+      },
+      {
+        "id": "q16",
+        "page": 6,
+        "label": "16",
+        "section": "level2"
+      },
+      {
+        "id": "q17",
+        "page": 6,
+        "label": "17",
+        "section": "level2"
+      },
+      {
+        "id": "q18",
+        "page": 7,
+        "label": "18",
+        "section": "level2"
+      },
+      {
+        "id": "q19",
+        "page": 8,
+        "label": "19",
+        "section": "level2"
+      },
+      {
+        "id": "q20",
+        "page": 8,
+        "label": "20",
+        "section": "level2"
+      },
+      {
+        "id": "q21",
+        "page": 9,
+        "label": "21",
+        "section": "level2"
+      },
+      {
+        "id": "q22",
+        "page": 10,
+        "label": "22",
+        "section": "level2"
+      },
+      {
+        "id": "q23",
+        "page": 11,
+        "label": "23",
+        "section": "level2"
+      },
+      {
+        "id": "q24",
+        "page": 12,
+        "label": "24",
+        "section": "level2"
+      }
+    ],
+    "anchors": {},
+    "fixedAnchors": {
+      "q7b": [
+        275.0,
+        287.0
+      ]
+    },
+    "overrides": {
+      "q1": {
+        "region": [
+          68.8,
+          434.9,
+          586,
+          490
+        ]
+      },
+      "q2": {
+        "region": [
+          68.4,
+          525.2,
+          586,
+          572
+        ]
+      },
+      "q3": {
+        "region": [
+          68.7,
+          660.1,
+          586,
+          822
+        ]
+      },
+      "q4": {
+        "region": [
+          68.0,
+          420.4,
+          586,
+          545
+        ]
+      },
+      "q5": {
+        "region": [
+          67.3,
+          660.4,
+          586,
+          800
+        ]
+      },
+      "q6": {
+        "region": [
+          65.1,
+          136.3,
+          586,
+          195
+        ]
+      },
+      "q7": {
+        "region": [
+          173.3,
+          247.7,
+          586,
+          266.2
+        ]
+      },
+      "q7b": {
+        "region": [
+          69.7,
+          289.5,
+          586,
+          398
+        ]
+      },
+      "q8": {
+        "region": [
+          68.6,
+          505.4,
+          586,
+          660
+        ]
+      },
+      "q9": {
+        "region": [
+          66.7,
+          730.9,
+          586,
+          822
+        ]
+      },
+      "q10": {
+        "region": [
+          66.7,
+          153.3,
+          586,
+          236
+        ]
+      },
+      "q11": {
+        "region": [
+          66.6,
+          325.4,
+          586,
+          408
+        ]
+      },
+      "q12": {
+        "region": [
+          70.8,
+          479.4,
+          586,
+          605
+        ]
+      },
+      "q13": {
+        "region": [
+          67.7,
+          697.0,
+          586,
+          800
+        ]
+      },
+      "q14": {
+        "region": [
+          66.8,
+          171.9,
+          586,
+          340
+        ]
+      },
+      "q15": {
+        "region": [
+          67.8,
+          454.5,
+          586,
+          800
+        ]
+      },
+      "q16": {
+        "region": [
+          68.2,
+          299.1,
+          586,
+          512
+        ]
+      },
+      "q17": {
+        "region": [
+          69.7,
+          668.7,
+          586,
+          800
+        ]
+      },
+      "q18": {
+        "region": [
+          69.2,
+          361.9,
+          586,
+          800
+        ]
+      },
+      "q19": {
+        "region": [
+          68.2,
+          135.1,
+          586,
+          452
+        ]
+      },
+      "q20": {
+        "region": [
+          68.2,
+          542.7,
+          586,
+          822
+        ]
+      },
+      "q21": {
+        "region": [
+          69.7,
+          245.1,
+          586,
+          800
+        ]
+      },
+      "q22": {
+        "region": [
+          66.2,
+          388.1,
+          586,
+          800
+        ]
+      },
+      "q23": {
+        "region": [
+          68.5,
+          408.2,
+          586,
+          800
+        ]
+      },
+      "q24": {
+        "region": [
+          67.4,
+          315.9,
+          586,
+          800
+        ]
+      }
+    }
+  },
+  "widgets": false,
+  "media": [
+    {
+      "page": 1,
+      "region": [
+        30.2,
+        223.8,
+        508.0,
+        383.4
+      ],
+      "scene": "jm30:ExpectedNumber",
+      "src": "media/expected-number.mp4",
+      "poster": "media/expected-number.jpg",
+      "title": "Animate the expected number of occurrences"
+    },
+    {
+      "page": 2,
+      "region": [
+        36.0,
+        92.6,
+        532.6,
+        362.7
+      ],
+      "scene": "jm30:ExpectedValue",
+      "src": "media/expected-value.mp4",
+      "poster": "media/expected-value.jpg",
+      "title": "Animate the expected value"
+    }
+  ]
+}

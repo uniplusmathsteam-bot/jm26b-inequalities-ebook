@@ -96,6 +96,8 @@ function unwrapClasses(s) {
 
 /** Readable plain text for the PDF export. */
 function plain(step) {
+  if (step.tree) return `Possible outcomes: ${treeNodes(step.tree).leaves.join("; ")}`;
+  if (step.table) return step.table.rows.map((row) => row.filter((v) => v != null && v !== "").join(" | ")).join("; ");
   let s = unwrapClasses(step.m ?? step.t ?? step.note ?? "").replace(/\[\[[\w-]+\|/g, "").replace(/\]\]/g, "");
   if (step.t || step.note) s = s.replace(/\\\$/g, "\u0001").replace(/\$/g, "").replace(/\u0001/g, "$").replace(/\*\*/g, "");
   for (let k = 0; k < 3; k++) s = s.replace(/\\[dt]?frac\{([^{}]*)\}\{([^{}]*)\}/g, "($1)/($2)");
@@ -130,6 +132,131 @@ function nlSvg(spec) {
   return `<svg class="nlsvg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${g}</svg>`;
 }
 
+const TF = 11;
+let measure;
+function textW(s, bold = false) {
+  measure ??= document.createElement("canvas").getContext("2d");
+  measure.font = `${bold ? "700 " : ""}${TF}px "Times New Roman", Times, serif`;
+  return measure.measureText(s).width;
+}
+
+/** Nodes of a tree spec, with leaves in reading order and each leaf's outcome text. */
+function treeNodes(spec) {
+  const leaves = [];
+  const levels = [];
+  const walk = (list, depth, path) => list.map((n) => {
+    const [label, kids] = Array.isArray(n) ? n : [n, null];
+    const node = { label: String(label), depth };
+    (levels[depth] ??= []).push(node);
+    if (kids?.length) node.kids = walk(kids, depth + 1, [...path, node.label]);
+    else {
+      node.leaf = leaves.length;
+      leaves.push(spec.out?.[leaves.length] ?? [...path, node.label].join(spec.sep ?? ""));
+    }
+    return node;
+  });
+  return { roots: walk(spec.kids, 0, []), levels, leaves };
+}
+
+function treeSvg(spec) {
+  const ink = "#111";
+  const DY = 15;
+  const BR = 30;
+  const DOTS = 46;
+  const { roots, levels, leaves } = treeNodes(spec);
+  const top = spec.cols || spec.label ? 19 : 3;
+  const colW = levels.map((l) => Math.max(...l.map((n) => textW(n.label))));
+  const cols = spec.cols || [];
+  const headW = (d) => (cols[d] ? textW(cols[d], true) / 2 : 0);
+  const labelR = spec.label ? 2 + textW(spec.label, true) : 0;
+  let headR = labelR ? labelR - 2 : -Infinity;
+  const clear = (at, d) => {
+    if (!cols[d]) return at;
+    at = Math.max(at, headR + 8 + headW(d));
+    headR = at + headW(d);
+    return at;
+  };
+  const cx = [];
+  let x = 4 + BR;
+  colW.forEach((w, d) => {
+    cx[d] = clear(x + w / 2, d);
+    x = cx[d] + w / 2 + BR;
+  });
+  const outW = Math.max(...leaves.map((s) => textW(s)));
+  const xOut = clear(x - BR + DOTS + outW / 2, colW.length) - outW / 2;
+  const mark = new Set(spec.mark || []);
+  const setY = (n) => {
+    if (n.kids) {
+      n.kids.forEach(setY);
+      n.y = (n.kids[0].y + n.kids[n.kids.length - 1].y) / 2;
+    } else n.y = top + n.leaf * DY + DY / 2;
+  };
+  roots.forEach(setY);
+  const line = (x1, y1, x2, y2, dash = "") => `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${ink}" stroke-width="0.9"${dash}/>`;
+  const text = (s, x, y, anchor, extra = "") => `<text x="${x.toFixed(1)}" y="${(y + 3.8).toFixed(1)}" text-anchor="${anchor}"${extra}>${esc(s)}</text>`;
+  let g = "";
+  const draw = (list, fromX, fromY) => list.forEach((n) => {
+    const half = textW(n.label) / 2;
+    g += line(fromX, fromY, cx[n.depth] - half - 3, n.y);
+    g += text(n.label, cx[n.depth], n.y, "middle");
+    const right = cx[n.depth] + half + 3;
+    if (n.kids) draw(n.kids, right, n.y);
+    else {
+      g += line(right + 4, n.y, xOut - 6, n.y, ` stroke-dasharray="2.6 2.4"`);
+      const hit = mark.has(n.leaf) || mark.has(leaves[n.leaf]);
+      g += text(leaves[n.leaf], xOut, n.y, "start", hit ? ` fill="#d00"` : "");
+    }
+  });
+  draw(roots, 4, (roots[0].y + roots[roots.length - 1].y) / 2);
+  let w = xOut + outW + 3;
+  const bold = ` font-weight="700"`;
+  if (spec.label) g += text(spec.label, 2, 7, "start", bold);
+  if (spec.cols) {
+    spec.cols.forEach((c, d) => {
+      const at = d < cx.length ? cx[d] : xOut + outW / 2;
+      w = Math.max(w, at + textW(c, true) / 2 + 3);
+      g += text(c, at, 7, "middle", bold);
+    });
+  }
+  const h = top + leaves.length * DY + 2;
+  return `<svg class="trsvg" viewBox="0 0 ${w.toFixed(1)} ${h}" style="width:calc(${w.toFixed(1)}px * var(--k));height:calc(${h}px * var(--k))" font-family="Times New Roman, Times, serif" font-size="${TF}" fill="${ink}">${g}</svg>`;
+}
+
+/**
+ * A table of outcomes. With `at: { xs, ys }` (page points of the printed grid lines) the
+ * cells sit on a grid that is already printed; otherwise the whole table is drawn.
+ */
+function tableHTML(spec) {
+  const cells = (list) => new Set((list || []).map(([r, c]) => `${r},${c}`));
+  const strike = cells(spec.strike);
+  const hl = cells(spec.hl);
+  const content = (v) => (v == null || v === "" ? "" : `<span>${inline(String(v))}</span>`);
+  const at = spec.at;
+  const head = at ? 0 : spec.head ?? 1;
+  const side = at ? 0 : spec.side ?? 1;
+  const cls = (v, r, c) => {
+    const k = `${r},${c}`;
+    const list = [];
+    if (r < head || c < side) list.push(r < head && c < side && (v == null || v === "") ? "corner" : "th");
+    if (strike.has(k)) list.push("x");
+    if (hl.has(k)) list.push("hl");
+    if (spec.u && r >= head && c >= side) list.push("u");
+    return list.length ? ` class="${list.join(" ")}"` : "";
+  };
+  if (at) {
+    const { xs, ys } = at;
+    const body = spec.rows.map((row, r) => row.map((v, c) => {
+      const box = `left:${xs[c] - xs[0]}px;top:${ys[r] - ys[0]}px;width:${xs[c + 1] - xs[c]}px;height:${ys[r + 1] - ys[r]}px`;
+      return `<div${cls(v, r, c).replace('class="', 'class="tc ') || ' class="tc"'} style="${box}">${content(v)}</div>`;
+    }).join("")).join("");
+    return `<div class="tbo" style="width:${xs[xs.length - 1] - xs[0]}px;height:${ys[ys.length - 1] - ys[0]}px">${body}</div>`;
+  }
+  const body = spec.rows.map((row, r) => `<tr>${row.map((v, c) => `<td${cls(v, r, c)}>${content(v)}</td>`).join("")}</tr>`).join("");
+  const topCap = spec.top ? `<div class="tcap">${inline(spec.top)}</div>` : "";
+  const leftCap = spec.left ? `<div class="lcap">${inline(spec.left)}</div>` : "";
+  return `<div class="tb">${topCap}${leftCap}<table class="tbl">${body}</table></div>`;
+}
+
 const cache = new WeakMap();
 
 function stepHTML(step, id, i) {
@@ -140,18 +267,21 @@ function stepHTML(step, id, i) {
     if (step.m != null) body = `<span class="lx${lk}">${kx(`\\displaystyle ${step.m}`)}</span>`;
     else if (step.t != null) body = `<span class="lx${lk}">${inline(step.t)}</span>`;
     else if (step.note != null) body = `<span class="lx${lk}">${inline(step.note)}</span>`;
-    else body = nlSvg(step.nl);
+    else if (step.tree || step.table) {
+      body = step.tree ? treeSvg(step.tree) : tableHTML(step.table);
+      if (lk) body = `<span class="lx${lk}">${body}</span>`;
+    } else body = nlSvg(step.nl);
     if (step.r) body += `<span class="rs">${esc(step.r)}</span>`;
     cache.set(step, body);
   }
-  const kind = step.m != null ? "m" : step.t != null ? "t" : step.note != null ? "note" : "nl";
+  const kind = step.m != null ? "m" : step.t != null ? "t" : step.note != null ? "note" : step.tree ? "tree" : step.table ? "table" : "nl";
   return `<div class="ln ${kind}" data-q="${id}" data-i="${i}" data-plain="${esc(plain(step))}">${body}</div>`;
 }
 
 function renderPlan(inner, plan, id) {
   inner.innerHTML = plan.map((b) => {
     const head = b.cont ? `<div class="hd cont">(continued)</div>` : "";
-    return `<div class="abox">${head}${b.items.map((e) => stepHTML(e.step, id, e.i)).join("")}</div>`;
+    return `<div class="abox${b.box.bare ? " bare" : ""}">${head}${b.items.map((e) => stepHTML(e.step, id, e.i)).join("")}</div>`;
   }).join("");
   return [...inner.children];
 }
@@ -238,16 +368,26 @@ function graphicButton(id) {
   return `<button type="button" data-act="graphic" data-q="${id}" title="Open the interactive graphic"><svg viewBox="0 0 20 20"><path d="M3 16h14M5 13l4-5 3 3 4-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
 }
 
-/** Puts the controls just right of the boxes, wrapping into columns when the region is short. */
-function placeCtl(qa, els, W) {
-  const ctl = qa.querySelector(".ctl");
-  const count = ctl.querySelectorAll("button").length;
-  const rows = Math.max(2, Math.min(count, Math.floor((qa.offsetHeight + 3) / 25)));
+/** The control grid for a region `h` tall: the buttons wrap into columns when it is short. */
+function ctlGrid(qa, h) {
+  const count = qa.querySelectorAll(".ctl button").length;
+  const rows = Math.max(2, Math.min(count, Math.floor((h + 3) / 25)));
   const cols = Math.ceil(count / rows);
+  // In a short region the step counter would hang well below the buttons, over the next question.
+  const side = rows * 25 + 12 > h + 13;
+  return { rows, side, width: cols * 27 };
+}
+
+/** Puts the controls just right of the boxes; a side counter may stick out past the region. */
+function placeCtl(qa, els) {
+  const ctl = qa.querySelector(".ctl");
+  const { rows, side, width } = ctlGrid(qa, qa.offsetHeight);
   ctl.style.setProperty("--rows", rows);
+  ctl.classList.toggle("side", side);
   const right = els.reduce((m, el) => Math.max(m, el.offsetLeft + el.offsetWidth), 0);
-  const width = cols * 27;
-  ctl.style.left = `${Math.min(right + 6, qa.offsetWidth - width)}px`;
+  let left = Math.min(right + 6, qa.offsetWidth - width - (side ? 24 : 0));
+  if (left < right + 2) left = Math.min(right + 2, qa.offsetWidth - width);
+  ctl.style.left = `${left}px`;
   ctl.style.right = "auto";
   ctl.dataset.home = ctl.style.left;
 }
@@ -351,13 +491,15 @@ function split(plan, els, H) {
 function fit(q, qa) {
   const sol = SOLUTION_BY_ID[q.id];
   const [x0, y0, x1, y1] = q.region;
-  const W = x1 - x0 - CTL - 2;
   const H = y1 - y0;
+  const W = x1 - x0 - Math.max(CTL + 2, ctlGrid(qa, H).width);
   const inner = qa.querySelector(".qa-in");
   inner.style.width = `${W}px`;
   const ks = scales(sol.minScale ?? 0.82);
   const full = META[q.id].boxes.map((items, k) => ({ box: sol.boxes[k], items }));
-  const attempt = (plan, k) => {
+  const fractions = full.some((b) => b.items.some((e) => /\\[dt]?frac/.test(e.step.m ?? "")));
+  const attempt = (plan, k, tight) => {
+    qa.classList.toggle("tight", tight);
     inner.style.setProperty("--k", k);
     return place(renderPlan(inner, plan, q.id), plan, W, H, sol.flow, x0, sol.nowrap);
   };
@@ -365,22 +507,31 @@ function fit(q, qa) {
     .map((b) => ({ ...b, items: b.items.filter((e) => !e.step.optional) }))
     .filter((b) => b.items.length);
   const leaner = lean.some((b, k) => b.items.length !== full[k]?.items.length) || lean.length !== full.length;
-  const columns = (k) => {
+  const columns = (k, tight) => {
     if (sol.nowrap || sol.flow === "row") return false;
+    qa.classList.toggle("tight", tight);
     inner.style.setProperty("--k", k);
     const els = renderPlan(inner, full, q.id);
     for (const el of els) Object.assign(el.style, { width: "max-content", maxWidth: "none" });
     const cols = split(full, els, H);
     return !!cols && place(renderPlan(inner, cols, q.id), cols, W, H, "col", x0, false, true);
   };
+  // Stacked fractions get breathing room when that costs at most one scale step (none below 3/4 size).
+  const ladder = (list, fn, slack = 1) => {
+    for (let i = 0; i < list.length + slack; i++) {
+      if (i < list.length && fn(list[i], false)) return true;
+      if (i >= slack && fractions && fn(list[i - slack], true)) return true;
+    }
+    return false;
+  };
   // Side-by-side columns read better than text below about 3/4 size, so they come first.
   const big = ks.filter((k) => k >= 0.76);
-  for (const k of big) if (attempt(full, k)) return null;
-  if (leaner) for (const k of big) if (attempt(lean, k)) return null;
-  for (const k of big) if (columns(k)) return null;
-  for (const k of ks.filter((k) => k < 0.76)) {
-    if (attempt(full, k) || (leaner && attempt(lean, k)) || columns(k)) return null;
-  }
+  if (ladder(big, (k, tight) => attempt(full, k, tight))) return null;
+  if (leaner && ladder(big, (k, tight) => attempt(lean, k, tight))) return null;
+  if (ladder(big, columns)) return null;
+  const small = ks.filter((k) => k < 0.76);
+  const any = (k, tight) => attempt(full, k, tight) || (leaner && attempt(lean, k, tight)) || columns(k, tight);
+  if (ladder(small, any, 0)) return null;
   const kmin = ks[ks.length - 1];
   const count = lean.reduce((n, b) => n + b.items.length, 0);
   let lo = 1;
@@ -388,12 +539,12 @@ function fit(q, qa) {
   let best = 1;
   while (lo <= hi) {
     const mid = (lo + hi) >> 1;
-    if (attempt(head(lean, mid), kmin)) {
+    if (attempt(head(lean, mid), kmin, true)) {
       best = mid;
       lo = mid + 1;
     } else hi = mid - 1;
   }
-  attempt(head(lean, best), kmin);
+  attempt(head(lean, best), kmin, true);
   return markCont(lean, best);
 }
 

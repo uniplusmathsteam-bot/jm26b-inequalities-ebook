@@ -197,9 +197,26 @@ body[data-mode="laser"] #viewport { cursor: crosshair; }
   border-radius: 3px;
 }
 .ln.m { padding-left: 0.9em; }
+.qa:not(.tight) .ln.m:has(.mfrac) + .ln.m:has(.mfrac) { padding-top: 0.4em; }
 .ln.note { font-size: 0.9em; color: #5b3a00; background: #fff6d8; margin: 0.15em 0; padding: 0.2em 0.4em; }
 .ln.nl { padding: 0.1em 0 0; }
 .nlsvg { display: block; width: calc(236px * var(--k)); height: calc(58px * var(--k)); }
+.ln.tree, .ln.table { padding: 0.15em 0 0.1em; }
+.trsvg { display: block; }
+.tb { display: inline-grid; grid-template-areas: ". top" "left body"; align-items: center; }
+.tcap { grid-area: top; text-align: center; font-weight: 700; white-space: pre-line; }
+.lcap { grid-area: left; writing-mode: vertical-rl; transform: rotate(180deg); font-weight: 700; padding-left: 0.3em; white-space: pre-line; text-align: center; line-height: 1.1; }
+.tbl { grid-area: body; border-collapse: collapse; }
+.tbl td { border: 1px solid #111; padding: 0.04em 0.45em; text-align: center; white-space: nowrap; min-width: 2em; }
+.tbl td.th { background: #d9d9d9; font-weight: 700; }
+.tbl td.corner { border: none; background: none; }
+.tbl td.hl, .tc.hl { background: #c6efce; }
+.tbl td.x, .tc.x { background: linear-gradient(to bottom right, transparent calc(50% - 0.8px), #111 calc(50% - 0.4px), #111 calc(50% + 0.4px), transparent calc(50% + 0.8px)); }
+.tbl td.u > span, .tc.u > span { text-decoration: underline; }
+.abox.bare { padding: 0; border: none; outline: 1.4px solid var(--red); background: transparent; }
+.abox.bare .ln { padding: 0; }
+.tbo { position: relative; }
+.tc { position: absolute; display: grid; place-items: center; white-space: nowrap; }
 .lx { min-width: 0; }
 .rs {
   margin-left: auto;
@@ -306,6 +323,7 @@ body:not([data-mode="read"]) .ln.hid.next::after { content: "▸"; }
 .lk-tag.c-amber { border-color: #d4890a; }
 .lk-tag.c-purple { border-color: #7d55c7; }
 .prog { position: absolute; left: 0; right: 0; top: calc(100% + 2px); text-align: center; font-size: 8.5px; color: #5c6570; white-space: nowrap; }
+.ctl.side .prog { left: 100%; right: auto; top: auto; bottom: 2px; padding-left: 3px; text-align: left; }
 
 .mcl {
   position: absolute;

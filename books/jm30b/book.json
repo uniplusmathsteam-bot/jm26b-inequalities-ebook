@@ -1,0 +1,427 @@
+{
+  "id": "jm30b",
+  "form": "S3",
+  "code": "JM30 (B)",
+  "title": "Probabilities",
+  "topic": "Probabilities",
+  "year": 2026,
+  "status": "draft",
+  "storage": "jm30b",
+  "source": {
+    "que": "source/S3 JM30 (B) - Probabilities - 2026 (QUE made).pdf",
+    "ans": "source/S3 JM30 (B) - Probabilities - 2026 (ANS).pdf",
+    "ansPageOffset": 0
+  },
+  "sections": [
+    {
+      "id": "tree",
+      "label": "Tree diagram"
+    },
+    {
+      "id": "table",
+      "label": "Tables"
+    },
+    {
+      "id": "level2",
+      "label": "Level 2"
+    }
+  ],
+  "continuation": {
+    "band": 60,
+    "top": 80,
+    "x": 48,
+    "width": 499,
+    "bottom": 812
+  },
+  "extract": {
+    "zoom": 3,
+    "regionX": [
+      66,
+      546
+    ],
+    "footer": 822,
+    "questions": [
+      {
+        "id": "q1",
+        "page": 2,
+        "label": "1",
+        "section": "tree"
+      },
+      {
+        "id": "q2",
+        "page": 2,
+        "label": "2",
+        "section": "tree"
+      },
+      {
+        "id": "q3",
+        "page": 2,
+        "label": "3",
+        "section": "tree"
+      },
+      {
+        "id": "q4",
+        "page": 3,
+        "label": "4",
+        "section": "tree"
+      },
+      {
+        "id": "q5",
+        "page": 3,
+        "label": "5",
+        "section": "tree"
+      },
+      {
+        "id": "q6",
+        "page": 3,
+        "label": "6",
+        "section": "tree"
+      },
+      {
+        "id": "q7",
+        "page": 4,
+        "label": "7",
+        "section": "table"
+      },
+      {
+        "id": "q7b",
+        "page": 4,
+        "label": "7(b)",
+        "section": "table"
+      },
+      {
+        "id": "q8",
+        "page": 5,
+        "label": "8",
+        "section": "table"
+      },
+      {
+        "id": "q8b",
+        "page": 5,
+        "label": "8(b)",
+        "section": "table"
+      },
+      {
+        "id": "q9",
+        "page": 5,
+        "label": "9",
+        "section": "table"
+      },
+      {
+        "id": "q9b",
+        "page": 5,
+        "label": "9(b)",
+        "section": "table"
+      },
+      {
+        "id": "q10",
+        "page": 5,
+        "label": "10",
+        "section": "table"
+      },
+      {
+        "id": "q11",
+        "page": 6,
+        "label": "11",
+        "section": "level2"
+      },
+      {
+        "id": "q12",
+        "page": 6,
+        "label": "12",
+        "section": "level2"
+      },
+      {
+        "id": "q13",
+        "page": 7,
+        "label": "13",
+        "section": "level2"
+      },
+      {
+        "id": "q14",
+        "page": 7,
+        "label": "14",
+        "section": "level2"
+      },
+      {
+        "id": "q15",
+        "page": 8,
+        "label": "15",
+        "section": "level2"
+      },
+      {
+        "id": "q16",
+        "page": 8,
+        "label": "16",
+        "section": "level2"
+      },
+      {
+        "id": "q17",
+        "page": 9,
+        "label": "17",
+        "section": "level2"
+      },
+      {
+        "id": "q18",
+        "page": 10,
+        "label": "18",
+        "section": "level2"
+      },
+      {
+        "id": "q19",
+        "page": 11,
+        "label": "19",
+        "section": "level2"
+      },
+      {
+        "id": "q20",
+        "page": 12,
+        "label": "20",
+        "section": "level2"
+      }
+    ],
+    "anchors": {},
+    "fixedAnchors": {
+      "q7b": [
+        693.6,
+        703.6
+      ],
+      "q8b": [
+        247.1,
+        257.1
+      ],
+      "q9b": [
+        502.7,
+        512.7
+      ]
+    },
+    "overrides": {
+      "q1": {
+        "region": [
+          68.4,
+          155.3,
+          586,
+          244.7
+        ]
+      },
+      "q2": {
+        "region": [
+          67.9,
+          351.2,
+          586,
+          496.9
+        ]
+      },
+      "q3": {
+        "region": [
+          67.8,
+          648.7,
+          586,
+          789.6
+        ]
+      },
+      "q4": {
+        "region": [
+          70.8,
+          136.4,
+          586,
+          300.1
+        ]
+      },
+      "q5": {
+        "region": [
+          70.2,
+          398.2,
+          586,
+          586.8
+        ]
+      },
+      "q6": {
+        "region": [
+          67.8,
+          659.8,
+          586,
+          809.6
+        ]
+      },
+      "q7": {
+        "region": [
+          161.4,
+          599.3,
+          586,
+          638.8
+        ]
+      },
+      "q7b": {
+        "region": [
+          64.2,
+          692.6,
+          586,
+          797.0
+        ]
+      },
+      "q8": {
+        "region": [
+          137.2,
+          169.6,
+          586,
+          226.2
+        ]
+      },
+      "q8b": {
+        "region": [
+          67.3,
+          246.1,
+          586,
+          312.6
+        ]
+      },
+      "q9": {
+        "region": [
+          161.2,
+          427.4,
+          586,
+          486.6
+        ]
+      },
+      "q9b": {
+        "region": [
+          66.9,
+          501.7,
+          586,
+          562.0
+        ]
+      },
+      "q10": {
+        "region": [
+          68.7,
+          653.6,
+          586,
+          827.4
+        ]
+      },
+      "q11": {
+        "region": [
+          69.7,
+          173.3,
+          586,
+          418.2
+        ]
+      },
+      "q12": {
+        "region": [
+          70.6,
+          519.3,
+          586,
+          784.1
+        ]
+      },
+      "q13": {
+        "region": [
+          68.8,
+          102.2,
+          586,
+          298.3
+        ]
+      },
+      "q14": {
+        "region": [
+          72.9,
+          419.9,
+          586,
+          747.1
+        ]
+      },
+      "q15": {
+        "region": [
+          68.7,
+          113.9,
+          586,
+          363.9
+        ]
+      },
+      "q16": {
+        "region": [
+          69.2,
+          476.6,
+          586,
+          829.2
+        ]
+      },
+      "q17": {
+        "region": [
+          70.2,
+          317.5,
+          586,
+          716.3
+        ]
+      },
+      "q18": {
+        "region": [
+          69.7,
+          318.2,
+          586,
+          519.6
+        ]
+      },
+      "q19": {
+        "region": [
+          70.4,
+          210.5,
+          458,
+          425.3
+        ]
+      },
+      "q20": {
+        "region": [
+          72.3,
+          273.2,
+          586,
+          541.2
+        ]
+      }
+    }
+  },
+  "widgets": false,
+  "media": [
+    {
+      "page": 1,
+      "region": [
+        32.5,
+        223.3,
+        555.2,
+        795.9
+      ],
+      "scene": "jm30:TreeDiagram",
+      "src": "media/tree.mp4",
+      "poster": "media/tree.jpg",
+      "title": "Animate the tree diagrams"
+    },
+    {
+      "page": 4,
+      "region": [
+        18.7,
+        136.8,
+        583.3,
+        295.2
+      ],
+      "scene": "jm30:TreeVsTable",
+      "src": "media/tree-table.mp4",
+      "poster": "media/tree-table.jpg",
+      "title": "Animate a tree diagram becoming a table"
+    },
+    {
+      "page": 4,
+      "region": [
+        15.6,
+        326.7,
+        580.1,
+        521.8
+      ],
+      "scene": "jm30:RemoveImpossible",
+      "src": "media/remove.mp4",
+      "poster": "media/remove.jpg",
+      "title": "Animate removing impossible outcomes"
+    }
+  ]
+}
