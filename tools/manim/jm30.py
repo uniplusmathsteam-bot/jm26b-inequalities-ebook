@@ -392,3 +392,153 @@ class RemoveImpossible(PrintScene):
         self.play(FadeOut(VGroup(*left)), run_time=0.4)
         self.wipe(final[3], 0.8)
         self.wait(1.5)
+
+
+# ---------------------------------------------------------------- JM30 (C) pages 1 and 2
+
+class ExpectedNumber(PrintScene):
+    """Expected number = trials x probability; 315 throws and the 1/6 chance go into the working."""
+
+    BOOK, PAGE = "jm30c", 1
+
+    def construct(self):
+        note = self.cover(270.5, 350.0, 456.5, 376.0)
+        arrow = self.cover(142.0, 348.0, 263.5, 367.0)
+        answer = self.cover(93.0, 345.0, 137.5, 359.5)
+        work = self.covers((93.0, 322.5, 105.5, 331.5), (110.5, 320.0, 133.0, 332.5),
+                           (137.3, 321.3, 148.5, 332.2), (157.5, 310.0, 169.0, 341.3))
+        eg = self.covers((60.0, 291.5, 82.0, 307.0), (91.5, 291.5, 487.0, 307.0))
+        rule = self.covers((59.5, 237.0, 188.0, 267.5), (197.5, 247.5, 210.0, 256.0), (220.0, 245.0, 337.0, 258.0),
+                           (340.5, 247.0, 351.5, 257.5), (354.5, 245.0, 482.0, 261.0))
+        self.wait(0.3)
+
+        for c, t in zip(rule, (1.1, 0.3, 0.9, 0.3, 1.0)):
+            self.wipe(c, t)
+        self.wait(0.4)
+        self.wipe(eg[0], 0.4)
+        self.wipe(eg[1], 2.0)
+        self.wait(0.3)
+
+        trials = [self.ring(394.0, 293.3, 485.0, 302.3, GREEN), self.ring(222.0, 246.8, 334.7, 256.0, GREEN)]
+        self.play(*[Create(r) for r in trials], run_time=0.6)
+        self.wipe(work[0], 0.3)
+        m = self.fly((434.5, 293.7, 452.8, 302.3), (112.5, 321.8, 130.8, 330.7), 1.0)
+        self.remove(work[1])
+        self.play(FadeOut(m), FadeOut(VGroup(*trials)), run_time=0.4)
+        self.wipe(work[2], 0.3)
+        chance = [self.ring(335.8, 293.3, 378.3, 302.3, BLUE), self.ring(356.7, 246.8, 479.7, 258.7, BLUE)]
+        self.play(*[Create(r) for r in chance], run_time=0.6)
+        self.wipe(work[3], 0.6, edge="top")
+        self.play(FadeOut(VGroup(*chance)), run_time=0.4)
+        self.wait(0.3)
+        self.wipe(answer, 0.8)
+        self.wait(0.4)
+        self.wipe(note, 1.4)
+        self.wipe(arrow, 0.8, edge="right")
+        self.wait(1.5)
+
+
+class ExpectedValue(PrintScene):
+    """Expected value = sum of outcome x probability; each column of the lucky-draw table becomes a term."""
+
+    BOOK, PAGE = "jm30c", 2
+
+    def construct(self):
+        note = self.cover(338.5, 320.5, 509.0, 349.2)
+        arrow = self.cover(293.8, 319.5, 332.5, 330.5)
+        answer = self.cover(251.5, 311.5, 289.0, 326.0)
+        terms = [self.covers(*t) for t in (
+            ((266.0, 282.5, 282.0, 297.0), (283.3, 284.5, 293.3, 295.5), (296.0, 273.0, 306.5, 304.0), (311.7, 284.5, 323.0, 296.0)),
+            ((327.3, 283.5, 349.0, 297.0), (350.3, 285.5, 360.3, 296.0), (364.3, 274.0, 374.8, 305.2), (378.3, 285.5, 389.7, 297.0)),
+            ((394.0, 284.5, 422.7, 297.8), (423.7, 286.0, 433.7, 297.0), (436.8, 274.5, 447.3, 306.0)),
+        )]
+        label = self.cover(101.5, 281.5, 262.5, 298.0)
+        body = [[self.cover(*c) for c in row] for row in cells([211.8, 255.9, 300.8, 345.8], [189.4, 223.9, 264.8], 1.0)]
+        table = self.cover(99.5, 187.5, 348.0, 266.7)
+        intro = self.covers((68.5, 111.5, 494.0, 127.0), (100.5, 138.0, 457.0, 153.5),
+                            (68.5, 167.5, 89.5, 183.0), (100.5, 167.5, 167.0, 183.0))
+        self.wait(0.3)
+
+        for c, t in zip(intro, (2.0, 1.8, 0.4, 0.6)):
+            self.wipe(c, t)
+        self.wait(0.3)
+        self.play(FadeOut(table, run_time=0.7))
+        for c in body[0]:
+            self.wipe(c, 0.35)
+        self.wipes(body[1], 0.6, edge="top")
+        self.wait(0.4)
+        self.wipe(label, 1.2)
+
+        values = [(227.8, 203.0, 240.3, 212.8), (269.2, 203.0, 287.7, 212.8), (310.3, 202.5, 335.8, 212.5)]
+        chances = [(230.0, 230.6, 237.3, 258.6), (274.9, 230.6, 282.4, 258.6), (319.8, 230.3, 327.2, 258.3)]
+        slots = [((267.8, 283.7, 280.2, 295.7), (297.5, 274.7, 305.0, 302.3)),
+                 ((328.8, 283.7, 347.3, 295.3), (365.8, 275.8, 373.3, 303.5)),
+                 ((395.5, 284.5, 421.2, 296.0), (438.3, 276.3, 445.8, 304.3))]
+        for value, chance, (to_value, to_chance), cover in zip(values, chances, slots, terms):
+            rings = [self.ring(*value, BLUE), self.ring(*chance, GREEN)]
+            self.play(*[Create(r) for r in rings], run_time=0.5)
+            self.remove(cover[1])
+            copies = self.flies([(value, to_value), (chance, to_chance)], 1.0, extra=[FadeOut(VGroup(*rings), run_time=1.0)])
+            self.remove(cover[0], cover[2])
+            self.play(*[FadeOut(m) for m in copies], run_time=0.3)
+            if len(cover) > 3:
+                self.wipe(cover[3], 0.3)
+        self.wait(0.4)
+        self.wipe(answer, 0.8)
+        self.wait(0.3)
+        self.wipe(note, 1.4)
+        self.wipe(arrow, 0.6, edge="right")
+        self.wait(1.5)
+
+
+class ExpectedValue(PrintScene):
+    """Expected value = sum of outcome x probability; each column of the lucky-draw table becomes a term."""
+
+    BOOK, PAGE = "jm30c", 2
+
+    def construct(self):
+        note = self.cover(338.5, 320.5, 509.0, 349.2)
+        arrow = self.cover(293.8, 319.5, 332.5, 330.5)
+        answer = self.cover(251.5, 311.5, 289.0, 326.0)
+        terms = [self.covers(*t) for t in (
+            ((266.0, 282.5, 282.0, 297.0), (283.3, 284.5, 293.3, 295.5), (296.0, 273.0, 306.5, 304.0), (311.7, 284.5, 323.0, 296.0)),
+            ((327.3, 283.5, 349.0, 297.0), (350.3, 285.5, 360.3, 296.0), (364.3, 274.0, 374.8, 305.2), (378.3, 285.5, 389.7, 297.0)),
+            ((394.0, 284.5, 422.7, 297.8), (423.7, 286.0, 433.7, 297.0), (436.8, 274.5, 447.3, 306.0)),
+        )]
+        label = self.cover(101.5, 281.5, 262.5, 298.0)
+        body = [[self.cover(*c) for c in row] for row in cells([211.8, 255.9, 300.8, 345.8], [189.4, 223.9, 264.8], 1.0)]
+        table = self.cover(99.5, 187.5, 348.0, 266.7)
+        intro = self.covers((68.5, 111.5, 494.0, 127.0), (100.5, 138.0, 457.0, 153.5),
+                            (68.5, 167.5, 89.5, 183.0), (100.5, 167.5, 167.0, 183.0))
+        self.wait(0.3)
+
+        for c, t in zip(intro, (2.0, 1.8, 0.4, 0.6)):
+            self.wipe(c, t)
+        self.wait(0.3)
+        self.play(FadeOut(table, run_time=0.7))
+        for c in body[0]:
+            self.wipe(c, 0.35)
+        self.wipes(body[1], 0.6, edge="top")
+        self.wait(0.4)
+        self.wipe(label, 1.2)
+
+        values = [(227.8, 203.0, 240.3, 212.8), (269.2, 203.0, 287.7, 212.8), (310.3, 202.5, 335.8, 212.5)]
+        chances = [(230.0, 230.6, 237.3, 258.6), (274.9, 230.6, 282.4, 258.6), (319.8, 230.3, 327.2, 258.3)]
+        slots = [((267.8, 283.7, 280.2, 295.7), (297.5, 274.7, 305.0, 302.3)),
+                 ((328.8, 283.7, 347.3, 295.3), (365.8, 275.8, 373.3, 303.5)),
+                 ((395.5, 284.5, 421.2, 296.0), (438.3, 276.3, 445.8, 304.3))]
+        for value, chance, (to_value, to_chance), cover in zip(values, chances, slots, terms):
+            rings = [self.ring(*value, BLUE), self.ring(*chance, GREEN)]
+            self.play(*[Create(r) for r in rings], run_time=0.5)
+            self.remove(cover[1])
+            copies = self.flies([(value, to_value), (chance, to_chance)], 1.0, extra=[FadeOut(VGroup(*rings), run_time=1.0)])
+            self.remove(cover[0], cover[2])
+            self.play(*[FadeOut(m) for m in copies], run_time=0.3)
+            if len(cover) > 3:
+                self.wipe(cover[3], 0.3)
+        self.wait(0.4)
+        self.wipe(answer, 0.8)
+        self.wait(0.3)
+        self.wipe(note, 1.4)
+        self.wipe(arrow, 0.6, edge="right")
+        self.wait(1.5)

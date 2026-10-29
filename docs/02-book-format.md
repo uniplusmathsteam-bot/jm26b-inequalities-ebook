@@ -70,7 +70,7 @@ Re-run `python tools/extract_pages.py <id>` after any `book.json → extract` ch
 ## solutions.js
 
 ```js
-import { m, t, h, note, nl, L, lk } from "../../engine/authoring.js";
+import { m, t, h, note, nl, tree, table, grow, align, L, lk } from "../../engine/authoring.js";
 
 export const SOLUTIONS = [
   {
@@ -100,6 +100,7 @@ export const SOLUTIONS = [
 | `boxes[].steps` | The lines of that box, in reveal order. |
 | `boxes[].w` | Fixed box width in points (otherwise the box fits its content). |
 | `boxes[].left` | Page x where this box should start, to line it up under a part of the question. |
+| `boxes[].bare` | No padding or fill, only the red outline: for a `table` with `at` that fills a grid printed on the page. |
 | `flow: "col"` | Stack the boxes in columns instead of rows. Good for long MC working beside the options. |
 | `minScale` | The smallest text scale allowed before the answer continues on an extra sheet (default 0.82; MC questions often need 0.62). |
 | `nowrap: true` | Keep the boxes in one row; shrink instead of wrapping. |
@@ -116,6 +117,9 @@ export const SOLUTIONS = [
 | `h(label)` | part heading such as "(a)" | not a step: never hidden, not counted |
 | `note(text)` | a teacher's margin note | same syntax as `t` |
 | `nl({ min, max, op, at, dots?, mark? })` | HKDSE number line | `op`: `lt`, `le`, `gt`, `ge`. `dots`: integers marked in red. `mark`: one highlighted value. It is optional: dropped first when space is short. |
+| `tree({ label?, cols?, kids, out?, sep?, mark? })` | tree diagram with a dashed line to each outcome | `kids`: nested `[label, kids]` pairs; `grow(["H", "T"], ["1", "2", "3"])` builds a tree where every stage has the same choices. `label`: part label at the top left. `cols`: bold column headers, one per stage plus one for the outcomes (pushed right so they never overlap). Outcomes are the labels on the path joined by `sep` (default ""), or `out[i]`. `mark`: outcome indexes or texts shown in red. |
+| `table({ rows, top?, left?, head?, side?, strike?, hl?, u?, at? })` | table of outcomes | `rows`: arrays of cell text (`$maths$` allowed). The first `head` rows and `side` columns (default 1 each) are bold headers; `top` / `left` are captions above and beside the table. `strike` and `hl`: `[[r, c], …]` cells crossed out "╱" or highlighted. `u: true` underlines the body cells. `at: { xs, ys }`: page points of a grid already printed on the page; only the cells are drawn, there are no headers, and the text scales to the row height. |
+| `align(steps)` | wraps a step list | Each "= …", "≈ …" or "> …" display line hangs under the first relation of the line that starts its chain, as printed keys do. |
 | `lk(key, step)` | marks a whole step as the answer side of link `key` | |
 | `L(key, tex)` | marks part of the maths as link `key` | Start with `{}` when the part begins with an operator, e.g. `L("lt", "{} < 4")`, so KaTeX keeps the spacing. Links can be nested. |
 

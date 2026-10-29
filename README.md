@@ -24,6 +24,9 @@ Live site: <https://uniplusmathsteam-bot.github.io/jm26b-inequalities-ebook/>. I
 | `jm29d` | S3 JM29 (D) Quadrilaterals | live |
 | `jm29e` | S3 JM29 (E) Quadrilaterals | live |
 | `m211-4` | M2 M211 Introduction to Vectors (4) | live |
+| `jm30a` | S3 JM30 (A) Probabilities | live |
+| `jm30b` | S3 JM30 (B) Probabilities | live |
+| `jm30c` | S3 JM30 (C) Probabilities | live |
 
 The library lists the books in `books/catalog.json`; each book's details are in `books/<id>/book.json`.
 
