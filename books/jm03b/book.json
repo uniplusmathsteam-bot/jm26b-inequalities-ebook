@@ -1,0 +1,265 @@
+{
+  "id": "jm03b",
+  "form": "S1",
+  "code": "JM03 (B)",
+  "title": "Percentages",
+  "topic": "Percentages",
+  "year": 2026,
+  "status": "live",
+  "storage": "jm03b",
+  "source": {
+    "que": "source/S1 JM03 (B) - Percentages 1[QUE].pdf",
+    "ans": "source/S1 JM03 (B) - Percentages 1[ANS].pdf",
+    "ansPageOffset": 0
+  },
+  "sections": [
+    {
+      "id": "profit",
+      "label": "Profit and loss"
+    },
+    {
+      "id": "discount",
+      "label": "Discount"
+    },
+    {
+      "id": "level2",
+      "label": "Level 2"
+    }
+  ],
+  "continuation": {
+    "band": 60,
+    "top": 80,
+    "x": 48,
+    "width": 499,
+    "bottom": 812
+  },
+  "extract": {
+    "zoom": 3,
+    "regionX": [
+      66,
+      546
+    ],
+    "footer": 822,
+    "questions": [
+      {
+        "id": "q1",
+        "page": 1,
+        "label": "1",
+        "section": "profit"
+      },
+      {
+        "id": "q2",
+        "page": 1,
+        "label": "2",
+        "section": "profit"
+      },
+      {
+        "id": "q3",
+        "page": 2,
+        "label": "3",
+        "section": "profit"
+      },
+      {
+        "id": "q4",
+        "page": 2,
+        "label": "4",
+        "section": "profit"
+      },
+      {
+        "id": "q5",
+        "page": 2,
+        "label": "5",
+        "section": "profit"
+      },
+      {
+        "id": "q6",
+        "page": 2,
+        "label": "6",
+        "section": "profit"
+      },
+      {
+        "id": "q7",
+        "page": 2,
+        "label": "7",
+        "section": "profit"
+      },
+      {
+        "id": "q8",
+        "page": 3,
+        "label": "8",
+        "section": "profit"
+      },
+      {
+        "id": "q9",
+        "page": 3,
+        "label": "9",
+        "section": "profit"
+      },
+      {
+        "id": "q10",
+        "page": 3,
+        "label": "10",
+        "section": "profit"
+      },
+      {
+        "id": "q11",
+        "page": 3,
+        "label": "11",
+        "section": "profit"
+      },
+      {
+        "id": "q12",
+        "page": 4,
+        "label": "12",
+        "section": "discount"
+      },
+      {
+        "id": "q13",
+        "page": 4,
+        "label": "13",
+        "section": "discount"
+      },
+      {
+        "id": "q14",
+        "page": 4,
+        "label": "14",
+        "section": "discount"
+      },
+      {
+        "id": "q15",
+        "page": 4,
+        "label": "15",
+        "section": "discount"
+      },
+      {
+        "id": "q16",
+        "page": 5,
+        "label": "16",
+        "section": "discount"
+      },
+      {
+        "id": "q17",
+        "page": 5,
+        "label": "17",
+        "section": "discount"
+      },
+      {
+        "id": "q18",
+        "page": 5,
+        "label": "18",
+        "section": "discount"
+      },
+      {
+        "id": "q19",
+        "page": 5,
+        "label": "19",
+        "section": "discount"
+      },
+      {
+        "id": "q20",
+        "page": 6,
+        "label": "20",
+        "section": "discount"
+      },
+      {
+        "id": "q21",
+        "page": 6,
+        "label": "21",
+        "section": "level2"
+      },
+      {
+        "id": "q22",
+        "page": 6,
+        "label": "22",
+        "section": "level2"
+      },
+      {
+        "id": "q23",
+        "page": 7,
+        "label": "23",
+        "section": "level2"
+      },
+      {
+        "id": "q24",
+        "page": 7,
+        "label": "24",
+        "section": "level2"
+      },
+      {
+        "id": "q25",
+        "page": 7,
+        "label": "25",
+        "section": "level2"
+      },
+      {
+        "id": "q26",
+        "page": 8,
+        "label": "26",
+        "section": "level2"
+      },
+      {
+        "id": "q27",
+        "page": 8,
+        "label": "27",
+        "section": "level2"
+      }
+    ],
+    "anchors": {},
+    "fixedAnchors": {},
+    "overrides": {
+      "q1": {
+        "region": [
+          105,
+          620,
+          535,
+          680
+        ]
+      },
+      "q2": {
+        "region": [
+          105,
+          724,
+          535,
+          784
+        ]
+      },
+      "q12": {
+        "region": [
+          105,
+          294,
+          535,
+          354
+        ]
+      }
+    }
+  },
+  "widgets": false,
+  "media": [
+    {
+      "page": 1,
+      "region": [
+        40,
+        218,
+        555,
+        575
+      ],
+      "scene": "jm03:ProfitLossFormulas",
+      "src": "media/profit_loss.mp4",
+      "poster": "media/profit_loss.jpg",
+      "title": "Animate profit and loss formulas"
+    },
+    {
+      "page": 4,
+      "region": [
+        40,
+        70,
+        555,
+        255
+      ],
+      "scene": "jm03:CostMarkedSelling",
+      "src": "media/cost_marked_selling.mp4",
+      "poster": "media/cost_marked_selling.jpg",
+      "title": "Animate cost, marked and selling price"
+    }
+  ]
+}
