@@ -46,6 +46,9 @@ function inline(src) {
     if (src.startsWith("\\$", i)) {
       buf += "$";
       i += 2;
+    } else if (src.startsWith("\\%", i)) {
+      buf += "%";
+      i += 2;
     } else if (src[i] === "$") {
       let j = i + 1;
       while (j < src.length && !(src[j] === "$" && src[j - 1] !== "\\")) j++;

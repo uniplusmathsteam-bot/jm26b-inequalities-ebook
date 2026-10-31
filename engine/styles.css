@@ -238,6 +238,14 @@ body[data-mode="laser"] #viewport { cursor: crosshair; }
   border-radius: 4px;
   background: #ece8e1;
 }
+/* Printed grids are multi-row; the usual 22% inset would leave answer cells uncovered. */
+.ln.table.hid::before {
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 0;
+}
 .ln.hid.next::before {
   background: repeating-linear-gradient(135deg, #fde3df 0 6px, #fbd2cc 6px 12px);
   outline: 1px dashed #e7867b;
