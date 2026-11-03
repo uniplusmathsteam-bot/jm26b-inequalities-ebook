@@ -307,26 +307,27 @@ class CardScene(PageScene):
 class Trapezium(CardScene):
     def construct(self):
         rows = self.card((36, 215, 387, 334), "A.   Trapezium", ["The bases are parallel sides", "The perpendicular between the bases is the height", "Area ="], 239)
-        # Small enough that the half-turned copy stays inside the panel (x ≤ 588).
-        U1, U2, L1, L2 = (400, 235), (448, 235), (388, 285), (478, 285)
+        # Clear of the card (right edge 387), and small enough that the
+        # half-turned copy stays inside the panel (x ≤ 588).
+        U1, U2, L1, L2 = (424, 235), (472, 235), (412, 285), (502, 285)
         shape = self.poly(U1, U2, L2, L1, color=FRAME_BLUE, width=1.4)
         self.play(Create(shape), run_time=0.8)
         par = VGroup(self.chevrons(U1, U2, 1, INK, 4, 0.6), self.chevrons(L1, L2, 1, INK, 4, 0.6))
         upper = self.span((U1[0], 229), (U2[0], 229))
         lower = self.span((L1[0], 291), (L2[0], 291))
-        names = VGroup(self.label("upper base", (424, 223), 8, font=SERIF, weight=NORMAL), self.label("lower base", (433, 297), 8, font=SERIF, weight=NORMAL))
+        names = VGroup(self.label("upper base", (448, 223), 8, font=SERIF, weight=NORMAL), self.label("lower base", (457, 297), 8, font=SERIF, weight=NORMAL))
         self.play(Write(rows[0]), FadeIn(par), Create(upper), Create(lower), FadeIn(names), Indicate(self.line(U1, U2, FRAME_BLUE, 2)), run_time=1.2)
-        H = (405, 285)
+        H = (429, 285)
         height = VGroup(
-            self.line((405, 237), H, INK, 1.0), self.chevrons(H, (405, 237), 1, INK, 4, 1.0),
-            self.right(H, (405, 237), L2, 5, INK, None), self.label("height", (418, 260), 8, font=SERIF, weight=NORMAL),
+            self.line((429, 237), H, INK, 1.0), self.chevrons(H, (429, 237), 1, INK, 4, 1.0),
+            self.right(H, (429, 237), L2, 5, INK, None), self.label("height", (442, 260), 8, font=SERIF, weight=NORMAL),
         )
         self.play(Write(rows[1]), Create(height), run_time=1.4)
         # Two copies of the trapezium make a parallelogram with base (upper + lower).
         M = ((U2[0] + L2[0]) / 2, (U2[1] + L2[1]) / 2)
         copy = self.poly(U1, U2, L2, L1, color=ORANGE, width=1.4).set_fill(ORANGE, 0.25)
         self.play(Rotate(copy, PI, about_point=self.P(*M)), run_time=1.4)
-        whole = self.label("upper + lower", (468, 297), 8, color="#9a5b00", font=SERIF, weight=NORMAL)
+        whole = self.label("upper + lower", (492, 297), 8, color="#9a5b00", font=SERIF, weight=NORMAL)
         self.play(FadeOut(names[1]), FadeIn(whole), run_time=0.6)
         frac_top = self.text("(upper base+lower base) × height", 131, 304.5, 8.5, font=MATH)
         bar = self.line((131, 307.5), (270, 307.5), INK, 0.6)

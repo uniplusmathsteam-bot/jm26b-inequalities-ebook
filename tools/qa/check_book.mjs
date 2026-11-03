@@ -208,6 +208,10 @@ try {
       const inner = qa.querySelector(".qa-in");
       return [qa.dataset.q, Math.ceil(parseFloat(inner.style.getPropertyValue("--used")) - inner.clientHeight)];
     }),
+    dropped: [...new Set([...document.querySelectorAll(".qa[data-q] .ln > .rs")].filter((rs) => {
+      const lx = rs.parentElement.querySelector(".lx");
+      return lx && rs.offsetTop >= lx.offsetTop + lx.offsetHeight - 2;
+    }).map((rs) => rs.closest(".qa").dataset.q))],
     small: [...document.querySelectorAll(".qa")].map((qa) => {
       const ks = [...qa.querySelectorAll(".abox")].map((el) => Number(el.style.getPropertyValue("--k"))).filter((k) => k > 0);
       return [qa.dataset.q, ks.length ? Math.min(...ks) : 1];
@@ -215,6 +219,7 @@ try {
   }));
   for (const [q, more] of fit.scrolling) warn(`${q}: answer scrolls inside its region (${more} pt more would show it all; "space" in extract.overrides opens the page)`);
   for (const [q, k] of fit.small) warn(`${q}: a wide line is set at ${Math.round(k * 100)} % to fit its column`);
+  for (const q of fit.dropped) warn(`${q}: a reason sits under its step instead of beside it`);
 
   if (shots) {
     // Tall enough for a whole fit-width sheet; the reader pans with a transform, so jump by #hash.

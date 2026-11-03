@@ -201,10 +201,17 @@ body[data-mode="laser"] #viewport { cursor: crosshair; }
 .qa-in { position: absolute; left: 0; top: 0; bottom: 0; --k: 1; }
 .qa.flash .abox { box-shadow: 0 0 0 3px rgba(255, 196, 0, 0.75); }
 
-/* A box that has to stay inside a column or the region's width: a reason may
-   drop under its step instead of pushing past the edge (see fitInWidth). */
-.abox.wrap .ln:has(.rs) { flex-wrap: wrap; width: auto; max-width: 100%; }
-.abox.wrap .ln:has(.rs) > .lx { min-width: 0; flex: 0 1 auto; }
+/* A box that has to stay inside a column or the region's width: a long step
+   breaks before "=" and its reason stays beside it. Only when the step still
+   cannot fit does its reason drop under it (.ln.drop, see fitInWidth). */
+.abox.wrap .ln:has(.rs) { width: auto; max-width: 100%; }
+.abox.wrap .ln:has(.rs) > .lx { min-width: min-content; flex: 0 1 auto; }
+.abox.wrap .ln.m:has(.rs):not(.drop) > .lx:not(.segs) { white-space: nowrap; }
+.abox.wrap .ln.drop:has(.rs) { flex-wrap: wrap; }
+.abox.wrap .ln.drop:has(.rs) > .lx { min-width: 0; }
+.abox.wrap .ln.tuck > .lx { flex: 0 0 auto; min-width: 0; }
+.abox.wrap .ln.tuck > .rs { position: absolute; }
+i.baseline { display: inline-block; width: 0; height: 0; }
 
 /* An answer taller than its region keeps its type size and scrolls inside it.
    The ::after marks the answer's full height, so the last line clears the edge. */

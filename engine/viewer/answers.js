@@ -737,48 +737,116 @@ function fit(page, q, qa) {
 
 /**
  * Sets the whole answer at type size k in rows across the region, each equation
- * free to break before an equals sign and each reason free to drop under its
- * step. "grow" makes the region as tall as the answer (growSheet() then opens
+ * free to break before an equals sign (see fitInWidth). "grow" makes the
+ * region as tall as the answer (growSheet() then opens
  * the page below it); "scroll" keeps the region and lets the answer scroll.
  */
 function flowFit(q, qa, k, mode) {
   const sol = SOLUTION_BY_ID[q.id];
-  const W = q.region[2] - q.region[0] - CTL - 2 - (mode === "scroll" ? BAR : 0);
+  const bar = mode === "scroll" ? BAR : 0;
   const inner = qa.querySelector(".qa-in");
   qa.classList.remove("tight");
-  inner.style.width = `${W}px`;
   inner.style.setProperty("--k", k);
   const full = META[q.id].boxes.map((items, n) => ({ box: sol.boxes[n], items }));
-  const els = renderPlan(inner, full, q.id, true);
-  let x = 0;
-  let rowTop = 0;
-  let rowH = 0;
-  for (const el of els) {
-    fitInWidth(el, W, k);
-    const w = Math.max(el.offsetWidth, inkWidth(el));
-    if (x > 0 && x + w > W + 0.5) {
-      rowTop += rowH + GAP;
-      rowH = 0;
-      x = 0;
+  const draw = (wide) => {
+    const W = answerRight(q, qa, bar, wide);
+    inner.style.width = `${W}px`;
+    const els = renderPlan(inner, full, q.id, true);
+    let x = 0;
+    let rowTop = 0;
+    let rowH = 0;
+    let cost = 0;
+    for (const el of els) {
+      cost += fitInWidth(el, W, k);
+      const w = Math.max(el.offsetWidth, inkWidth(el));
+      if (x > 0 && x + w > W + 0.5) {
+        rowTop += rowH + GAP;
+        rowH = 0;
+        x = 0;
+      }
+      el.style.left = `${x}px`;
+      el.style.top = `${rowTop}px`;
+      rowH = Math.max(rowH, el.offsetHeight);
+      x += w + GAP;
     }
-    el.style.left = `${x}px`;
-    el.style.top = `${rowTop}px`;
-    rowH = Math.max(rowH, el.offsetHeight);
-    x += w + GAP;
+    return { els, used: rowTop + rowH + 4, cost };
+  };
+  let out = draw(false);
+  if (out.cost) {
+    const wide = draw(true);
+    out = wide.cost < out.cost ? wide : draw(false);
   }
-  finish(q, qa, els, rowTop + rowH + 4, mode);
+  finish(q, qa, out.els, out.used, mode);
 }
 
 /**
- * Keeps a box within W: its lines may break, and only a line that cannot break
- * (a wide fraction, table or tree) gives the box a smaller type of its own.
+ * Right edge of the answer, in region coordinates. `wide` lets the answer use
+ * the strip kept for the step buttons, which then sit in the page margin, so a
+ * reason can stay beside its step.
+ */
+function answerRight(q, qa, bar, wide) {
+  const x0 = q.region[0];
+  const right = q.region[2] - x0 - CTL - 2;
+  if (!wide) return right - bar;
+  const { width, side } = ctlGrid(qa, regionHeight(q));
+  return Math.max(right, PAGE_W - 4 - width - (side ? 24 : 0) - 6 - x0) - bar;
+}
+
+/**
+ * Keeps a box within W, giving up as little as it can. Returns what that cost:
+ * 0 nothing breaks, 1 a step breaks before "=" with its reason beside its last
+ * row, 2 a reason drops under its step, 3 a line that cannot break (a wide
+ * fraction, table or tree) gives the box a smaller type of its own.
  */
 function fitInWidth(el, W, k) {
   el.classList.add("wrap");
   el.style.width = "max-content";
+  el.style.maxWidth = "none";
+  const wide = () => Math.max(el.offsetWidth, el.scrollWidth, inkWidth(el));
+  const fits = wide() <= W + 0.5;
   el.style.maxWidth = `${W}px`;
-  const w = Math.max(el.offsetWidth, el.scrollWidth, inkWidth(el));
-  if (w > W + 0.5) el.style.setProperty("--k", Math.max(0.5, k * (W / w)).toFixed(3));
+  if (fits) return 0;
+  let cost = 1;
+  for (const ln of el.querySelectorAll(".ln")) {
+    const rs = ln.querySelector(":scope > .rs");
+    if (!rs) continue;
+    const lx = ln.querySelector(":scope > .lx.segs");
+    const over = ln.scrollWidth > ln.clientWidth + 0.5;
+    const broken = lx && lx.lastElementChild.offsetTop > lx.firstElementChild.offsetTop + 1;
+    if ((over || broken) && tuck(ln, lx, rs)) continue;
+    if (over) {
+      ln.classList.add("drop");
+      cost = 2;
+    }
+  }
+  const w = wide();
+  if (w <= W + 0.5) return cost;
+  el.style.setProperty("--k", Math.max(0.5, k * (W / w)).toFixed(3));
+  return 3;
+}
+
+/** Moves a broken step's reason to the end of its last row, on that row's baseline. False when it has no room there. */
+function tuck(ln, lx, rs) {
+  if (!lx) return false;
+  const cs = getComputedStyle(ln);
+  const gap = parseFloat(cs.columnGap) + parseFloat(getComputedStyle(rs).marginLeft);
+  const room = ln.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - rs.offsetWidth - gap;
+  if (lx.lastElementChild.offsetWidth > room) return false;
+  ln.classList.add("tuck");
+  lx.style.width = `${room}px`;
+  const last = lx.lastElementChild;
+  const baseline = (host) => {
+    const probe = document.createElement("i");
+    probe.className = "baseline";
+    host.append(probe);
+    const y = probe.offsetTop;
+    probe.remove();
+    return y;
+  };
+  rs.style.left = `${last.offsetLeft + last.offsetWidth + gap - parseFloat(getComputedStyle(rs).marginLeft)}px`;
+  rs.style.top = "0px";
+  rs.style.top = `${baseline(last) - baseline(rs)}px`;
+  return true;
 }
 
 /** Makes the region as tall as the answer ("grow"), or lets an answer taller than its region scroll. */
@@ -832,10 +900,9 @@ function partColumns(page, q, plan) {
   return cols.has(-1) || cols.size !== labels.length ? null : { labels, pieces };
 }
 
-/** Left and right edges of each part's column, in region coordinates. */
-function partBounds(q, labels, bar) {
+/** Left and right edges of each part's column, in region coordinates; the last column ends at `right`. */
+function partBounds(q, labels, right) {
   const x0 = q.region[0];
-  const right = q.region[2] - x0 - CTL - 2 - bar;
   return labels.map((l, i) => ({
     x: Math.max(0, l.x - 4 - x0),
     r: i + 1 < labels.length ? labels[i + 1].x - 4 - x0 - GAP : right,
@@ -847,21 +914,29 @@ function layoutParts(q, qa, parts, k, mode) {
   const inner = qa.querySelector(".qa-in");
   qa.classList.remove("tight");
   inner.style.setProperty("--k", k);
-  const draw = (bar) => {
-    const cols = partBounds(q, parts.labels, bar);
+  const draw = (bar, wide) => {
+    const cols = partBounds(q, parts.labels, answerRight(q, qa, bar, wide));
     inner.style.width = `${cols[cols.length - 1].r}px`;
     const els = renderPlan(inner, parts.pieces, q.id, true);
     const y = cols.map(() => 0);
+    let cost = 0;
     els.forEach((el, n) => {
       const { col } = parts.pieces[n];
-      fitInWidth(el, cols[col].r - cols[col].x, k);
+      cost += fitInWidth(el, cols[col].r - cols[col].x, k);
       Object.assign(el.style, { left: `${cols[col].x}px`, top: `${y[col]}px` });
       y[col] += el.offsetHeight + GAP;
     });
-    return { els, used: Math.max(...y) - GAP + 4 };
+    return { els, used: Math.max(...y) - GAP + 4, cost };
   };
-  let out = draw(0);
-  if (mode === "scroll" && out.used > regionHeight(q) + 0.5) out = draw(BAR);
+  const attempt = (wide) => {
+    const out = draw(0, wide);
+    return mode === "scroll" && out.used > regionHeight(q) + 0.5 ? draw(BAR, wide) : out;
+  };
+  let out = attempt(false);
+  if (out.cost) {
+    const wide = attempt(true);
+    out = wide.cost < out.cost ? wide : attempt(false);
+  }
   finish(q, qa, out.els, out.used, mode);
 }
 
