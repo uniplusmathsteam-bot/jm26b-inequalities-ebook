@@ -295,8 +295,9 @@ function updateIndicator() {
   }
   if (!best) return;
   const label = document.getElementById("page-label");
-  label.textContent = best.classList.contains("continuation") ? `Page ${best.dataset.page}+` : `Page ${best.dataset.page} / 16`;
-  document.getElementById("pr-label").textContent = best.classList.contains("continuation") ? `${best.dataset.page}+ / 16` : `${best.dataset.page} / 16`;
+  const total = state.layout.pages.length;
+  label.textContent = best.classList.contains("continuation") ? `Page ${best.dataset.page}+` : `Page ${best.dataset.page} / ${total}`;
+  document.getElementById("pr-label").textContent = best.classList.contains("continuation") ? `${best.dataset.page}+ / ${total}` : `${best.dataset.page} / ${total}`;
   if (state.currentKey !== best.dataset.key) {
     state.currentKey = best.dataset.key;
     document.querySelectorAll(".thumb").forEach((t) => t.classList.toggle("on", t.dataset.key === state.currentKey));
