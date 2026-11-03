@@ -21,6 +21,7 @@ These rules make every book look and read like the teacher's own notes. Each one
   - final answers underlined where the key underlines them: `\\underline{26}`.
 - **One step per line.** Each algebra step is its own `m()` line, so a tap reveals exactly one move.
 - **Side reasons** are short and start with the operation: "+ 10", "÷ 2", "÷ (−6): reverse", "collect like terms", "set up from the question". Always flag a sign reversal.
+- **Geometry reasons** use the bracket phrase a marker accepts, and a parallel-line reason names the lines. A reason longer than 14 characters is drawn on its own line under the step, so it can be read at the same size as the working without leaving the red box. When that extra line does not fit in the answer space, the reason stays beside the step and wraps inside the box. The phrases are: `given`; `SAS` / `SSS` / `ASA` / `AAS` / `RHS`; `common side`; `adj. ∠s on st. line`; `vert. opp. ∠s`; `corr. ∠s, AB // CD`; `alt. ∠s, AB // CD`; `int. ∠s, AB // CD`; `corr. ∠s equal` / `alt. ∠s equal` / `int. ∠s supp.`; `∠ sum of △`; `ext. ∠ of △`; `base ∠s, isos. △`; `corr. sides, ≅ △s` / `corr. ∠s, ≅ △s`; `opp. sides of //gram`; `opp. ∠s of //gram`; `diags. of //gram`; `diags. bisect each other`; `opp. sides equal`; `opp. ∠s equal`; `2 sides equal and //`; `mid-pt. theorem`; `Pyth. theorem`.
 - **Parts** get `h("(a)")` headings, normally one box per part.
 - **Teacher margin notes** (`note()`) are for the key's pink side remarks, such as "Number of pages must be an integer, so …".
 - **MC questions:**

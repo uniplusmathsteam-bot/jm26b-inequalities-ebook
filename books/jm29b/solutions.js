@@ -30,13 +30,13 @@ export const SOLUTIONS = [
     id: "q3",
     minScale: 0.62,
     links: [
-      { key: "ask", color: "amber", note: "opp. sides equal and $//$", q: ["following quadrilaterals are parallelograms"] },
+      { key: "ask", color: "amber", note: "2 sides equal and $//$", q: ["following quadrilaterals are parallelograms"] },
     ],
     boxes: [{
       steps: [
         m("AB = DC = k\\text{ cm}", "given"),
         m("BA \\parallel CD", "given"),
-        lk("ask", t("$\\therefore$ $ABCD$ is a parallelogram.", "opp. sides equal and //")),
+        lk("ask", t("$\\therefore$ $ABCD$ is a parallelogram.", "2 sides equal and //")),
       ],
     }],
   },
@@ -161,7 +161,7 @@ export const SOLUTIONS = [
         h("(a)"),
         lk("ab", m("AB = DC", "given")),
         lk("rt", m("\\angle ADB = \\angle CBD = 90^\\circ", "given")),
-        m("BD = DB", "common"),
+        m("BD = DB", "common side"),
         t("$\\therefore$ $\\triangle ABD \\cong \\triangle CDB$.", "RHS"),
         h("(b)"),
         m("\\triangle ABD \\cong \\triangle CDB", "proved"),
@@ -228,7 +228,7 @@ export const SOLUTIONS = [
       { key: "rt", color: "green", note: "$\\angle AFD = \\angle CEB = 90^\\circ$", q: ["AC ⊥ BE"] },
       { key: "eq", color: "blue", note: "$AE = CF$", q: ["AE = CF"] },
       { key: "ang", color: "pink", note: "alt. $\\angle$s equal", q: ["FAD = ECB"] },
-      { key: "ask", color: "amber", note: "opp. sides equal and $//$", q: ["ABCD is a parallelogram"] },
+      { key: "ask", color: "amber", note: "2 sides equal and $//$", q: ["ABCD is a parallelogram"] },
     ],
     boxes: [
       {
@@ -251,7 +251,7 @@ export const SOLUTIONS = [
           m("\\because \\angle FAD = \\angle ECB", "given"),
           m("\\therefore AD \\parallel BC", "alt. ∠s equal"),
           m("\\because AD = CB \\text{ and } AD \\parallel BC"),
-          lk("ask", t("$\\therefore$ $ABCD$ is a parallelogram.", "opp. sides equal and //")),
+          lk("ask", t("$\\therefore$ $ABCD$ is a parallelogram.", "2 sides equal and //")),
         ],
       },
     ],
@@ -276,7 +276,7 @@ export const SOLUTIONS = [
           t("$\\therefore$ $\\triangle ABE \\cong \\triangle DCF$.", "SAS"),
           h("(b)(i)"),
           m("\\triangle ABE \\cong \\triangle DCF", "proved"),
-          m("BE = CF", "corr. sides of ≅ △s"),
+          m("BE = CF", "corr. sides, ≅ △s"),
           lk("be", m("BE = EG", "given")),
           m("EG = CF"),
         ],
@@ -285,7 +285,7 @@ export const SOLUTIONS = [
         steps: [
           h("(b)(ii)"),
           m("\\triangle ABE \\cong \\triangle DCF", "proved"),
-          m("\\angle AEB = \\angle DFC", "corr. ∠s of ≅ △s"),
+          m("\\angle AEB = \\angle DFC", "corr. ∠s, ≅ △s"),
           m("\\angle AEB = \\angle GEF", "vert. opp. ∠s"),
           m("\\angle GEF = \\angle CFD"),
           h("(c)"),
@@ -333,7 +333,7 @@ export const SOLUTIONS = [
       { key: "para", color: "blue", note: "opp. sides of //gram", q: ["CDEF is a parallelogram"] },
       { key: "af", color: "green", note: "$AF = CG$", q: ["AF = CG"] },
       { key: "bg", color: "pink", note: "$BG = GD$", q: ["BG = GD"] },
-      { key: "ask", color: "amber", note: "opp. sides equal and $//$", q: ["ABGE is a parallelogram"] },
+      { key: "ask", color: "amber", note: "2 sides equal and $//$", q: ["ABGE is a parallelogram"] },
     ],
     boxes: [{
       steps: [
@@ -355,7 +355,7 @@ export const SOLUTIONS = [
         lk("bg", m("\\because BG = GD", "given")),
         m("\\therefore AE = BG"),
         m("\\because AE = BG \\text{ and } AE \\parallel BG"),
-        lk("ask", t("$\\therefore$ $ABGE$ is a parallelogram.", "opp. sides equal and //")),
+        lk("ask", t("$\\therefore$ $ABGE$ is a parallelogram.", "2 sides equal and //")),
       ],
     }],
   },
@@ -439,7 +439,7 @@ export const SOLUTIONS = [
         m("\\therefore AD = x\\text{ cm}"),
         m("\\therefore AD = BE"),
         m("\\because AD = BE \\text{ and } AD \\parallel BE"),
-        t("$\\therefore$ $ABED$ is a parallelogram.", "opp. sides equal and //"),
+        t("$\\therefore$ $ABED$ is a parallelogram.", "2 sides equal and //"),
       ],
     }],
   },

@@ -220,10 +220,45 @@ body[data-mode="laser"] #viewport { cursor: crosshair; }
 .lx { min-width: 0; }
 .rs {
   margin-left: auto;
+  max-width: 100%;
+  min-width: 0;
   font-family: "Segoe Print", "Bradley Hand", "Noteworthy", "Comic Sans MS", cursive;
-  font-size: 0.78em;
+  font-size: 1em;
+  line-height: 1.15;
+  text-align: right;
   color: var(--reason);
   white-space: nowrap;
+}
+/* A long reason takes the next line and wraps inside the working. width: 0
+   keeps that line out of the box width, so the box stays as wide as the step.
+   A flex item cannot do this: basis 100% stretches the box to the region. */
+.ln:has(.rs-block) {
+  display: grid;
+  grid-template-columns: max-content;
+  justify-content: start;
+}
+.ln:has(.rs-block) > .lx { grid-column: 1; grid-row: 1; }
+.rs-block {
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: end;
+  width: 0;
+  min-width: 100%;
+  margin-left: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+/* The extra line does not fit: keep the reason beside the step, still wrapping
+   inside the box, so the working is not shrunk to make room. */
+.qa-in.rs-inline .ln:has(.rs-block) { display: flex; }
+.qa-in.rs-inline .rs-block {
+  grid-column: auto;
+  grid-row: auto;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  margin-left: auto;
+  justify-self: auto;
 }
 
 /* Hidden steps keep their space; a bar shows where the next line will appear. */

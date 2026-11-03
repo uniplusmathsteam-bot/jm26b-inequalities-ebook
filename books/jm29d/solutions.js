@@ -508,7 +508,7 @@ export const SOLUTIONS = [
         m(`\\because ${L("mid", "AD = DB")} \\text{ and } AG = GC`, "given"),
         m("\\therefore DG = \\dfrac{1}{2} \\times BC \\text{ and } DG \\parallel EF", "mid-pt. theorem"),
         m("= EF"),
-        lk("pg", t("$\\therefore$ $DEFG$ is a parallelogram.", "opp. sides equal and //")),
+        lk("pg", t("$\\therefore$ $DEFG$ is a parallelogram.", "2 sides equal and //")),
       ],
     }],
   },

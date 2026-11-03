@@ -274,7 +274,10 @@ function stepHTML(step, id, i) {
       body = step.tree ? treeSvg(step.tree) : tableHTML(step.table);
       if (lk) body = `<span class="lx${lk}">${body}</span>`;
     } else body = nlSvg(step.nl);
-    if (step.r) body += `<span class="rs">${esc(step.r)}</span>`;
+    if (step.r) {
+      const block = step.r.length > 14 ? " rs-block" : "";
+      body += `<span class="rs${block}">${esc(step.r)}</span>`;
+    }
     cache.set(step, body);
   }
   const kind = step.m != null ? "m" : step.t != null ? "t" : step.note != null ? "note" : step.tree ? "tree" : step.table ? "table" : "nl";
@@ -501,10 +504,18 @@ function fit(q, qa) {
   const ks = scales(sol.minScale ?? 0.82);
   const full = META[q.id].boxes.map((items, k) => ({ box: sol.boxes[k], items }));
   const fractions = full.some((b) => b.items.some((e) => /\\[dt]?frac/.test(e.step.m ?? "")));
+  const laidOut = (plan, k, flow, nowrap, strict) => {
+    inner.style.setProperty("--k", k);
+    return place(renderPlan(inner, plan, q.id), plan, W, H, flow, x0, nowrap, strict);
+  };
+  // The long reason's own line is the reading layout. When that line makes the
+  // answer miss the region, draw the reason beside the step at the same scale.
   const attempt = (plan, k, tight) => {
     qa.classList.toggle("tight", tight);
-    inner.style.setProperty("--k", k);
-    return place(renderPlan(inner, plan, q.id), plan, W, H, sol.flow, x0, sol.nowrap);
+    inner.classList.remove("rs-inline");
+    if (laidOut(plan, k, sol.flow, sol.nowrap, false)) return true;
+    inner.classList.add("rs-inline");
+    return laidOut(plan, k, sol.flow, sol.nowrap, false);
   };
   const lean = full
     .map((b) => ({ ...b, items: b.items.filter((e) => !e.step.optional) }))
@@ -513,11 +524,15 @@ function fit(q, qa) {
   const columns = (k, tight) => {
     if (sol.nowrap || sol.flow === "row") return false;
     qa.classList.toggle("tight", tight);
-    inner.style.setProperty("--k", k);
-    const els = renderPlan(inner, full, q.id);
-    for (const el of els) Object.assign(el.style, { width: "max-content", maxWidth: "none" });
-    const cols = split(full, els, H);
-    return !!cols && place(renderPlan(inner, cols, q.id), cols, W, H, "col", x0, false, true);
+    for (const inline of [false, true]) {
+      inner.classList.toggle("rs-inline", inline);
+      inner.style.setProperty("--k", k);
+      const els = renderPlan(inner, full, q.id);
+      for (const el of els) Object.assign(el.style, { width: "max-content", maxWidth: "none" });
+      const cols = split(full, els, H);
+      if (cols && place(renderPlan(inner, cols, q.id), cols, W, H, "col", x0, false, true)) return true;
+    }
+    return false;
   };
   // Stacked fractions get breathing room when that costs at most one scale step (none below 3/4 size).
   const ladder = (list, fn, slack = 1) => {
