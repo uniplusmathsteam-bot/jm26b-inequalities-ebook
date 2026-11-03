@@ -313,5 +313,15 @@
       "p6": { "region": [44, 672.4, 505, 801] },
       "q29": { "region": [66, 116.7, 546, 274] }
     }
-  }
+  },
+  "media": [
+    {
+      "page": 6,
+      "region": [88.3, 92.3, 505.4, 267.7],
+      "scene": "jm27:IncreaseAtConstantRate",
+      "src": "media/increase.mp4",
+      "poster": "media/increase.jpg",
+      "title": "Animate increase at a constant rate"
+    }
+  ]
 }

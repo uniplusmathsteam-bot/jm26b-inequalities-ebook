@@ -34,6 +34,10 @@
 - Q9 uses `nowrap` with two boxes, like the key.
 - Review links include the exponent inside the factor, for example `L("r", "(1 + 15\\%)^3")`. A link that stops before `^3` looks cramped.
 
+## Animations
+
+The pink box under "Increase at a Constant Rate" on page 6 is a Manim animation (`tools/manim/jm27.py`, `IncreaseAtConstantRate`). It stops above Example 4. The chain grows one factor at a time and the last frame is the printed panel: \(A = P(1 + r\%)^n\), with no extra formula. Chinese is Microsoft JhengHei, the same gothic face as the print; the red \(n\) is Cambria italic. The decrease box on the same page is not animated.
+
 ## Graphics
 
 Every question has one (all 48). Most use the shared `timeline()` in `books/jm27a/widgets.js`: one bar per period, the factor between bars, a slider for periods and, where needed, a slider for the unknown. A full-width amber line marks a given value or threshold, and red dashed caps show the value lost so far.
