@@ -274,10 +274,7 @@ function stepHTML(step, id, i) {
       body = step.tree ? treeSvg(step.tree) : tableHTML(step.table);
       if (lk) body = `<span class="lx${lk}">${body}</span>`;
     } else body = nlSvg(step.nl);
-    if (step.r) {
-      const block = step.r.length > 14 ? " rs-block" : "";
-      body += `<span class="rs${block}">${esc(step.r)}</span>`;
-    }
+    if (step.r) body += `<span class="rs">${esc(step.r)}</span>`;
     cache.set(step, body);
   }
   const kind = step.m != null ? "m" : step.t != null ? "t" : step.note != null ? "note" : step.tree ? "tree" : step.table ? "table" : "nl";
@@ -319,7 +316,8 @@ function place(els, plan, W, H, flow, x0, nowrap = false, strict = false) {
       el.style.left = `${colX}px`;
       el.style.top = `${y}px`;
       const w = el.offsetWidth;
-      colRight = Math.max(colRight, colX + w);
+      const span = Math.max(w, inkWidth(el));
+      colRight = Math.max(colRight, colX + span);
       y += h + GAP;
       if (colX + w > W + 0.5 || y - GAP > H + 0.5) ok = false;
     });
@@ -334,7 +332,8 @@ function place(els, plan, W, H, flow, x0, nowrap = false, strict = false) {
     el.style.width = box.w ? `${box.w}px` : "max-content";
     el.style.maxWidth = `${W}px`;
     let w = el.offsetWidth;
-    if (x > 0 && x + w > W + 0.5) {
+    const span = () => Math.max(el.offsetWidth, inkWidth(el));
+    if (x > 0 && x + span() > W + 0.5) {
       if (nowrap) ok = false;
       rowTop += rowH + GAP;
       rowH = 0;
@@ -348,10 +347,21 @@ function place(els, plan, W, H, flow, x0, nowrap = false, strict = false) {
     el.style.top = `${rowTop}px`;
     const h = el.offsetHeight;
     rowH = Math.max(rowH, h);
-    x += w + GAP;
+    x += span() + GAP;
     if (rowTop + h > H + 0.5) ok = false;
   });
   return ok;
+}
+
+/** Right edge of a box in its own coordinates, including a reason past the border. */
+function inkWidth(el) {
+  let right = el.offsetWidth;
+  const border = el.clientLeft;
+  for (const rs of el.querySelectorAll(".rs")) {
+    const ln = rs.parentElement;
+    right = Math.max(right, border + ln.offsetLeft + rs.offsetLeft + rs.offsetWidth);
+  }
+  return right;
 }
 
 function usedHeight(els) {
@@ -390,9 +400,10 @@ function placeCtl(qa, els) {
   const { rows, side, width } = ctlGrid(qa, qa.offsetHeight);
   ctl.style.setProperty("--rows", rows);
   ctl.classList.toggle("side", side);
-  const right = els.reduce((m, el) => Math.max(m, el.offsetLeft + el.offsetWidth), 0);
-  let left = Math.min(right + 6, qa.offsetWidth - width - (side ? 24 : 0));
-  if (left < right + 2) left = Math.min(right + 2, qa.offsetWidth - width);
+  const right = els.reduce((m, el) => Math.max(m, el.offsetLeft + inkWidth(el)), 0);
+  const limit = qa.offsetWidth - width - (side ? 24 : 0);
+  let left = Math.min(right + 6, limit);
+  if (left < right + 2) left = right + 6;
   ctl.style.left = `${left}px`;
   ctl.style.right = "auto";
   ctl.dataset.home = ctl.style.left;
@@ -498,24 +509,18 @@ function fit(q, qa) {
   const sol = SOLUTION_BY_ID[q.id];
   const [x0, y0, x1, y1] = q.region;
   const H = y1 - y0;
-  const W = x1 - x0 - Math.max(CTL + 2, ctlGrid(qa, H).width);
+  // One control column stays clear. Extra button columns may sit past the
+  // region, so a reason can remain beside its step instead of leaving the box.
+  const W = x1 - x0 - CTL - 2;
   const inner = qa.querySelector(".qa-in");
   inner.style.width = `${W}px`;
   const ks = scales(sol.minScale ?? 0.82);
   const full = META[q.id].boxes.map((items, k) => ({ box: sol.boxes[k], items }));
   const fractions = full.some((b) => b.items.some((e) => /\\[dt]?frac/.test(e.step.m ?? "")));
-  const laidOut = (plan, k, flow, nowrap, strict) => {
-    inner.style.setProperty("--k", k);
-    return place(renderPlan(inner, plan, q.id), plan, W, H, flow, x0, nowrap, strict);
-  };
-  // The long reason's own line is the reading layout. When that line makes the
-  // answer miss the region, draw the reason beside the step at the same scale.
   const attempt = (plan, k, tight) => {
     qa.classList.toggle("tight", tight);
-    inner.classList.remove("rs-inline");
-    if (laidOut(plan, k, sol.flow, sol.nowrap, false)) return true;
-    inner.classList.add("rs-inline");
-    return laidOut(plan, k, sol.flow, sol.nowrap, false);
+    inner.style.setProperty("--k", k);
+    return place(renderPlan(inner, plan, q.id), plan, W, H, sol.flow, x0, sol.nowrap);
   };
   const lean = full
     .map((b) => ({ ...b, items: b.items.filter((e) => !e.step.optional) }))
@@ -524,15 +529,11 @@ function fit(q, qa) {
   const columns = (k, tight) => {
     if (sol.nowrap || sol.flow === "row") return false;
     qa.classList.toggle("tight", tight);
-    for (const inline of [false, true]) {
-      inner.classList.toggle("rs-inline", inline);
-      inner.style.setProperty("--k", k);
-      const els = renderPlan(inner, full, q.id);
-      for (const el of els) Object.assign(el.style, { width: "max-content", maxWidth: "none" });
-      const cols = split(full, els, H);
-      if (cols && place(renderPlan(inner, cols, q.id), cols, W, H, "col", x0, false, true)) return true;
-    }
-    return false;
+    inner.style.setProperty("--k", k);
+    const els = renderPlan(inner, full, q.id);
+    for (const el of els) Object.assign(el.style, { width: "max-content", maxWidth: "none" });
+    const cols = split(full, els, H);
+    return !!cols && place(renderPlan(inner, cols, q.id), cols, W, H, "col", x0, false, true);
   };
   // Stacked fractions get breathing room when that costs at most one scale step (none below 3/4 size).
   const ladder = (list, fn, slack = 1) => {

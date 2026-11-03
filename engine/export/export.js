@@ -55,11 +55,6 @@ async function rasterSheet(sheet, strokes) {
     const lines = [...box.querySelectorAll(".hd, .ln:not(.hid)")];
     if (!lines.some((n) => n.classList.contains("ln"))) continue;
     const b = local(box);
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(b.x, b.y, b.w, b.h);
-    ctx.strokeStyle = "#e00000";
-    ctx.lineWidth = 1.2;
-    ctx.strokeRect(b.x, b.y, b.w, b.h);
     for (const line of lines) {
       const r = local(line);
       const size = Math.max(7, Math.min(12, r.h * 0.62));
