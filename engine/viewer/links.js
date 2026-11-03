@@ -106,9 +106,29 @@ function makeRect(box, link, open, id) {
 /**
  * Answer-side marker: a coloured underline (dotted when closed) with a
  * transparent hit area. Nested links drop the line by 2.6 pt per enclosing
- * `.lk-*` so neighbouring pieces never draw overlapping boxes.
+ * `.lk-*`. The stroke stays under its own ink: the next line, and a wrapped
+ * piece of the same step, stop it short so it cannot cross the working.
  */
-function makeUnderline(box, link, open, id, depth = 0) {
+function underlineLimit(sheet, node, box) {
+  const qa = node.closest(".qa");
+  if (!qa) return Infinity;
+  const ownLine = node.closest(".ln");
+  const ownSeg = node.closest(".seg");
+  let limit = Infinity;
+  for (const el of qa.querySelectorAll(".ln, .seg")) {
+    if (el === ownLine || el === ownSeg || el.contains(node)) continue;
+    for (const r of el.getClientRects()) {
+      if (r.width < 0.5 || r.height < 0.5) continue;
+      const b = sheetPoint(sheet, r);
+      const overlapsX = b.x < box.x + box.w - 0.4 && box.x < b.x + b.w - 0.4;
+      if (!overlapsX || b.y < box.y + box.h * 0.45) continue;
+      limit = Math.min(limit, b.y - 1.4);
+    }
+  }
+  return limit;
+}
+
+function makeUnderline(box, link, open, id, depth = 0, yLimit = Infinity, fontSize = 12.5) {
   const c = COLORS[link.color] || COLORS.blue;
   const g = svgEl("g", {
     class: open ? "lk-u-g" : "lk-u-g hint",
@@ -125,14 +145,17 @@ function makeUnderline(box, link, open, id, depth = 0) {
       fill: c.fill,
     }));
   }
+  const drop = Math.max(3.2, fontSize * 0.36) + depth * 2.6;
+  let y = box.y + box.h + drop;
+  if (y > yLimit) y = yLimit;
+  if (y < box.y + box.h + 0.8) y = box.y + box.h + 0.8;
   g.append(svgEl("rect", {
     x: box.x,
     y: box.y,
     width: Math.max(1, box.w),
-    height: Math.max(1, box.h + 1.2 + depth * 2.6 + 2),
+    height: Math.max(1, y - box.y + 2),
     class: "lk-hit",
   }));
-  const y = box.y + box.h + 1.2 + depth * 2.6;
   g.append(svgEl("line", {
     x1: box.x,
     y1: y,
@@ -222,14 +245,18 @@ export function renderContLinks(sheet, id, page, open) {
   const layer = document.createElement("div");
   layer.className = "rev";
   layer.dataset.q = id;
-  const svg = svgEl("svg", { viewBox: `0 0 ${page.width} ${page.height}` });
+  const svg = svgEl("svg", { viewBox: `0 0 ${page.width} ${sheet.offsetHeight || page.height}` });
   layer.append(svg);
   overlay.append(layer);
   const rects = [];
   for (const link of sol.links) {
     for (const n of answerNodes(qa, link.key)) {
       const depth = linkDepth(n);
-      for (const cr of inkRects(n)) rects.push(makeUnderline(sheetPoint(sheet, cr), link, open.has(link.key), id, depth));
+      const fontSize = parseFloat(getComputedStyle(n).fontSize) || 12.5;
+      for (const cr of inkRects(n)) {
+        const box = sheetPoint(sheet, cr);
+        rects.push(makeUnderline(box, link, open.has(link.key), id, depth, underlineLimit(sheet, n, box), fontSize));
+      }
     }
   }
   rects.sort((a, b) => b.area - a.area);
@@ -254,21 +281,29 @@ export function renderLinks(sheet, id, page, q, open) {
   const layer = document.createElement("div");
   layer.className = "rev";
   layer.dataset.q = id;
-  const svg = svgEl("svg", { viewBox: `0 0 ${page.width} ${page.height}` });
+  const svg = svgEl("svg", { viewBox: `0 0 ${page.width} ${sheet.offsetHeight || page.height}` });
   layer.append(svg);
   overlay.append(layer);
 
+  // Page text sits lower on a sheet that has opened room under a grown answer.
+  const sy = sheet.shiftY || ((y) => y);
+  const qTop = parseFloat(qa.style.top) || q.region[1];
+  const at = { ...q, region: [q.region[0], qTop, q.region[2], qTop + qa.offsetHeight] };
   const tags = [];
   const rects = [];
   for (const link of sol.links) {
     const isOpen = open.has(link.key);
     for (const phrase of link.q || []) {
-      for (const r of questionRects(page, q, phrase)) rects.push(makeRect(r, link, isOpen, id));
+      for (const r of questionRects(page, q, phrase)) rects.push(makeRect({ ...r, y: sy(r.y) }, link, isOpen, id));
     }
     const nodes = answerNodes(qa, link.key);
     for (const n of nodes) {
       const depth = linkDepth(n);
-      for (const cr of inkRects(n)) rects.push(makeUnderline(sheetPoint(sheet, cr), link, isOpen, id, depth));
+      const fontSize = parseFloat(getComputedStyle(n).fontSize) || 12.5;
+      for (const cr of inkRects(n)) {
+        const box = sheetPoint(sheet, cr);
+        rects.push(makeUnderline(box, link, isOpen, id, depth, underlineLimit(sheet, n, box), fontSize));
+      }
     }
     if (!isOpen || !nodes.length) continue;
     const spots = nodes.map((n) => {
@@ -340,9 +375,10 @@ export function renderLinks(sheet, id, page, q, open) {
     .filter((s) => s.x < tagX + maxW && s.x + s.w > tagX);
 
   const roomBelow = (x0, x1, y) => {
-    let limit = page.height - 18;
+    let limit = (sheet.offsetHeight || page.height) - 18;
     for (const row of page.text || []) {
-      if (row[0] > y + 1 && row[0] < limit && row[2].some((w) => w[0] < x1 && w[1] > x0)) limit = row[0] - 2;
+      const top = sy(row[0]);
+      if (top > y + 1 && top < limit && row[2].some((w) => w[0] < x1 && w[1] > x0)) limit = top - 2;
     }
     for (const s of boxS.values()) {
       if (s.y > y + 1 && s.y < limit && s.x < x1 && s.x + s.w > x0) limit = s.y - 2;
@@ -350,7 +386,7 @@ export function renderLinks(sheet, id, page, q, open) {
     return limit;
   };
 
-  if (side.length) placeColumn(svg, side, tagX, q, obstacles);
+  if (side.length) placeColumn(svg, side, tagX, at, obstacles);
   if (below.length) {
     const groups = new Map();
     for (const t of below) {
@@ -359,7 +395,7 @@ export function renderLinks(sheet, id, page, q, open) {
     }
     const underEach = [...groups].every(([h, list]) => layoutLegend(list, h.x, h.x + h.w, h.y + h.h, roomBelow(h.x, h.x + h.w, h.y + h.h)));
     if (underEach || layoutLegend(below, left, right, bottom, roomBelow(left, right, bottom))) drawLegend(svg, below);
-    else placeCallouts(svg, below, sheet.offsetWidth, q);
+    else placeCallouts(svg, below, sheet.offsetWidth, at);
   }
 
   if (!side.length) return null;

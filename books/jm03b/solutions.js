@@ -48,13 +48,13 @@ const LIST = [
       {
         steps: [
           h("(a)"),
-          m(`\\text{Profit} = \\$(${L("s", "60")} - ${L("c", "12")}) = ${U("\\$48")}`),
+          m(`${L("p", "\\text{Profit}")} = \\$(${L("s", "60")} - ${L("c", "12")}) = ${U("\\$48")}`),
         ],
       },
       {
         steps: [
           h("(b)"),
-          m(`${L("r", "\\text{Profit }\\%")} = \\dfrac{${L("p", "48")}}{12} \\times 100\\% = ${U("400\\%")}`),
+          m(`${L("r", "\\text{Profit }\\%")} = \\dfrac{48}{12} \\times 100\\% = ${U("400\\%")}`),
         ],
       },
     ],
@@ -86,8 +86,8 @@ const LIST = [
       {
         steps: [
           h("(a)"),
-          m(`\\text{Total cost price of the 5 watches} = \\$${L("c", "250")} \\times ${L("n", "5")} = \\$1250`),
-          m(`\\text{Total selling price} = \\$1250 \\times (1 - ${L("r", "16\\%")})`),
+          m(`\\text{Total cost price} = \\$${L("c", "250")} \\times ${L("n", "5")} = \\$1250`),
+          m(`\\text{Selling price} = \\$1250 \\times (1 - ${L("r", "16\\%")})`),
           m(`= \\$1250 \\times 0.84 = ${U("\\$1050")}`),
         ],
       },
@@ -203,14 +203,14 @@ const LIST = [
       {
         steps: [
           h("(a)"),
-          m(`\\text{Profit }\\%\\text{ of the pen} = \\dfrac{${L("g", "1")}}{${L("p", "1.5")}} \\times 100\\% = ${U("66\\dfrac{2}{3}\\%")}`),
+          m(`\\text{Profit }\\%\\text{ of the pen} = ${L("g", `\\dfrac{1}{${L("p", "1.5")}}`)} \\times 100\\% = ${U("66\\dfrac{2}{3}\\%")}`),
           m(`\\text{Profit }\\%\\text{ of the notebook} = \\dfrac{1}{${L("n", "2")}} \\times 100\\% = ${U("50\\%")}`),
         ],
       },
       {
         steps: [
           h("(b)"),
-          m(`\\text{Profit }\\% = \\dfrac{${L("m", "2 + 6")}}{1.5 \\times 2 + 2 \\times 6} \\times 100\\%`),
+          m(`\\text{Profit }\\% = ${L("m", "\\dfrac{2 + 6}{1.5 \\times 2 + 2 \\times 6}")} \\times 100\\%`),
           m(`= \\dfrac{8}{15} \\times 100\\% = ${U("53\\dfrac{1}{3}\\%")}`),
         ],
       },
@@ -234,7 +234,7 @@ const LIST = [
       },
       {
         steps: [
-          m(`\\text{Total selling price for Boris} = \\dfrac{${L("c", "73.2")}}{12} \\times 60 = \\$366`),
+          m(`\\text{Total selling price for Boris} = ${L("c", "\\dfrac{73.2}{12}")} \\times 60 = \\$366`),
           m(`\\text{Profit for Boris} = \\$(366 - 300) = \\$66`),
           m(`\\text{Profit }\\%\\text{ for Boris} = \\dfrac{66}{300} \\times 100\\% = 22\\%`),
           t("[[w|Anson]] earned a larger profit per cent."),
@@ -414,6 +414,7 @@ const LIST = [
     ],
     boxes: [
       {
+        w: 285,
         steps: [
           h("(a)"),
           m(`\\text{Selling price} = \\$${L("m", "4800")} \\times (1 - ${L("d", "25\\%")}) \\times (1 - 8\\%)`),
@@ -431,7 +432,6 @@ const LIST = [
   },
   {
     id: "q21",
-    flow: "col",
     minScale: 0.62,
     links: [
       { key: "n", color: "blue", note: "10 cans", q: ["buy 10 cans of coke"] },
@@ -444,21 +444,21 @@ const LIST = [
         steps: [
           h("(a)"),
           t("Buy 7, get 3 free."),
-          m(`\\therefore\\ \\text{Discount }\\% = \\dfrac{${L("a", "3")}}{${L("n", "10")}} \\times 100\\% = ${U("30\\%")}`),
+          m(`\\therefore\\ \\text{Discount }\\% = ${L("a", `\\dfrac{3}{${L("n", "10")}}`)} \\times 100\\% = ${U("30\\%")}`),
         ],
       },
       {
         steps: [
           h("(b)"),
           t("Buy 8, get 2 free."),
-          m(`\\therefore\\ \\text{Discount }\\% = \\dfrac{${L("b", "2")}}{10} \\times 100\\% = ${U("20\\%")}`),
+          m(`\\therefore\\ \\text{Discount }\\% = ${L("b", "\\dfrac{2}{10}")} \\times 100\\% = ${U("20\\%")}`),
         ],
       },
       {
         steps: [
           h("(c)"),
           t("5 at full price, 5 at half."),
-          m(`\\therefore\\ \\text{Discount }\\% = \\dfrac{${L("c", "5 \\times 0.5")}}{10} \\times 100\\% = ${U("25\\%")}`),
+          m(`\\therefore\\ \\text{Discount }\\% = ${L("c", "\\dfrac{5 \\times 0.5}{10}")} \\times 100\\% = ${U("25\\%")}`),
         ],
       },
     ],

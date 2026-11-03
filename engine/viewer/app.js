@@ -1,9 +1,10 @@
 import { BOOK, BOOK_DIR, BOOK_ID, BOOK_NAME, STORAGE, SOLUTION_BY_ID, mountGraphic, pageImage } from "../book.js";
 import { createInk } from "../ink/ink.js";
 import { exportAnnotations, exportPdf } from "../export/export.js";
-import { buildOverlay, layoutAnswers, paint, totalSteps } from "./answers.js";
+import { ANSWER_SIZES, answerSize, buildOverlay, layoutAnswers, onPageRows, paint, setAnswerSize, totalSteps } from "./answers.js";
 import { renderLinks, renderContLinks, clearLinks } from "./links.js";
 import { addMedia, toggleMedia } from "./media.js";
+import { addInfographics } from "../infographic/infographic.js";
 
 const PAGE_W = 595.32;
 const PAGE_H = 841.92;
@@ -48,6 +49,22 @@ function loadUI() {
 function saveUI() {
   const dock = [...toolbar.classList].find((c) => c.startsWith("dock-"))?.slice(5) || "right";
   localStorage.setItem(UI_KEY, JSON.stringify({ reveal: state.reveal, tool: ink.getTool(), dock, hints: state.hints }));
+}
+
+/** Reader preferences shared by every book: answer text size and collapsed bars. */
+const PREFS_KEY = "ebook-reader-prefs";
+const prefs = (() => {
+  try {
+    return JSON.parse(localStorage.getItem(PREFS_KEY) || "{}");
+  } catch {
+    return {};
+  }
+})();
+
+function savePrefs() {
+  try {
+    localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+  } catch { /* private mode */ }
 }
 
 /* ---------- questions and reveal ---------- */
@@ -168,6 +185,7 @@ function buildPages() {
     overlay.className = "overlay";
     buildOverlay(page, overlay);
     addMedia(page.page, overlay);
+    addInfographics(page, overlay);
     ink.setText(sheet.dataset.key, page.text);
     sheet.append(img, overlay, ...makeCanvases());
     world.append(sheet);
@@ -244,7 +262,7 @@ function applyTransform() {
 }
 
 function toolbarShown() {
-  return !document.body.classList.contains("tools-hidden");
+  return !document.body.classList.contains("tools-hidden") && !document.body.classList.contains("tools-collapsed");
 }
 
 function reservedRight() {
@@ -297,6 +315,7 @@ function updateIndicator() {
   const label = document.getElementById("page-label");
   const total = state.layout.pages.length;
   label.textContent = best.classList.contains("continuation") ? `Page ${best.dataset.page}+` : `Page ${best.dataset.page} / ${total}`;
+  document.getElementById("bar-show-label").textContent = label.textContent;
   document.getElementById("pr-label").textContent = best.classList.contains("continuation") ? `${best.dataset.page}+ / ${total}` : `${best.dataset.page} / ${total}`;
   if (state.currentKey !== best.dataset.key) {
     state.currentKey = best.dataset.key;
@@ -741,6 +760,14 @@ function bindViewport() {
     toast(done ? (max === 2 ? "Undo" : "Redo") : max === 2 ? "Nothing to undo" : "Nothing to redo");
   };
 
+  // Ink is kept in printed-page points, so a page opened up by large answer text takes none.
+  viewport.addEventListener("pointerdown", (event) => {
+    if (event.pointerType === "touch" || ink.getTool().type === "read") return;
+    if (!event.target.closest?.(".sheet.grown") || event.target.closest(UI_SELECTOR)) return;
+    event.stopPropagation();
+    toast("Drawing on this page needs the answer text at 100% (tap the % button)");
+  }, true);
+
   viewport.addEventListener("pointerdown", (event) => {
     if (event.target.closest(UI_SELECTOR)) return;
     if (palm(event)) return;
@@ -884,7 +911,7 @@ function bindViewport() {
     const tapOK = ink.getTool().type === "read" || lastPointer === "touch";
     if (!tapOK) return;
     // Tapping ink selects it for editing; tapping away clears the selection.
-    if (ink.tapSelect(event.clientX, event.clientY, lastPointer === "touch" ? 12 : 6)) return;
+    if (!event.target.closest(".sheet.grown") && ink.tapSelect(event.clientX, event.clientY, lastPointer === "touch" ? 12 : 6)) return;
     const hint = event.target.closest("[data-link]");
     if (hint) {
       toggleLink(hint.dataset.q, hint.dataset.link);
@@ -963,7 +990,93 @@ function closeGraphic() {
   document.body.classList.remove("drawer-open");
 }
 
+/* ---------- collapsible bars and answer text size ---------- */
+
+function refit() {
+  if (presenting()) showPage();
+  else fitWidth();
+}
+
+function setBarCollapsed(on, quiet = false) {
+  document.body.classList.toggle("bar-collapsed", on);
+  document.getElementById("more").open = false;
+  if (quiet) return;
+  prefs.barCollapsed = on;
+  savePrefs();
+  refit();
+}
+
+function setToolsCollapsed(on, quiet = false) {
+  document.body.classList.toggle("tools-collapsed", on);
+  const btn = document.getElementById("tools-collapse");
+  btn.setAttribute("aria-expanded", String(!on));
+  btn.title = on ? "Show the drawing tools" : "Hide the drawing tools (\\ hides both bars)";
+  btn.querySelector("span").textContent = on ? "Tools" : "Hide";
+  if (quiet) return;
+  prefs.toolsCollapsed = on;
+  savePrefs();
+  refit();
+}
+
+function toggleBars() {
+  const body = document.body.classList;
+  const hide = !body.contains("bar-collapsed") || !body.contains("tools-collapsed");
+  setBarCollapsed(hide, true);
+  setToolsCollapsed(hide, true);
+  Object.assign(prefs, { barCollapsed: hide, toolsCollapsed: hide });
+  savePrefs();
+  refit();
+}
+
+/** Lays the answers out again and keeps the page that was on screen in place. */
+function relayoutKeepingView() {
+  const before = currentSheet();
+  const key = before?.dataset.key;
+  const top = before ? parseFloat(before.style.top) || 0 : 0;
+  layout();
+  const after = world.querySelector(`.sheet[data-key="${key}"]`);
+  if (after) {
+    state.ty -= ((parseFloat(after.style.top) || 0) - top) * state.scale;
+    applyTransform();
+  }
+}
+
+function showSize() {
+  const f = answerSize();
+  const reset = document.getElementById("size-reset");
+  reset.textContent = `${Math.round(f * 100)}%`;
+  reset.classList.toggle("on", f !== 1);
+  document.getElementById("size-down").disabled = f <= ANSWER_SIZES[0];
+  document.getElementById("size-up").disabled = f >= ANSWER_SIZES[ANSWER_SIZES.length - 1];
+}
+
+function setSize(f) {
+  if (f === answerSize()) return;
+  setAnswerSize(f);
+  prefs.answerSize = answerSize();
+  savePrefs();
+  showSize();
+  relayoutKeepingView();
+  toast(answerSize() === 1
+    ? "Answer text 100%: every answer fits its space on the page"
+    : `Answer text ${Math.round(answerSize() * 100)}%: the page opens up below answers that need more room`);
+}
+
+function stepSize(dir) {
+  const i = ANSWER_SIZES.indexOf(answerSize());
+  setSize(ANSWER_SIZES[Math.max(0, Math.min(ANSWER_SIZES.length - 1, i + dir))]);
+}
+
 function bindChrome() {
+  document.getElementById("size-down").onclick = () => stepSize(-1);
+  document.getElementById("size-up").onclick = () => stepSize(1);
+  document.getElementById("size-reset").onclick = () => setSize(1);
+  document.getElementById("bar-hide").onclick = () => setBarCollapsed(true);
+  document.getElementById("bar-show").onclick = () => setBarCollapsed(false);
+  document.getElementById("tools-collapse").onclick = (event) => {
+    event.stopPropagation();
+    setToolsCollapsed(!document.body.classList.contains("tools-collapsed"));
+  };
   document.getElementById("fit").onclick = fitWidth;
   document.getElementById("zoom-in").onclick = () => zoomAt(viewport.clientWidth / 2, viewport.clientHeight / 2, 1.15);
   document.getElementById("zoom-out").onclick = () => zoomAt(viewport.clientWidth / 2, viewport.clientHeight / 2, 1 / 1.15);
@@ -1006,10 +1119,20 @@ function bindChrome() {
     const btn = document.getElementById("export-pdf");
     btn.disabled = true;
     toast("Building the PDF…");
+    // The PDF is the printed page with its ink, so it is built at the 100% layout.
+    const size = answerSize();
+    if (size !== 1) {
+      setAnswerSize(1);
+      relayoutKeepingView();
+    }
     try {
       await exportPdf(sheets(), ink.toJSON(), `${BOOK_NAME.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "")}-solutions.pdf`);
     } finally {
       btn.disabled = false;
+      if (size !== 1) {
+        setAnswerSize(size);
+        relayoutKeepingView();
+      }
     }
   };
   document.getElementById("export-json").onclick = () => exportAnnotations(ink.toJSON(), `${STORAGE}-annotations.json`);
@@ -1050,6 +1173,14 @@ function bindChrome() {
       return;
     }
     if (event.metaKey || event.ctrlKey || event.altKey) return;
+    if (key === "[" || key === "]") {
+      stepSize(key === "]" ? 1 : -1);
+      return;
+    }
+    if (key === "\\") {
+      toggleBars();
+      return;
+    }
     if (key === "f5") {
       event.preventDefault();
       setPresent(true);
@@ -1108,6 +1239,18 @@ function showBookName() {
 async function main() {
   showBookName();
   loadUI();
+  setAnswerSize(prefs.answerSize ?? 1);
+  showSize();
+  let rowsTimer = 0;
+  onPageRows(() => {
+    clearTimeout(rowsTimer);
+    rowsTimer = setTimeout(() => {
+      if (answerSize() !== 1) relayoutKeepingView();
+    }, 150);
+  });
+  // A phone has no room beside the page, so the drawing tools start tucked away there.
+  setToolsCollapsed(prefs.toolsCollapsed ?? window.innerWidth < 700, true);
+  setBarCollapsed(prefs.barCollapsed === true, true);
   state.layout = await fetch(`${BOOK_DIR}layout.json`).then((r) => r.json());
   placeChrome();
   buildPages();

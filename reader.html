@@ -30,13 +30,20 @@
       <button type="button" id="next-page" title="Next page">›</button>
     </div>
     <div class="top-actions">
-      <button type="button" id="zoom-out" title="Zoom out (Ctrl + wheel)">−</button>
-      <button type="button" id="fit" title="Fit width">Fit</button>
-      <button type="button" id="zoom-in" title="Zoom in (Ctrl + wheel)">+</button>
+      <div class="group" role="group" aria-label="Page zoom">
+        <button type="button" id="zoom-out" title="Zoom out (Ctrl + wheel)" aria-label="Zoom out">−</button>
+        <button type="button" id="fit" title="Fit the page width">Fit</button>
+        <button type="button" id="zoom-in" title="Zoom in (Ctrl + wheel)" aria-label="Zoom in">+</button>
+      </div>
+      <div class="group size" role="group" aria-label="Answer text size">
+        <button type="button" id="size-down" title="Smaller answer text ([)" aria-label="Smaller answer text">A<small>−</small></button>
+        <button type="button" id="size-reset" title="Answer text size. Tap to fit the answers to the page again (100%)">100%</button>
+        <button type="button" id="size-up" title="Larger answer text (])" aria-label="Larger answer text">A<small>+</small></button>
+      </div>
       <button type="button" id="present" title="Presentation mode: full screen, one page at a time (F5)">Present</button>
-      <button type="button" id="show-all" title="Reveal every step of every answer">Show all answers</button>
+      <button type="button" id="show-all" title="Reveal every step of every answer"><span class="lbl-long">Show all answers</span><span class="lbl-short">Show all</span></button>
       <button type="button" id="hide-all" title="Hide every step again">Hide all</button>
-      <button type="button" id="thumbs-toggle">Pages</button>
+      <button type="button" id="thumbs-toggle" title="Page thumbnails">Pages</button>
       <details id="more" class="more">
         <summary>More</summary>
         <div class="menu">
@@ -46,12 +53,19 @@
           <button type="button" id="print">Print / Save as PDF</button>
           <button type="button" id="export-json">Save ink file</button>
           <button type="button" id="import-json">Load ink file</button>
-          <p class="keys">Touch: tap ink to edit it · two-finger tap undo · three-finger tap redo.<br>Keys: Esc / V read · P pen · H highlighter · E eraser · K laser · L select · F5 present · Ctrl+Z undo · Ctrl+wheel zoom</p>
+          <p class="keys">Touch: tap ink to edit it · two-finger tap undo · three-finger tap redo.<br>Keys: Esc / V read · P pen · H highlighter · E eraser · K laser · L select · F5 present · [ ] answer text size · \ hide bars · Ctrl+Z undo · Ctrl+wheel zoom</p>
         </div>
       </details>
       <input id="import-file" type="file" accept="application/json,.json" hidden>
     </div>
+    <button type="button" id="bar-hide" class="bar-hide" title="Hide the top bar for more reading room (\)" aria-label="Hide the top bar">
+      <svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg>
+    </button>
   </header>
+  <button type="button" id="bar-show" class="bar-show" title="Show the top bar (\)" aria-label="Show the top bar">
+    <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+    <span id="bar-show-label">Menu</span>
+  </button>
 
   <aside id="sidebar" class="sidebar">
     <div id="thumbs" class="thumbs"></div>
@@ -148,6 +162,10 @@
     <button type="button" id="dock" class="tool small" title="Move the toolbar">
       <svg viewBox="0 0 24 24"><path d="M4 12h16M12 4v16M4 12l3-3M4 12l3 3M20 12l-3-3M20 12l-3 3"/></svg>
       <span>Move bar</span>
+    </button>
+    <button type="button" id="tools-collapse" class="tool small" title="Hide the drawing tools (\ hides both bars)" aria-expanded="true">
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+      <span>Hide</span>
     </button>
   </div>
 

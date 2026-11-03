@@ -159,7 +159,7 @@
         "id": "q20",
         "page": 6,
         "label": "20",
-        "section": "discount"
+        "section": "level2"
       },
       {
         "id": "q21",
@@ -227,21 +227,22 @@
         "region": [
           105,
           294,
-          535,
+          580,
           354
         ]
       }
     }
   },
   "widgets": false,
+  "infographics": true,
   "media": [
     {
       "page": 1,
       "region": [
-        40,
-        218,
-        555,
-        575
+        24,
+        203,
+        488,
+        584.5
       ],
       "scene": "jm03:ProfitLossFormulas",
       "src": "media/profit_loss.mp4",
@@ -251,10 +252,10 @@
     {
       "page": 4,
       "region": [
-        40,
-        70,
-        555,
-        255
+        32,
+        68,
+        546,
+        264.3
       ],
       "scene": "jm03:CostMarkedSelling",
       "src": "media/cost_marked_selling.mp4",

@@ -7,6 +7,7 @@
   "year": 2026,
   "status": "live",
   "storage": "jm03c",
+  "infographics": true,
   "source": {
     "que": "source/S1_JM03__C__-_Percentages_1_QUE_.pdf",
     "ans": "source/S1_JM03__C__-_Percentages_1_ANS_.pdf",
@@ -52,5 +53,16 @@
     "anchors": {},
     "fixedAnchors": {},
     "overrides": {}
-  }
+  },
+  "media": [
+    { "page": 1, "region": [27, 193, 386, 392.2], "scene": "jm03:PercentageChange",
+      "src": "media/percentage_change.mp4", "poster": "media/percentage_change.jpg",
+      "title": "Animate percentage increase and decrease" },
+    { "page": 1, "region": [30, 392.3, 384, 593], "scene": "jm03:ProfitLossPercent",
+      "src": "media/profit_loss_percent.mp4", "poster": "media/profit_loss_percent.jpg",
+      "title": "Animate profit or loss per cent" },
+    { "page": 1, "region": [27, 598, 394, 777], "scene": "jm03:DiscountPercent",
+      "src": "media/discount_percent.mp4", "poster": "media/discount_percent.jpg",
+      "title": "Animate discount per cent" }
+  ]
 }

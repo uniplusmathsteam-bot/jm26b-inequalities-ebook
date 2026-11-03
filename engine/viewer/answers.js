@@ -16,6 +16,27 @@ for (const [id, sol] of Object.entries(SOLUTION_BY_ID)) {
 /** Steps actually on the page (optional number lines may be dropped to fit). */
 const RENDERED = {};
 
+/**
+ * Reader's answer text size. At 1 every answer is fitted into its region as
+ * authored. Any other size sets the type at that scale and lets the region grow
+ * into a card that covers the page below it, instead of shrinking the type.
+ */
+let SIZE = 1;
+export const ANSWER_SIZES = [0.85, 1, 1.15, 1.3, 1.5, 1.75, 2];
+
+export function setAnswerSize(f) {
+  SIZE = ANSWER_SIZES.includes(f) ? f : 1;
+}
+
+export function answerSize() {
+  return SIZE;
+}
+
+/** Answers on a printed grid keep their cells, so they stay fitted at every size. */
+function flowable(sol) {
+  return !sol.boxes.some((b) => b.steps.some((s) => s.table?.at));
+}
+
 export function totalSteps(id) {
   return RENDERED[id] ?? META[id]?.total ?? 0;
 }
@@ -136,10 +157,12 @@ function nlSvg(spec) {
 }
 
 const TF = 11;
+// Same stack as --font-serif in styles.css; Tinos and Liberation Serif share Times' metrics.
+const SERIF = `"Times New Roman", Times, Tinos, "Liberation Serif", serif`;
 let measure;
 function textW(s, bold = false) {
   measure ??= document.createElement("canvas").getContext("2d");
-  measure.font = `${bold ? "700 " : ""}${TF}px "Times New Roman", Times, serif`;
+  measure.font = `${bold ? "700 " : ""}${TF}px ${SERIF}`;
   return measure.measureText(s).width;
 }
 
@@ -222,7 +245,7 @@ function treeSvg(spec) {
     });
   }
   const h = top + leaves.length * DY + 2;
-  return `<svg class="trsvg" viewBox="0 0 ${w.toFixed(1)} ${h}" style="width:calc(${w.toFixed(1)}px * var(--k));height:calc(${h}px * var(--k))" font-family="Times New Roman, Times, serif" font-size="${TF}" fill="${ink}">${g}</svg>`;
+  return `<svg class="trsvg" viewBox="0 0 ${w.toFixed(1)} ${h}" style="width:calc(${w.toFixed(1)}px * var(--k));height:calc(${h}px * var(--k))" font-family='${SERIF}' font-size="${TF}" fill="${ink}">${g}</svg>`;
 }
 
 /**
@@ -262,29 +285,53 @@ function tableHTML(spec) {
 
 const cache = new WeakMap();
 
-function stepHTML(step, id, i) {
+/** Pieces of one equation, split before each top-level "=" so a narrow column can wrap there. */
+function mathSegments(src) {
+  const parts = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    if (ch === "\\") { i++; continue; }
+    if (ch === "{") depth++;
+    else if (ch === "}") depth--;
+    else if (ch === "=" && depth <= 0 && src.slice(start, i).trim()) {
+      parts.push(src.slice(start, i).trim());
+      start = i;
+    }
+  }
+  const last = src.slice(start).trim();
+  if (last) parts.push(last);
+  return parts.length ? parts : [src];
+}
+
+function stepHTML(step, id, i, wrap = false) {
   if (step.h) return `<div class="hd">${inline(step.h)}</div>`;
-  let body = cache.get(step);
-    if (!body) {
+  let body = wrap ? null : cache.get(step);
+  if (!body) {
     const lk = step.lk ? ` lk lk-${esc(step.lk)}` : "";
-    if (step.m != null) body = `<span class="lx${lk}">${kx(`\\displaystyle ${step.m}`)}</span>`;
-    else if (step.t != null) body = `<span class="lx${lk}">${inline(step.t)}</span>`;
+    if (step.m != null) {
+      const parts = wrap ? mathSegments(step.m) : [step.m];
+      body = parts.length > 1
+        ? `<span class="lx${lk} segs">${parts.map((p) => `<span class="seg">${kx(`\\displaystyle ${p}`)}</span>`).join("")}</span>`
+        : `<span class="lx${lk}">${kx(`\\displaystyle ${step.m}`)}</span>`;
+    } else if (step.t != null) body = `<span class="lx${lk}">${inline(step.t)}</span>`;
     else if (step.note != null) body = `<span class="lx${lk}">${inline(step.note)}</span>`;
     else if (step.tree || step.table) {
       body = step.tree ? treeSvg(step.tree) : tableHTML(step.table);
       if (lk) body = `<span class="lx${lk}">${body}</span>`;
     } else body = nlSvg(step.nl);
     if (step.r) body += `<span class="rs">${esc(step.r)}</span>`;
-    cache.set(step, body);
+    if (!wrap) cache.set(step, body);
   }
   const kind = step.m != null ? "m" : step.t != null ? "t" : step.note != null ? "note" : step.tree ? "tree" : step.table ? "table" : "nl";
   return `<div class="ln ${kind}" data-q="${id}" data-i="${i}" data-plain="${esc(plain(step))}">${body}</div>`;
 }
 
-function renderPlan(inner, plan, id) {
+function renderPlan(inner, plan, id, wrap = false) {
   inner.innerHTML = plan.map((b) => {
     const head = b.cont ? `<div class="hd cont">(continued)</div>` : "";
-    return `<div class="abox${b.box.bare ? " bare" : ""}">${head}${b.items.map((e) => stepHTML(e.step, id, e.i)).join("")}</div>`;
+    return `<div class="abox${b.box.bare ? " bare" : ""}">${head}${b.items.map((e) => stepHTML(e.step, id, e.i, wrap)).join("")}</div>`;
   }).join("");
   return [...inner.children];
 }
@@ -351,6 +398,56 @@ function place(els, plan, W, H, flow, x0, nowrap = false, strict = false) {
     if (rowTop + h > H + 0.5) ok = false;
   });
   return ok;
+}
+
+/**
+ * Side-by-side boxes whose lines are too long for the region at this size.
+ * Each equation may break before an equals sign, so the type does not have to
+ * shrink to the width of the longest unwrapped line. False when a piece still
+ * overflows or the wrapped boxes are taller than the region.
+ */
+function placeWrap(els, plan, W, H) {
+  if (plan.some((b) => b.box.left != null || b.box.w || b.box.bare)) return false;
+  const info = els.map((el) => {
+    el.style.width = "max-content";
+    el.style.maxWidth = "none";
+    const natural = Math.max(el.offsetWidth, inkWidth(el));
+    const segs = [...el.querySelectorAll(".seg")];
+    if (!segs.length) return { el, natural, floor: natural };
+    const pad = parseFloat(getComputedStyle(el).paddingLeft) + parseFloat(getComputedStyle(el).paddingRight);
+    const floor = Math.min(natural, Math.max(...segs.map((s) => s.offsetWidth)) + pad + 2);
+    return { el, natural, floor };
+  });
+  if (!info.some((i) => i.floor < i.natural - 1)) return false;
+  const gaps = GAP * Math.max(0, info.length - 1);
+  const floorSum = info.reduce((s, i) => s + i.floor, 0);
+  if (floorSum + gaps > W + 0.5) return false;
+  let extra = W - gaps - floorSum;
+  const slack = info.map((i) => i.natural - i.floor);
+  const slackSum = slack.reduce((s, w) => s + w, 0);
+  const widths = info.map((i, n) => i.floor + (slackSum > 0 ? Math.min(slack[n], extra * slack[n] / slackSum) : 0));
+  let x = 0;
+  let rowTop = 0;
+  let rowH = 0;
+  for (let n = 0; n < info.length; n++) {
+    const { el } = info[n];
+    if (x > 0 && x + widths[n] > W + 0.5) {
+      rowTop += rowH + GAP;
+      rowH = 0;
+      x = 0;
+    }
+    const w = Math.max(60, Math.min(widths[n], W - x));
+    el.style.width = `${w}px`;
+    el.style.maxWidth = `${w}px`;
+    if (el.scrollWidth > el.clientWidth + 3 || inkWidth(el) > w + 3) return false;
+    const h = el.offsetHeight;
+    el.style.left = `${x}px`;
+    el.style.top = `${rowTop}px`;
+    rowH = Math.max(rowH, h);
+    x += w + GAP;
+    if (rowTop + h > H + 0.5) return false;
+  }
+  return true;
 }
 
 /** Right edge of a box in its own coordinates, including a reason past the border. */
@@ -522,6 +619,12 @@ function fit(q, qa) {
     inner.style.setProperty("--k", k);
     return place(renderPlan(inner, plan, q.id), plan, W, H, sol.flow, x0, sol.nowrap);
   };
+  const attemptWrap = (plan, k, tight) => {
+    if (sol.nowrap || sol.flow === "col" || sol.flow === "row") return false;
+    qa.classList.toggle("tight", tight);
+    inner.style.setProperty("--k", k);
+    return placeWrap(renderPlan(inner, plan, q.id, true), plan, W, H);
+  };
   const lean = full
     .map((b) => ({ ...b, items: b.items.filter((e) => !e.step.optional) }))
     .filter((b) => b.items.length);
@@ -543,6 +646,12 @@ function fit(q, qa) {
     }
     return false;
   };
+  // Keep the type near full size. A long equation may break before an equals
+  // sign rather than shrink below about 82% just to stay on one line.
+  const readable = ks.filter((k) => k >= 0.82);
+  if (ladder(readable, (k, tight) => attempt(full, k, tight))) return null;
+  if (leaner && ladder(readable, (k, tight) => attempt(lean, k, tight))) return null;
+  if (ladder(readable, (k, tight) => attemptWrap(full, k, tight))) return null;
   // Side-by-side columns read better than text below about 3/4 size, so they come first.
   const big = ks.filter((k) => k >= 0.76);
   if (ladder(big, (k, tight) => attempt(full, k, tight))) return null;
@@ -583,6 +692,164 @@ function markCont(plan, from) {
 }
 
 /**
+ * Sets the whole answer at the reader's size in rows of the region's width and
+ * makes the region as tall as the answer. growSheet() then opens that much room
+ * in the page below it. A box whose unbreakable line is wider than the region
+ * gets a smaller size of its own, so nothing runs past the page edge.
+ */
+function flowFit(q, qa) {
+  const sol = SOLUTION_BY_ID[q.id];
+  const [x0, y0, x1, y1] = q.region;
+  const W = x1 - x0 - CTL - 2;
+  const inner = qa.querySelector(".qa-in");
+  qa.classList.add("flow");
+  qa.classList.remove("tight");
+  inner.style.width = `${W}px`;
+  inner.style.setProperty("--k", SIZE);
+  const full = META[q.id].boxes.map((items, k) => ({ box: sol.boxes[k], items }));
+  const els = renderPlan(inner, full, q.id, true);
+  let x = 0;
+  let rowTop = 0;
+  let rowH = 0;
+  for (const el of els) {
+    el.style.width = "max-content";
+    el.style.maxWidth = `${W}px`;
+    let w = Math.max(el.offsetWidth, inkWidth(el));
+    if (w > W + 0.5) {
+      el.style.setProperty("--k", Math.max(0.5, SIZE * (W / w)).toFixed(3));
+      w = Math.max(el.offsetWidth, inkWidth(el));
+    }
+    if (x > 0 && x + w > W + 0.5) {
+      rowTop += rowH + GAP;
+      rowH = 0;
+      x = 0;
+    }
+    el.style.left = `${x}px`;
+    el.style.top = `${rowTop}px`;
+    rowH = Math.max(rowH, el.offsetHeight);
+    x += w + GAP;
+  }
+  qa.flowUsed = rowTop + rowH + 4;
+  qa.style.height = `${Math.max(y1 - y0, qa.flowUsed)}px`;
+  placeCtl(qa, els);
+}
+
+const PAGE_W = 595.32;
+const PAGE_H = 841.92;
+/** Per page image: 1 for each point row that is blank across the whole page. */
+const BLANK = new Map();
+let rowsReady = null;
+
+/** Called once a page image that a reflow had to guess at has loaded. */
+export function onPageRows(fn) {
+  rowsReady = fn;
+}
+
+function blankRows(img) {
+  if (BLANK.has(img.src)) return BLANK.get(img.src);
+  if (!img.complete || !img.naturalWidth) {
+    img.addEventListener("load", () => rowsReady?.(), { once: true });
+    return null;
+  }
+  const w = Math.round(PAGE_W);
+  const h = Math.round(PAGE_H);
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, w, h);
+  let data;
+  try {
+    data = ctx.getImageData(0, 0, w, h).data;
+  } catch {
+    BLANK.set(img.src, null);
+    return null;
+  }
+  const rows = new Uint8Array(h);
+  for (let y = 0; y < h; y++) {
+    let blank = 1;
+    for (let x = 3, i = (y * w + 3) * 4; x < w - 3; x++, i += 4) {
+      if (data[i] + data[i + 1] + data[i + 2] < 600) {
+        blank = 0;
+        break;
+      }
+    }
+    rows[y] = blank;
+  }
+  BLANK.set(img.src, rows);
+  return rows;
+}
+
+/**
+ * Where to open the page for a region that grows: its bottom edge, or the
+ * lowest blank row above it when a figure or option list beside the region
+ * crosses that edge, so the printed page is never torn through its ink.
+ */
+function cutFor(rows, y0, y1) {
+  if (!rows) return y1;
+  const clear = (y) => rows[y - 1] && rows[y] && rows[y + 1];
+  for (let y = Math.min(rows.length - 2, Math.round(y1)); y > y0 + 2; y--) if (clear(y)) return y;
+  return y1;
+}
+
+/**
+ * Opens room in a page under every region that grew: the page image is cut
+ * into slices and everything on the overlay below a cut moves down with it.
+ * Ink is drawn in page points, so a sheet that has grown hides it until the
+ * answers are back at 100%.
+ */
+function growSheet(sheet, page) {
+  const img = sheet.querySelector("img.bg");
+  const cuts = [];
+  for (const q of page.questions) {
+    const qa = sheet.querySelector(`.qa.flow[data-q="${q.id}"]`);
+    const extra = qa ? qa.flowUsed - (q.region[3] - q.region[1]) : 0;
+    if (extra > 0.5) cuts.push({ y: cutFor(blankRows(img), q.region[1], q.region[3]), d: Math.ceil(extra) });
+  }
+  cuts.sort((a, b) => a.y - b.y);
+  // Regions side by side end at about the same height: one gap, as tall as the taller needs.
+  const merged = [];
+  for (const c of cuts) {
+    const last = merged[merged.length - 1];
+    if (last && c.y - last.y < 3) last.d = Math.max(last.d, c.d);
+    else merged.push({ ...c });
+  }
+  const shift = (y) => merged.reduce((s, c) => (y >= c.y ? s + c.d : s), 0);
+  sheet.shiftY = merged.length ? (y) => y + shift(y) : null;
+  sheet.classList.toggle("grown", merged.length > 0);
+  sheet.style.height = `${PAGE_H + merged.reduce((s, c) => s + c.d, 0)}px`;
+  for (const el of sheet.querySelector(".overlay").children) {
+    if (el.classList.contains("rev")) continue;
+    if (!("y" in el.dataset)) el.dataset.y = parseFloat(el.style.top) || 0;
+    const y = Number(el.dataset.y);
+    el.style.top = `${y + shift(y)}px`;
+  }
+  sheet.querySelectorAll(".bg-slice").forEach((s) => s.remove());
+  img.hidden = merged.length > 0;
+  if (!merged.length) return;
+  let from = 0;
+  let off = 0;
+  let after = img;
+  for (const c of [...merged, { y: PAGE_H, d: 0 }]) {
+    const slice = document.createElement("div");
+    slice.className = "bg-slice";
+    slice.dataset.from = from;
+    slice.dataset.to = c.y;
+    Object.assign(slice.style, { top: `${from + off}px`, height: `${c.y - from}px` });
+    const part = document.createElement("img");
+    part.src = img.src;
+    part.alt = "";
+    part.draggable = false;
+    part.style.top = `${-from}px`;
+    slice.append(part);
+    after.after(slice);
+    after = slice;
+    off += c.d;
+    from = c.y;
+  }
+}
+
+/**
  * Lays out every answer region. Questions that overflow even at their minimum
  * scale continue on an extra sheet created by makeSheet(page) after the page.
  */
@@ -593,6 +860,13 @@ export function layoutAnswers(world, layout, makeSheet) {
     for (const q of page.questions) {
       const qa = world.querySelector(`.qa[data-q="${q.id}"]`);
       if (!qa) continue;
+      qa.classList.remove("flow");
+      qa.style.height = `${q.region[3] - q.region[1]}px`;
+      if (SIZE !== 1 && flowable(SOLUTION_BY_ID[q.id])) {
+        flowFit(q, qa);
+        qa.classList.remove("has-cont");
+        continue;
+      }
       const tail = fit(q, qa);
       placeCtl(qa, [...qa.querySelector(".qa-in").children]);
       qa.classList.toggle("has-cont", !!tail);
@@ -601,6 +875,8 @@ export function layoutAnswers(world, layout, makeSheet) {
         rest.get(page.page).push({ q, tail });
       }
     }
+    const sheet = world.querySelector(`.sheet[data-key="p${page.page}"]`);
+    if (sheet) growSheet(sheet, page);
   }
   for (const [pageNo, items] of rest) {
     const sheet = makeSheet(pageNo);
@@ -623,7 +899,7 @@ export function layoutAnswers(world, layout, makeSheet) {
       overlay.append(qa);
       const inner = qa.querySelector(".qa-in");
       inner.style.width = `${W}px`;
-      inner.style.setProperty("--k", 1);
+      inner.style.setProperty("--k", SIZE);
       const els = renderPlan(inner, tail, q.id);
       place(els, tail, W, CONT.bottom - y, sol.flow === "col" ? "row" : sol.flow, 0);
       const used = Math.max(70, usedHeight(els));
@@ -631,6 +907,7 @@ export function layoutAnswers(world, layout, makeSheet) {
       placeCtl(qa, els);
       y += used + 26;
     }
+    if (y > CONT.bottom) sheet.style.height = `${Math.ceil(y + 10)}px`;
   }
   for (const id of Object.keys(META)) {
     const lines = world.querySelectorAll(`.ln[data-q="${id}"]`);

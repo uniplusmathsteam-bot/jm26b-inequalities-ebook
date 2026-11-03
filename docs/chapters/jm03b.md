@@ -24,6 +24,8 @@ No `widgets.js` sliders. Two Key Concepts panels are Manim animations (`tools/ma
 | 1 | `ProfitLossFormulas` | Profit and loss formulas, then Selling = Cost × (1 ± %). |
 | 4 | `CostMarkedSelling` | Cost → Marked → Selling, with profit/loss and discount. |
 
+The jm03b QUE PDF is not in the repo, so `jm03.py` falls back to `pages/pNN.jpg` as the background when the PDF is missing. Media regions: p1 `[24, 203, 488, 584.5]`, p4 `[32, 68, 546, 264.3]`.
+
 ## Review links
 
 Every word problem has links. Table fills q1, q2 and q12 are skipped (cells only).

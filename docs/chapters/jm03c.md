@@ -10,7 +10,7 @@
 
 ## Source facts
 
-- Page 1 is the formula sheet (percentage change, profit or loss, discount). No questions and no red boxes. Left as printed. The panels are equations, so they are not animated.
+- Page 1 is the formula sheet (percentage change, profit or loss, discount). No questions and no red boxes. Its three numbered panels are Manim PrintScenes (`tools/manim/jm03.py`: `PercentageChange`, `ProfitLossPercent`, `DiscountPercent`). Each one wipes in the rule box, then each "× (1 ± rate)" box, ringing the + part green and the − part red (blue for discount).
 - Q1–Q16 are numbered long problems. No examples, practices, or multiple choice.
 - Both PDFs have 12 pages and the questions line up, so `ansPageOffset` is 0.
 - The teacher's working is a raster image inside each red frame, not PDF text. Solutions are transcribed from `reference/ans/`.

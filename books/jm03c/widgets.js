@@ -105,7 +105,7 @@ function q2(root) {
 function q3(root) {
   live(root, {
     h: 188,
-    q: "A toy car sells for \\$300 at a profit of 20%. A doll sells for \\$120 at a loss of 20%.",
+    q: "A toy car sells for \\$300 at a profit of 20%. A doll sells for \\$120 at a loss of 20%. Then the car is 10% off and the doll 5% off.",
     lets: ["Car cost $= 300 \\div 1.2 = 250$", "Doll cost $= 120 \\div 0.8 = 150$"],
     slider: { label: "Later discount on the car", min: 0, max: 30, step: 1, value: 10, fmt: (v) => `${v}%` },
     buttons: [["No extra discount", 0], ["Question: 10%", 10]],

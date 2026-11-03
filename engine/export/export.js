@@ -34,7 +34,15 @@ async function rasterSheet(sheet, strokes) {
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   const bg = sheet.querySelector("img.bg");
-  if (bg && bg.complete && bg.naturalWidth) {
+  const slices = [...sheet.querySelectorAll(".bg-slice")];
+  if (bg && bg.complete && bg.naturalWidth && slices.length) {
+    const ky = bg.naturalHeight / PAGE_H;
+    for (const s of slices) {
+      const from = Number(s.dataset.from);
+      const h = Number(s.dataset.to) - from;
+      ctx.drawImage(bg, 0, from * ky, bg.naturalWidth, h * ky, 0, parseFloat(s.style.top) * scale, canvas.width, h * scale);
+    }
+  } else if (bg && bg.complete && bg.naturalWidth) {
     ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
   } else if (sheet.classList.contains("continuation")) {
     ctx.fillStyle = "#163a86";
