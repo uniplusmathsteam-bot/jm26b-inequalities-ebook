@@ -44,12 +44,6 @@ async function rasterSheet(sheet, strokes) {
     }
   } else if (bg && bg.complete && bg.naturalWidth) {
     ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
-  } else if (sheet.classList.contains("continuation")) {
-    ctx.fillStyle = "#163a86";
-    ctx.font = `${16 * scale}px Georgia, serif`;
-    ctx.fillText("Solution, continued", 40 * scale, 46 * scale);
-    ctx.fillStyle = "#1aa3c4";
-    ctx.fillRect(40 * scale, 58 * scale, 220 * scale, 3 * scale);
   }
   ctx.save();
   ctx.scale(scale, scale);
@@ -63,8 +57,12 @@ async function rasterSheet(sheet, strokes) {
     const lines = [...box.querySelectorAll(".hd, .ln:not(.hid)")];
     if (!lines.some((n) => n.classList.contains("ln"))) continue;
     const b = local(box);
+    // A long answer exports the lines in its window, as it reads on screen.
+    const scroller = box.closest(".qa.scroll")?.querySelector(".qa-in");
+    const view = scroller ? local(scroller) : null;
     for (const line of lines) {
       const r = local(line);
+      if (view && (r.y + r.h / 2 < view.y || r.y + r.h / 2 > view.y + view.h)) continue;
       const size = Math.max(7, Math.min(12, r.h * 0.62));
       ctx.font = `${size}px 'Times New Roman', Times, serif`;
       ctx.fillStyle = "#111111";

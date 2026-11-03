@@ -74,9 +74,13 @@ def render(book_dir, item, still):
     video = book_dir / item["src"]
     poster = book_dir / item["poster"]
     video.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(out), "-an", "-c:v", "libx264", "-preset", "slow", "-crf", "26",
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg:
+        import imageio_ffmpeg
+        ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+    subprocess.run([ffmpeg, "-v", "error", "-y", "-i", str(out), "-an", "-c:v", "libx264", "-preset", "slow", "-crf", "26",
                     "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(video)], check=True)
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-sseof", "-0.2", "-i", str(video), "-frames:v", "1", "-q:v", "3",
+    subprocess.run([ffmpeg, "-v", "error", "-y", "-sseof", "-0.2", "-i", str(video), "-frames:v", "1", "-q:v", "3",
                     "-update", "1", str(poster)], check=True)
     print(f"video {video.relative_to(ROOT)} ({video.stat().st_size // 1024} KB), poster {poster.name}")
 

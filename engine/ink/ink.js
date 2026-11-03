@@ -683,6 +683,9 @@ export function createInk({ dbName }) {
       const parts = line.classList.contains("hd") ? [line] : [...line.querySelectorAll(".lx, .rs")];
       const boxes = parts.map((el) => el.getBoundingClientRect()).filter((r) => r.width > 0);
       if (!boxes.length) continue;
+      // A line scrolled out of a long answer's window is not on the page.
+      const view = line.closest(".qa.scroll")?.querySelector(".qa-in").getBoundingClientRect();
+      if (view && boxes.every((r) => r.bottom <= view.top + 1 || r.top >= view.bottom - 1)) continue;
       const tokens = parts.flatMap(tokenRects).sort((p, q) => p.left - q.left);
       const y0 = (Math.min(...boxes.map((r) => r.top)) - origin.top) * k;
       const y1 = (Math.max(...boxes.map((r) => r.bottom)) - origin.top) * k;
@@ -930,7 +933,7 @@ export function createInk({ dbName }) {
     if (replay) stopReplay();
     const sheet = event.target.closest?.(".sheet");
     if (!sheet) return;
-    if (event.target.closest("button, input, a, select, textarea, .ctl")) return;
+    if (event.target.closest("button, input, a, select, textarea, .ctl, .qa-bar")) return;
     if (event.pointerType === "mouse" && event.button !== 0) return;
     if (activeId !== null) {
       // A second finger or a palm never interrupts the Pencil.
@@ -1195,7 +1198,7 @@ export function createInk({ dbName }) {
     // checks for a double-tap, scroll or text-selection gesture.
     const claimStylus = (event) => {
       if (tool.type === "read" || tool.type === "hand") return;
-      if (event.target.closest?.("button, input, a, select, textarea, .ctl")) return;
+      if (event.target.closest?.("button, input, a, select, textarea, .ctl, .qa-bar")) return;
       if ([...event.changedTouches].some((t) => t.touchType === "stylus")) event.preventDefault();
     };
     world.addEventListener("touchstart", claimStylus, { passive: false });

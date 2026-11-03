@@ -203,7 +203,8 @@
           544.6,
           550.0,
           616.6
-        ]
+        ],
+        "space": 65
       },
       "q2": {
         "region": [
@@ -211,7 +212,8 @@
           659.9,
           398.0,
           807.9
-        ]
+        ],
+        "space": 160
       },
       "q3": {
         "region": [
@@ -219,7 +221,8 @@
           313.0,
           550.0,
           429.0
-        ]
+        ],
+        "space": 165
       },
       "q4": {
         "region": [
@@ -458,5 +461,5 @@
       "title": "Animate the quadrilateral family"
     }
   ],
-  "widgets": false
+  "widgets": true
 }

@@ -1,8 +1,10 @@
 import { BOOK, BOOK_DIR, BOOK_ID, BOOK_NAME, STORAGE, SOLUTION_BY_ID, mountGraphic, pageImage } from "../book.js";
 import { createInk } from "../ink/ink.js";
 import { exportAnnotations, exportPdf } from "../export/export.js";
-import { ANSWER_SIZES, answerSize, buildOverlay, layoutAnswers, onPageRows, paint, setAnswerSize, totalSteps } from "./answers.js";
-import { renderLinks, renderContLinks, clearLinks } from "./links.js";
+import {
+  ANSWER_SIZES, answerScroller, answerSize, buildOverlay, keepInView, layoutAnswers, onAnswerScroll, onPageRows, paint, setAnswerSize, totalSteps,
+} from "./answers.js";
+import { renderLinks, clearLinks } from "./links.js";
 import { addMedia, toggleMedia } from "./media.js";
 import { addInfographics } from "../infographic/infographic.js";
 
@@ -10,7 +12,7 @@ const PAGE_W = 595.32;
 const PAGE_H = 841.92;
 const GAP = 22;
 const UI_KEY = `${STORAGE}-ui`;
-const UI_SELECTOR = "button, input, select, textarea, a, label, .ctl, .drawer";
+const UI_SELECTOR = "button, input, select, textarea, a, label, .ctl, .qa-bar, .drawer";
 
 const world = document.getElementById("world");
 const viewport = document.getElementById("viewport");
@@ -84,15 +86,32 @@ function revealed(id) {
 }
 
 function setReveal(id, n) {
+  const before = revealed(id);
   state.reveal[id] = Math.max(0, Math.min(totalSteps(id), n));
   paint(world, id, state.reveal[id]);
+  keepInView(world, id, before, state.reveal[id]);
   saveUI();
   syncLinks(id);
 }
 
-function paintAll() {
-  for (const q of questions()) paint(world, q.id, revealed(q.id));
+/** Paints every question; `from` (id → steps shown before) scrolls long answers to what changed. */
+function paintAll(from = null) {
+  for (const q of questions()) {
+    const n = revealed(q.id);
+    paint(world, q.id, n);
+    keepInView(world, q.id, from ? from[q.id] ?? 0 : Math.max(0, n - 1), n, false);
+  }
   syncAllLinks();
+}
+
+function revealAll(count) {
+  const from = {};
+  for (const q of questions()) {
+    from[q.id] = revealed(q.id);
+    state.reveal[q.id] = count(q.id);
+  }
+  paintAll(from);
+  saveUI();
 }
 
 function pageOf(id) {
@@ -114,9 +133,6 @@ function syncLinks(id) {
   const sheet = world.querySelector(`.qa[data-q="${id}"]`)?.closest(".sheet");
   if (!found || !sheet) return;
   const pos = renderLinks(sheet, id, found.page, found.q, openSet(id));
-  for (const cont of world.querySelectorAll(`.sheet.continuation .qa.cont[data-q="${id}"]`)) {
-    renderContLinks(cont.closest(".sheet"), id, found.page, openSet(id));
-  }
   const ctl = sheet.querySelector(`.qa[data-q="${id}"] .ctl`);
   if (!pos || !ctl) return;
   const qaLeft = parseFloat(ctl.closest(".qa").style.left) || 0;
@@ -192,30 +208,13 @@ function buildPages() {
   }
 }
 
-function makeContinuation(pageNo) {
-  const anchor = world.querySelector(`.sheet[data-key="p${pageNo}"]`);
-  const sheet = document.createElement("article");
-  sheet.className = "sheet continuation";
-  sheet.dataset.key = `c${pageNo}-1`;
-  sheet.dataset.page = String(pageNo);
-  sheet.style.width = `${PAGE_W}px`;
-  sheet.style.height = `${PAGE_H}px`;
-  const band = document.createElement("div");
-  band.className = "band";
-  band.style.backgroundImage = `url("${pageImage(pageNo)}")`;
-  if (BOOK.continuation?.band) band.style.height = `${BOOK.continuation.band}px`;
-  const foot = document.createElement("div");
-  foot.className = "cont-foot";
-  foot.textContent = `Answers continued from page ${pageNo}`;
-  const overlay = document.createElement("div");
-  overlay.className = "overlay";
-  sheet.append(band, foot, overlay, ...makeCanvases());
-  anchor.after(sheet);
-  return sheet;
-}
-
 function layout() {
-  layoutAnswers(world, state.layout, makeContinuation);
+  layoutAnswers(world, state.layout);
+  // The highlighter snaps to printed lines, which sit lower on a page opened up under an answer.
+  for (const page of state.layout.pages) {
+    const sy = world.querySelector(`.sheet[data-key="p${page.page}"]`)?.shiftY;
+    ink.setText(`p${page.page}`, sy ? page.text.map(([y0, y1, words]) => [sy(y0), sy(y1), words]) : page.text);
+  }
   paintAll();
   layoutWorld();
   buildThumbs();
@@ -314,9 +313,9 @@ function updateIndicator() {
   if (!best) return;
   const label = document.getElementById("page-label");
   const total = state.layout.pages.length;
-  label.textContent = best.classList.contains("continuation") ? `Page ${best.dataset.page}+` : `Page ${best.dataset.page} / ${total}`;
+  label.textContent = `Page ${best.dataset.page} / ${total}`;
   document.getElementById("bar-show-label").textContent = label.textContent;
-  document.getElementById("pr-label").textContent = best.classList.contains("continuation") ? `${best.dataset.page}+ / ${total}` : `${best.dataset.page} / ${total}`;
+  document.getElementById("pr-label").textContent = `${best.dataset.page} / ${total}`;
   if (state.currentKey !== best.dataset.key) {
     state.currentKey = best.dataset.key;
     document.querySelectorAll(".thumb").forEach((t) => t.classList.toggle("on", t.dataset.key === state.currentKey));
@@ -738,7 +737,8 @@ function bindViewport() {
   }
 
   const startDrag = (event) => {
-    drag = { id: event.pointerId, x: event.clientX, y: event.clientY, tx: state.tx, ty: state.ty, moved: false, samples: [] };
+    const scroller = answerScroller(event.target);
+    drag = { id: event.pointerId, x: event.clientX, y: event.clientY, tx: state.tx, ty: state.ty, moved: false, samples: [], scroller, top: scroller?.scrollTop ?? 0 };
   };
 
   // Two-finger tap = undo, three-finger tap = redo (as in Notability and GoodNotes).
@@ -814,6 +814,14 @@ function bindViewport() {
     if (!drag.moved) return;
     state.tx = drag.tx + dx;
     state.ty = drag.ty + dy;
+    if (drag.scroller) {
+      // A long answer takes the vertical drag first; the page moves only past its ends.
+      const inner = drag.scroller;
+      const want = drag.top - dy / state.scale;
+      const got = Math.max(0, Math.min(inner.scrollHeight - inner.clientHeight, want));
+      inner.scrollTop = got;
+      state.ty = drag.ty - (want - got) * state.scale;
+    }
     const now = performance.now();
     drag.samples.push({ x: event.clientX, y: event.clientY, t: now });
     while (drag.samples.length > 2 && now - drag.samples[0].t > 90) drag.samples.shift();
@@ -848,7 +856,7 @@ function bindViewport() {
       // Presenting a whole page: a swipe turns the page, a small drag springs back.
       suppressClickUntil = performance.now() + 350;
       const dx = event.clientX - drag.x;
-      const dy = event.clientY - drag.y;
+      const dy = drag.scroller ? state.ty - drag.ty : event.clientY - drag.y;
       drag = null;
       if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy)) stepPage(dx < 0 ? 1 : -1);
       else if (Math.abs(dy) > 90) stepPage(dy < 0 ? 1 : -1);
@@ -858,7 +866,7 @@ function bindViewport() {
     if (drag.moved) {
       suppressClickUntil = performance.now() + 350;
       const s = drag.samples;
-      if (s.length >= 2) {
+      if (s.length >= 2 && !drag.scroller) {
         const a = s[0];
         const b = s[s.length - 1];
         const dt = Math.max(16, b.t - a.t);
@@ -890,12 +898,21 @@ function bindViewport() {
     const unit = event.deltaMode === 1 ? 18 : event.deltaMode === 2 ? viewport.clientHeight : 1;
     const dx = event.shiftKey && !event.deltaX ? event.deltaY : event.deltaX;
     const dy = event.shiftKey && !event.deltaX ? 0 : event.deltaY;
+    const inner = answerScroller(event.target);
+    if (inner && dy) {
+      const top = Math.max(0, Math.min(inner.scrollHeight - inner.clientHeight, inner.scrollTop + (dy * unit) / state.scale));
+      if (Math.abs(top - inner.scrollTop) > 0.5) {
+        inner.scrollTop = top;
+        return;
+      }
+    }
     state.tx -= dx * unit;
     state.ty -= dy * unit;
     applyTransform();
   }, { passive: false });
 
   world.addEventListener("click", (event) => {
+    if (event.target.closest(".qa-bar")) return;
     const play = event.target.closest("[data-media]");
     if (play) {
       event.stopPropagation();
@@ -942,17 +959,12 @@ function buildThumbs() {
     btn.className = "thumb";
     btn.dataset.key = sheet.dataset.key;
     const page = sheet.dataset.page;
-    if (sheet.classList.contains("continuation")) {
-      btn.textContent = `p.${page} continued`;
-      btn.classList.add("cont");
-    } else {
-      const img = document.createElement("img");
-      img.src = pageImage(page);
-      img.alt = `Page ${page}`;
-      const cap = document.createElement("span");
-      cap.textContent = page;
-      btn.append(img, cap);
-    }
+    const img = document.createElement("img");
+    img.src = pageImage(page);
+    img.alt = `Page ${page}`;
+    const cap = document.createElement("span");
+    cap.textContent = page;
+    btn.append(img, cap);
     btn.addEventListener("click", () => scrollToSheet(sheet));
     bar.append(btn);
   }
@@ -1058,7 +1070,7 @@ function setSize(f) {
   showSize();
   relayoutKeepingView();
   toast(answerSize() === 1
-    ? "Answer text 100%: every answer fits its space on the page"
+    ? "Answer text 100%: a long answer scrolls inside its space on the page"
     : `Answer text ${Math.round(answerSize() * 100)}%: the page opens up below answers that need more room`);
 }
 
@@ -1080,16 +1092,8 @@ function bindChrome() {
   document.getElementById("fit").onclick = fitWidth;
   document.getElementById("zoom-in").onclick = () => zoomAt(viewport.clientWidth / 2, viewport.clientHeight / 2, 1.15);
   document.getElementById("zoom-out").onclick = () => zoomAt(viewport.clientWidth / 2, viewport.clientHeight / 2, 1 / 1.15);
-  document.getElementById("show-all").onclick = () => {
-    for (const q of questions()) state.reveal[q.id] = totalSteps(q.id);
-    paintAll();
-    saveUI();
-  };
-  document.getElementById("hide-all").onclick = () => {
-    for (const q of questions()) state.reveal[q.id] = 0;
-    paintAll();
-    saveUI();
-  };
+  document.getElementById("show-all").onclick = () => revealAll(totalSteps);
+  document.getElementById("hide-all").onclick = () => revealAll(() => 0);
   document.getElementById("thumbs-toggle").onclick = () => {
     document.getElementById("sidebar").classList.toggle("open");
   };
@@ -1247,6 +1251,16 @@ async function main() {
     rowsTimer = setTimeout(() => {
       if (answerSize() !== 1) relayoutKeepingView();
     }, 150);
+  });
+  const scrolledIds = new Set();
+  onAnswerScroll((id) => {
+    if (!scrolledIds.size) {
+      requestAnimationFrame(() => {
+        for (const q of scrolledIds) syncLinks(q);
+        scrolledIds.clear();
+      });
+    }
+    scrolledIds.add(id);
   });
   // A phone has no room beside the page, so the drawing tools start tucked away there.
   setToolsCollapsed(prefs.toolsCollapsed ?? window.innerWidth < 700, true);

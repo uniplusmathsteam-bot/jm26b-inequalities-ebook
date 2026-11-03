@@ -232,35 +232,14 @@ export function clearLinks(sheet, id) {
   if (ctl?.dataset.home) ctl.style.left = ctl.dataset.home;
 }
 
-/**
- * Answer-side underlines for the steps of a question that continue on an extra
- * sheet. The question boxes, tags and leaders stay on the question's own sheet.
- */
-export function renderContLinks(sheet, id, page, open) {
-  sheet.querySelector(`.rev[data-q="${id}"]`)?.remove();
-  const sol = SOLUTION_BY_ID[id];
-  const qa = sheet.querySelector(`.qa.cont[data-q="${id}"]`);
-  const overlay = sheet.querySelector(".overlay");
-  if (!sol?.links || !qa || !overlay) return;
-  const layer = document.createElement("div");
-  layer.className = "rev";
-  layer.dataset.q = id;
-  const svg = svgEl("svg", { viewBox: `0 0 ${page.width} ${sheet.offsetHeight || page.height}` });
-  layer.append(svg);
-  overlay.append(layer);
-  const rects = [];
-  for (const link of sol.links) {
-    for (const n of answerNodes(qa, link.key)) {
-      const depth = linkDepth(n);
-      const fontSize = parseFloat(getComputedStyle(n).fontSize) || 12.5;
-      for (const cr of inkRects(n)) {
-        const box = sheetPoint(sheet, cr);
-        rects.push(makeUnderline(box, link, open.has(link.key), id, depth, underlineLimit(sheet, n, box), fontSize));
-      }
-    }
-  }
-  rects.sort((a, b) => b.area - a.area);
-  for (const r of rects) svg.append(r.rect);
+/** The visible window of an answer that scrolls inside its region, in sheet points. */
+function viewOf(sheet, qa) {
+  return qa.classList.contains("scroll") ? sheetPoint(sheet, qa.querySelector(".qa-in").getBoundingClientRect()) : null;
+}
+
+function inView(view, b) {
+  const mid = b.y + b.h / 2;
+  return !view || (mid > view.y && mid < view.y + view.h);
 }
 
 /**
@@ -289,6 +268,9 @@ export function renderLinks(sheet, id, page, q, open) {
   const sy = sheet.shiftY || ((y) => y);
   const qTop = parseFloat(qa.style.top) || q.region[1];
   const at = { ...q, region: [q.region[0], qTop, q.region[2], qTop + qa.offsetHeight] };
+  // Only the lines scrolled into a long answer's window are marked.
+  const view = viewOf(sheet, qa);
+  const viewBottom = view ? view.y + view.h : Infinity;
   const tags = [];
   const rects = [];
   for (const link of sol.links) {
@@ -296,14 +278,18 @@ export function renderLinks(sheet, id, page, q, open) {
     for (const phrase of link.q || []) {
       for (const r of questionRects(page, q, phrase)) rects.push(makeRect({ ...r, y: sy(r.y) }, link, isOpen, id));
     }
-    const nodes = answerNodes(qa, link.key);
-    for (const n of nodes) {
+    const nodes = [];
+    for (const n of answerNodes(qa, link.key)) {
       const depth = linkDepth(n);
       const fontSize = parseFloat(getComputedStyle(n).fontSize) || 12.5;
+      let shown = false;
       for (const cr of inkRects(n)) {
         const box = sheetPoint(sheet, cr);
-        rects.push(makeUnderline(box, link, isOpen, id, depth, underlineLimit(sheet, n, box), fontSize));
+        if (!inView(view, box)) continue;
+        shown = true;
+        rects.push(makeUnderline(box, link, isOpen, id, depth, Math.min(viewBottom, underlineLimit(sheet, n, box)), fontSize));
       }
+      if (shown) nodes.push(n);
     }
     if (!isOpen || !nodes.length) continue;
     const spots = nodes.map((n) => {
@@ -327,10 +313,32 @@ export function renderLinks(sheet, id, page, q, open) {
     t.h = d.offsetHeight || 16;
   }
 
-  const boxS = new Map(boxes.map((b) => [b, sheetPoint(sheet, b.getBoundingClientRect())]));
-  const right = Math.max(...[...boxS.values()].map((s) => s.x + s.w));
+  const boxS = new Map();
+  for (const b of boxes) {
+    const s = sheetPoint(sheet, b.getBoundingClientRect());
+    if (view) {
+      const top = Math.max(s.y, view.y);
+      const end = Math.min(s.y + s.h, viewBottom);
+      if (end <= top) continue;
+      Object.assign(s, { y: top, h: end - top });
+    }
+    boxS.set(b, s);
+  }
+  for (const t of [...tags]) {
+    t.spots = t.spots.filter((s) => boxS.has(s.hostEl));
+    t.pick = Math.min(t.pick, t.spots.length - 1);
+    if (t.spots.length) continue;
+    t.el.remove();
+    tags.splice(tags.indexOf(t), 1);
+  }
+  if (!tags.length) return null;
+  let right = Math.max(...[...boxS.values()].map((s) => s.x + s.w));
   const left = Math.min(...[...boxS.values()].map((s) => s.x));
   const bottom = Math.max(...[...boxS.values()].map((s) => s.y + s.h));
+  if (view) {
+    const bar = sheetPoint(sheet, qa.querySelector(".qa-bar").getBoundingClientRect());
+    right = Math.max(right, bar.x + bar.w);
+  }
   const tagX = right + 10;
 
   // A side leader leaves its box's right edge at the clear height nearest the component.

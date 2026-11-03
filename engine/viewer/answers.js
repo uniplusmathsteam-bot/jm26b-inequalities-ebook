@@ -2,8 +2,13 @@ import { BOOK, SOLUTION_BY_ID, hasGraphic } from "../book.js";
 
 const GAP = 7;
 const CTL = 30;
-// Writable area of a continuation sheet, below the page's header band.
-const CONT = { top: 96, x: 48, width: 499, bottom: 812, ...BOOK.continuation };
+/** Room for the scroll bar between an answer that scrolls and its controls. */
+const BAR = 10;
+/**
+ * Type size of every answer at reader size 100%. It is the same in every
+ * question: an answer that needs more room than its region scrolls inside it.
+ */
+const BASE = BOOK.answerScale ?? 1;
 
 /** Per-question step metadata: global reveal index of every line (headings get -1). */
 export const META = {};
@@ -13,13 +18,10 @@ for (const [id, sol] of Object.entries(SOLUTION_BY_ID)) {
   META[id] = { boxes, total: n };
 }
 
-/** Steps actually on the page (optional number lines may be dropped to fit). */
-const RENDERED = {};
-
 /**
- * Reader's answer text size. At 1 every answer is fitted into its region as
- * authored. Any other size sets the type at that scale and lets the region grow
- * into a card that covers the page below it, instead of shrinking the type.
+ * Reader's answer text size. At 1 every answer is set at BASE in its region and
+ * scrolls when it needs more room. Any other size sets the type at that scale
+ * and lets the region grow into a card that covers the page below it.
  */
 let SIZE = 1;
 export const ANSWER_SIZES = [0.85, 1, 1.15, 1.3, 1.5, 1.75, 2];
@@ -38,7 +40,12 @@ function flowable(sol) {
 }
 
 export function totalSteps(id) {
-  return RENDERED[id] ?? META[id]?.total ?? 0;
+  return META[id]?.total ?? 0;
+}
+
+/** Height of a question's answer space: its printed region plus any room the book opens below it. */
+function regionHeight(q) {
+  return q.region[3] - q.region[1] + (q.space || 0);
 }
 
 function esc(s) {
@@ -329,10 +336,7 @@ function stepHTML(step, id, i, wrap = false) {
 }
 
 function renderPlan(inner, plan, id, wrap = false) {
-  inner.innerHTML = plan.map((b) => {
-    const head = b.cont ? `<div class="hd cont">(continued)</div>` : "";
-    return `<div class="abox${b.box.bare ? " bare" : ""}">${head}${b.items.map((e) => stepHTML(e.step, id, e.i, wrap)).join("")}</div>`;
-  }).join("");
+  inner.innerHTML = plan.map((b) => `<div class="abox${b.box.bare ? " bare" : ""}">${b.items.map((e) => stepHTML(e.step, id, e.i, wrap)).join("")}</div>`).join("");
   return [...inner.children];
 }
 
@@ -461,22 +465,6 @@ function inkWidth(el) {
   return right;
 }
 
-function usedHeight(els) {
-  return els.reduce((m, el) => Math.max(m, el.offsetTop + el.offsetHeight), 0);
-}
-
-/** The first `count` lines of a plan, keeping the box structure. */
-function head(plan, count) {
-  const out = [];
-  let n = 0;
-  for (const b of plan) {
-    const items = b.items.slice(0, Math.max(0, count - n));
-    n += b.items.length;
-    if (items.some((e) => !e.step.h)) out.push({ box: b.box, items });
-  }
-  return out;
-}
-
 function graphicButton(id) {
   return `<button type="button" data-act="graphic" data-q="${id}" title="Open the interactive graphic"><svg viewBox="0 0 20 20"><path d="M3 16h14M5 13l4-5 3 3 4-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
 }
@@ -491,31 +479,130 @@ function ctlGrid(qa, h) {
   return { rows, side, width: cols * 27 };
 }
 
-/** Puts the controls just right of the boxes; a side counter may stick out past the region. */
+/**
+ * Puts the controls just right of the boxes; a side counter may stick out past
+ * the region. An answer that scrolls is clipped at its right edge, with the
+ * scroll bar between it and the controls.
+ */
 function placeCtl(qa, els) {
   const ctl = qa.querySelector(".ctl");
   const { rows, side, width } = ctlGrid(qa, qa.offsetHeight);
   ctl.style.setProperty("--rows", rows);
   ctl.classList.toggle("side", side);
   const right = els.reduce((m, el) => Math.max(m, el.offsetLeft + inkWidth(el)), 0);
+  const bar = qa.classList.contains("scroll") ? BAR : 0;
+  if (bar) {
+    qa.querySelector(".qa-in").style.width = `${Math.ceil(right) + 2}px`;
+    qa.querySelector(".qa-bar").style.left = `${Math.ceil(right) + 3}px`;
+  }
   const limit = qa.offsetWidth - width - (side ? 24 : 0);
-  let left = Math.min(right + 6, limit);
-  if (left < right + 2) left = right + 6;
+  let left = Math.min(right + 6 + bar, limit);
+  if (left < right + 2 + bar) left = right + 6 + bar;
   ctl.style.left = `${left}px`;
   ctl.style.right = "auto";
   ctl.dataset.home = ctl.style.left;
 }
 
-function ctlHTML(id, cont) {
-  const graphic = hasGraphic(id) ? graphicButton(id) : "";
+function ctlHTML(id) {
   return `<div class="ctl">
     <button type="button" data-act="next" data-q="${id}" title="Show the next step">▸</button>
     <button type="button" data-act="all" data-q="${id}" title="Show every step">»</button>
     <button type="button" data-act="back" data-q="${id}" title="Hide the last step">◂</button>
     <button type="button" data-act="reset" data-q="${id}" title="Hide all steps">↺</button>
-    ${cont ? "" : graphic}
+    ${hasGraphic(id) ? graphicButton(id) : ""}
     <span class="prog" data-q="${id}"></span>
   </div>`;
+}
+
+let scrolled = null;
+
+/** `fn(id)` runs whenever an answer scrolls, so its review links can follow. */
+export function onAnswerScroll(fn) {
+  scrolled = fn;
+}
+
+/** The scrolling window of the answer under `target`, or null when that answer fits its region. */
+export function answerScroller(target) {
+  return target?.closest?.(".qa.scroll")?.querySelector(".qa-in") ?? null;
+}
+
+/** Sizes and places the scroll bar's thumb for the answer's current position. */
+function syncBar(qa) {
+  if (!qa.classList.contains("scroll")) return;
+  const inner = qa.querySelector(".qa-in");
+  const thumb = qa.querySelector(".qa-bar i");
+  const H = inner.clientHeight;
+  const max = Math.max(0, inner.scrollHeight - H);
+  const h = Math.max(18, (H * H) / (H + max));
+  Object.assign(thumb.style, { height: `${h}px`, top: `${max ? ((H - h) * inner.scrollTop) / max : 0}px` });
+  qa.classList.toggle("at-end", inner.scrollTop >= max - 1);
+}
+
+/** Press anywhere on the bar to bring the thumb there, then drag it. */
+function bindBar(qa) {
+  const bar = qa.querySelector(".qa-bar");
+  const inner = qa.querySelector(".qa-in");
+  bar.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const thumb = bar.firstElementChild;
+    const rect = bar.getBoundingClientRect();
+    const k = rect.height / bar.offsetHeight || 1;
+    const room = bar.offsetHeight - thumb.offsetHeight || 1;
+    const max = inner.scrollHeight - inner.clientHeight;
+    const grab = event.target === thumb ? (event.clientY - thumb.getBoundingClientRect().top) / k : thumb.offsetHeight / 2;
+    const move = (e) => {
+      const y = (e.clientY - rect.top) / k - grab;
+      inner.scrollTop = max * Math.max(0, Math.min(1, y / room));
+    };
+    const stop = () => {
+      bar.classList.remove("drag");
+      bar.removeEventListener("pointermove", move);
+      bar.removeEventListener("pointerup", stop);
+      bar.removeEventListener("pointercancel", stop);
+    };
+    bar.setPointerCapture(event.pointerId);
+    bar.classList.add("drag");
+    move(event);
+    bar.addEventListener("pointermove", move);
+    bar.addEventListener("pointerup", stop);
+    bar.addEventListener("pointercancel", stop);
+  });
+}
+
+/**
+ * Scrolls every window of answer `id` after its shown steps went from `from` to
+ * `to`: the newly shown steps come into view, with the next grey bar when there
+ * is room, and showing everything at once starts from the top.
+ */
+export function keepInView(root, id, from, to, smooth = true) {
+  for (const qa of root.querySelectorAll(`.qa.scroll[data-q="${id}"]`)) {
+    const inner = qa.querySelector(".qa-in");
+    const H = inner.clientHeight;
+    const view = inner.getBoundingClientRect();
+    const k = view.height / H || 1;
+    const span = (list) => {
+      const rects = list.map((i) => inner.querySelector(`.ln[data-i="${i}"]`)?.getBoundingClientRect()).filter(Boolean);
+      if (!rects.length) return null;
+      const y = (v) => (v - view.top) / k + inner.scrollTop;
+      return [y(Math.min(...rects.map((r) => r.top))), y(Math.max(...rects.map((r) => r.bottom)))];
+    };
+    const pad = 6;
+    let top = inner.scrollTop;
+    const shown = to > from ? Array.from({ length: to - from }, (_, n) => from + n) : [to - 1];
+    const fresh = to > 0 ? span(shown) : null;
+    if (!fresh) top = 0;
+    else {
+      const next = span([to]);
+      const want = next ? [Math.min(fresh[0], next[0]), Math.max(fresh[1], next[1])] : fresh;
+      const [a, b] = want[1] - want[0] + 2 * pad <= H ? want : fresh;
+      if (b - a + 2 * pad > H) top = a - pad;
+      else if (b + pad > top + H) top = b + pad - H;
+      else if (a - pad < top) top = a - pad;
+    }
+    const max = inner.scrollHeight - H;
+    inner.scrollTo({ top: Math.max(0, Math.min(max, top)), behavior: smooth ? "smooth" : "auto" });
+  }
 }
 
 /** Creates the answer region, MC square and ring placeholders for one page overlay. */
@@ -538,7 +625,12 @@ export function buildOverlay(page, overlay) {
     qa.className = "qa";
     qa.dataset.q = q.id;
     Object.assign(qa.style, { left: `${x0}px`, top: `${y0}px`, width: `${x1 - x0}px`, height: `${y1 - y0}px` });
-    qa.innerHTML = `<div class="qa-in"></div>${ctlHTML(q.id, false)}`;
+    qa.innerHTML = `<div class="qa-in"></div><div class="qa-bar" title="Drag to scroll the answer"><i></i></div>${ctlHTML(q.id)}`;
+    qa.querySelector(".qa-in").addEventListener("scroll", () => {
+      syncBar(qa);
+      scrolled?.(q.id);
+    }, { passive: true });
+    bindBar(qa);
     overlay.append(qa);
     if (q.square && sol.letter) {
       const [a, b, c, d] = q.square;
@@ -558,13 +650,6 @@ export function buildOverlay(page, overlay) {
       overlay.append(ring);
     }
   }
-}
-
-function scales(min) {
-  const list = [];
-  for (let k = 1; k > min + 1e-6; k -= 0.06) list.push(Number(k.toFixed(2)));
-  list.push(min);
-  return list;
 }
 
 /**
@@ -601,124 +686,76 @@ function split(plan, els, H) {
   return any ? out : null;
 }
 
-/** Fits one question into its region; returns the plan that did not fit (or null). */
-function fit(q, qa) {
+/**
+ * Sets one answer at the book's type size. It keeps the authored layout when
+ * that fits the region, then tries long equations broken before "=", then tall
+ * boxes cut into side-by-side columns; otherwise the answer scrolls in its region.
+ */
+function fit(page, q, qa) {
   const sol = SOLUTION_BY_ID[q.id];
-  const [x0, y0, x1, y1] = q.region;
-  const H = y1 - y0;
+  const full = META[q.id].boxes.map((items, k) => ({ box: sol.boxes[k], items }));
+  const parts = partColumns(page, q, full);
+  if (parts) {
+    layoutParts(q, qa, parts, BASE, "scroll");
+    return;
+  }
+  const x0 = q.region[0];
+  const H = regionHeight(q);
   // One control column stays clear. Extra button columns may sit past the
   // region, so a reason can remain beside its step instead of leaving the box.
-  const W = x1 - x0 - CTL - 2;
+  const W = q.region[2] - x0 - CTL - 2;
   const inner = qa.querySelector(".qa-in");
   inner.style.width = `${W}px`;
-  const ks = scales(sol.minScale ?? 0.82);
-  const full = META[q.id].boxes.map((items, k) => ({ box: sol.boxes[k], items }));
+  inner.style.setProperty("--k", BASE);
   const fractions = full.some((b) => b.items.some((e) => /\\[dt]?frac/.test(e.step.m ?? "")));
-  const attempt = (plan, k, tight) => {
+  const attempt = (tight) => {
     qa.classList.toggle("tight", tight);
-    inner.style.setProperty("--k", k);
-    return place(renderPlan(inner, plan, q.id), plan, W, H, sol.flow, x0, sol.nowrap);
+    return place(renderPlan(inner, full, q.id), full, W, H, sol.flow, x0, sol.nowrap);
   };
-  const attemptWrap = (plan, k, tight) => {
+  const attemptWrap = (tight) => {
     if (sol.nowrap || sol.flow === "col" || sol.flow === "row") return false;
     qa.classList.toggle("tight", tight);
-    inner.style.setProperty("--k", k);
-    return placeWrap(renderPlan(inner, plan, q.id, true), plan, W, H);
+    return placeWrap(renderPlan(inner, full, q.id, true), full, W, H);
   };
-  const lean = full
-    .map((b) => ({ ...b, items: b.items.filter((e) => !e.step.optional) }))
-    .filter((b) => b.items.length);
-  const leaner = lean.some((b, k) => b.items.length !== full[k]?.items.length) || lean.length !== full.length;
-  const columns = (k, tight) => {
+  const columns = (tight) => {
     if (sol.nowrap || sol.flow === "row") return false;
     qa.classList.toggle("tight", tight);
-    inner.style.setProperty("--k", k);
     const els = renderPlan(inner, full, q.id);
     for (const el of els) Object.assign(el.style, { width: "max-content", maxWidth: "none" });
     const cols = split(full, els, H);
     return !!cols && place(renderPlan(inner, cols, q.id), cols, W, H, "col", x0, false, true);
   };
-  // Stacked fractions get breathing room when that costs at most one scale step (none below 3/4 size).
-  const ladder = (list, fn, slack = 1) => {
-    for (let i = 0; i < list.length + slack; i++) {
-      if (i < list.length && fn(list[i], false)) return true;
-      if (i >= slack && fractions && fn(list[i - slack], true)) return true;
+  // Stacked fractions keep their breathing room unless only the tight spacing fits.
+  for (const tryIt of [attempt, attemptWrap, columns]) {
+    if (tryIt(false) || (fractions && tryIt(true))) {
+      placeCtl(qa, [...inner.children]);
+      return;
     }
-    return false;
-  };
-  // Keep the type near full size. A long equation may break before an equals
-  // sign rather than shrink below about 82% just to stay on one line.
-  const readable = ks.filter((k) => k >= 0.82);
-  if (ladder(readable, (k, tight) => attempt(full, k, tight))) return null;
-  if (leaner && ladder(readable, (k, tight) => attempt(lean, k, tight))) return null;
-  if (ladder(readable, (k, tight) => attemptWrap(full, k, tight))) return null;
-  // Side-by-side columns read better than text below about 3/4 size, so they come first.
-  const big = ks.filter((k) => k >= 0.76);
-  if (ladder(big, (k, tight) => attempt(full, k, tight))) return null;
-  if (leaner && ladder(big, (k, tight) => attempt(lean, k, tight))) return null;
-  if (ladder(big, columns)) return null;
-  const small = ks.filter((k) => k < 0.76);
-  const any = (k, tight) => attempt(full, k, tight) || (leaner && attempt(lean, k, tight)) || columns(k, tight);
-  if (ladder(small, any, 0)) return null;
-  const kmin = ks[ks.length - 1];
-  const count = lean.reduce((n, b) => n + b.items.length, 0);
-  let lo = 1;
-  let hi = count - 1;
-  let best = 1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if (attempt(head(lean, mid), kmin, true)) {
-      best = mid;
-      lo = mid + 1;
-    } else hi = mid - 1;
   }
-  attempt(head(lean, best), kmin, true);
-  return markCont(lean, best);
-}
-
-function markCont(plan, from) {
-  const out = [];
-  let n = 0;
-  for (const b of plan) {
-    const start = n;
-    const end = n + b.items.length;
-    n = end;
-    if (end <= from) continue;
-    const items = b.items.slice(Math.max(0, from - start));
-    if (!items.some((e) => !e.step.h)) continue;
-    out.push({ box: { ...b.box, left: undefined }, items, cont: from > start });
-  }
-  return out;
+  flowFit(q, qa, BASE, "scroll");
 }
 
 /**
- * Sets the whole answer at the reader's size in rows of the region's width and
- * makes the region as tall as the answer. growSheet() then opens that much room
- * in the page below it. A box whose unbreakable line is wider than the region
- * gets a smaller size of its own, so nothing runs past the page edge.
+ * Sets the whole answer at type size k in rows across the region, each equation
+ * free to break before an equals sign and each reason free to drop under its
+ * step. "grow" makes the region as tall as the answer (growSheet() then opens
+ * the page below it); "scroll" keeps the region and lets the answer scroll.
  */
-function flowFit(q, qa) {
+function flowFit(q, qa, k, mode) {
   const sol = SOLUTION_BY_ID[q.id];
-  const [x0, y0, x1, y1] = q.region;
-  const W = x1 - x0 - CTL - 2;
+  const W = q.region[2] - q.region[0] - CTL - 2 - (mode === "scroll" ? BAR : 0);
   const inner = qa.querySelector(".qa-in");
-  qa.classList.add("flow");
   qa.classList.remove("tight");
   inner.style.width = `${W}px`;
-  inner.style.setProperty("--k", SIZE);
-  const full = META[q.id].boxes.map((items, k) => ({ box: sol.boxes[k], items }));
+  inner.style.setProperty("--k", k);
+  const full = META[q.id].boxes.map((items, n) => ({ box: sol.boxes[n], items }));
   const els = renderPlan(inner, full, q.id, true);
   let x = 0;
   let rowTop = 0;
   let rowH = 0;
   for (const el of els) {
-    el.style.width = "max-content";
-    el.style.maxWidth = `${W}px`;
-    let w = Math.max(el.offsetWidth, inkWidth(el));
-    if (w > W + 0.5) {
-      el.style.setProperty("--k", Math.max(0.5, SIZE * (W / w)).toFixed(3));
-      w = Math.max(el.offsetWidth, inkWidth(el));
-    }
+    fitInWidth(el, W, k);
+    const w = Math.max(el.offsetWidth, inkWidth(el));
     if (x > 0 && x + w > W + 0.5) {
       rowTop += rowH + GAP;
       rowH = 0;
@@ -729,9 +766,103 @@ function flowFit(q, qa) {
     rowH = Math.max(rowH, el.offsetHeight);
     x += w + GAP;
   }
-  qa.flowUsed = rowTop + rowH + 4;
-  qa.style.height = `${Math.max(y1 - y0, qa.flowUsed)}px`;
+  finish(q, qa, els, rowTop + rowH + 4, mode);
+}
+
+/**
+ * Keeps a box within W: its lines may break, and only a line that cannot break
+ * (a wide fraction, table or tree) gives the box a smaller type of its own.
+ */
+function fitInWidth(el, W, k) {
+  el.classList.add("wrap");
+  el.style.width = "max-content";
+  el.style.maxWidth = `${W}px`;
+  const w = Math.max(el.offsetWidth, el.scrollWidth, inkWidth(el));
+  if (w > W + 0.5) el.style.setProperty("--k", Math.max(0.5, k * (W / w)).toFixed(3));
+}
+
+/** Makes the region as tall as the answer ("grow"), or lets an answer taller than its region scroll. */
+function finish(q, qa, els, used, mode) {
+  const H = regionHeight(q);
+  if (mode === "grow") {
+    qa.classList.add("flow");
+    qa.flowUsed = used;
+    qa.style.height = `${Math.max(H, used)}px`;
+  } else {
+    qa.classList.toggle("scroll", used > H + 0.5);
+    qa.querySelector(".qa-in").style.setProperty("--used", `${Math.ceil(used)}px`);
+  }
   placeCtl(qa, els);
+}
+
+const PART = /^\([a-h]\)$/;
+
+/**
+ * Parts printed side by side ("(a)" … "(b)" on one row of the question, the
+ * first at the left margin): each part's boxes go in the column under its own
+ * label. Null when the parts are printed one under another, or the boxes do not
+ * open with those labels.
+ */
+function partColumns(page, q, plan) {
+  const top = q.anchor ? q.anchor[0] : q.region[1];
+  let labels = null;
+  for (const [y0, , words] of page.text || []) {
+    if (y0 < top - 2 || y0 > q.region[1]) continue;
+    const row = words.filter((w) => PART.test(w[2]));
+    if (row.length > 1 && row[0][0] < q.region[0] + 30 && row.every((w, i) => !i || w[0] - row[i - 1][0] > 90)) {
+      labels = row.map((w) => ({ x: w[0], label: w[2] }));
+      break;
+    }
+  }
+  if (!labels) return null;
+  const pieces = [];
+  for (const b of plan) {
+    const box = { ...b.box, w: undefined, left: undefined };
+    let piece = null;
+    for (const e of b.items) {
+      const col = e.step.h ? labels.findIndex((l) => e.step.h.trim().startsWith(l.label)) : -1;
+      if (!piece || (col >= 0 && piece.items.some((i) => !i.step.h))) {
+        piece = { box, items: [], col: col >= 0 ? col : pieces.at(-1)?.col ?? -1 };
+        pieces.push(piece);
+      }
+      piece.items.push(e);
+    }
+  }
+  const cols = new Set(pieces.map((p) => p.col));
+  return cols.has(-1) || cols.size !== labels.length ? null : { labels, pieces };
+}
+
+/** Left and right edges of each part's column, in region coordinates. */
+function partBounds(q, labels, bar) {
+  const x0 = q.region[0];
+  const right = q.region[2] - x0 - CTL - 2 - bar;
+  return labels.map((l, i) => ({
+    x: Math.max(0, l.x - 4 - x0),
+    r: i + 1 < labels.length ? labels[i + 1].x - 4 - x0 - GAP : right,
+  }));
+}
+
+/** Each part's boxes stacked in the column under its printed label, at type size k. */
+function layoutParts(q, qa, parts, k, mode) {
+  const inner = qa.querySelector(".qa-in");
+  qa.classList.remove("tight");
+  inner.style.setProperty("--k", k);
+  const draw = (bar) => {
+    const cols = partBounds(q, parts.labels, bar);
+    inner.style.width = `${cols[cols.length - 1].r}px`;
+    const els = renderPlan(inner, parts.pieces, q.id, true);
+    const y = cols.map(() => 0);
+    els.forEach((el, n) => {
+      const { col } = parts.pieces[n];
+      fitInWidth(el, cols[col].r - cols[col].x, k);
+      Object.assign(el.style, { left: `${cols[col].x}px`, top: `${y[col]}px` });
+      y[col] += el.offsetHeight + GAP;
+    });
+    return { els, used: Math.max(...y) - GAP + 4 };
+  };
+  let out = draw(0);
+  if (mode === "scroll" && out.used > regionHeight(q) + 0.5) out = draw(BAR);
+  finish(q, qa, out.els, out.used, mode);
 }
 
 const PAGE_W = 595.32;
@@ -793,18 +924,25 @@ function cutFor(rows, y0, y1) {
 }
 
 /**
- * Opens room in a page under every region that grew: the page image is cut
+ * Opens room in a page under every region with authored space (`space` in
+ * layout.json) or that grew with the reader's text size: the page image is cut
  * into slices and everything on the overlay below a cut moves down with it.
- * Ink is drawn in page points, so a sheet that has grown hides it until the
- * answers are back at 100%.
+ * Authored space is always cut at the region's own bottom edge, so ink drawn
+ * on that sheet stays put. Room opened for the reader's size depends on the
+ * text, so a sheet that has grown that way hides its ink until the answers are
+ * back at 100%.
  */
 function growSheet(sheet, page) {
   const img = sheet.querySelector("img.bg");
   const cuts = [];
+  let grown = false;
   for (const q of page.questions) {
+    const room = q.space || 0;
     const qa = sheet.querySelector(`.qa.flow[data-q="${q.id}"]`);
-    const extra = qa ? qa.flowUsed - (q.region[3] - q.region[1]) : 0;
-    if (extra > 0.5) cuts.push({ y: cutFor(blankRows(img), q.region[1], q.region[3]), d: Math.ceil(extra) });
+    const extra = qa ? qa.flowUsed - regionHeight(q) : 0;
+    if (extra > 0.5) grown = true;
+    const d = room + Math.max(0, extra);
+    if (d > 0.5) cuts.push({ y: room ? q.region[3] : cutFor(blankRows(img), q.region[1], q.region[3]), d: Math.ceil(d) });
   }
   cuts.sort((a, b) => a.y - b.y);
   // Regions side by side end at about the same height: one gap, as tall as the taller needs.
@@ -816,7 +954,7 @@ function growSheet(sheet, page) {
   }
   const shift = (y) => merged.reduce((s, c) => (y >= c.y ? s + c.d : s), 0);
   sheet.shiftY = merged.length ? (y) => y + shift(y) : null;
-  sheet.classList.toggle("grown", merged.length > 0);
+  sheet.classList.toggle("grown", grown);
   sheet.style.height = `${PAGE_H + merged.reduce((s, c) => s + c.d, 0)}px`;
   for (const el of sheet.querySelector(".overlay").children) {
     if (el.classList.contains("rev")) continue;
@@ -850,70 +988,29 @@ function growSheet(sheet, page) {
 }
 
 /**
- * Lays out every answer region. Questions that overflow even at their minimum
- * scale continue on an extra sheet created by makeSheet(page) after the page.
+ * Lays out every answer region at the book's type size (scrolling where an
+ * answer needs more room), or at the reader's size with the page opened up,
+ * then opens each page under its regions.
  */
-export function layoutAnswers(world, layout, makeSheet) {
-  world.querySelectorAll(".sheet.continuation").forEach((s) => s.remove());
-  const rest = new Map();
+export function layoutAnswers(world, layout) {
   for (const page of layout.pages) {
     for (const q of page.questions) {
       const qa = world.querySelector(`.qa[data-q="${q.id}"]`);
       if (!qa) continue;
-      qa.classList.remove("flow");
-      qa.style.height = `${q.region[3] - q.region[1]}px`;
-      if (SIZE !== 1 && flowable(SOLUTION_BY_ID[q.id])) {
-        flowFit(q, qa);
-        qa.classList.remove("has-cont");
-        continue;
-      }
-      const tail = fit(q, qa);
-      placeCtl(qa, [...qa.querySelector(".qa-in").children]);
-      qa.classList.toggle("has-cont", !!tail);
-      if (tail) {
-        if (!rest.has(page.page)) rest.set(page.page, []);
-        rest.get(page.page).push({ q, tail });
-      }
+      qa.classList.remove("flow", "scroll");
+      qa.style.height = `${regionHeight(q)}px`;
+      const sol = SOLUTION_BY_ID[q.id];
+      if (SIZE !== 1 && flowable(sol)) {
+        const full = META[q.id].boxes.map((items, k) => ({ box: sol.boxes[k], items }));
+        const parts = partColumns(page, q, full);
+        if (parts) layoutParts(q, qa, parts, BASE * SIZE, "grow");
+        else flowFit(q, qa, BASE * SIZE, "grow");
+      } else fit(page, q, qa);
+      syncBar(qa);
     }
     const sheet = world.querySelector(`.sheet[data-key="p${page.page}"]`);
     if (sheet) growSheet(sheet, page);
   }
-  for (const [pageNo, items] of rest) {
-    const sheet = makeSheet(pageNo);
-    const overlay = sheet.querySelector(".overlay");
-    let y = CONT.top;
-    for (const { q, tail } of items) {
-      const sol = SOLUTION_BY_ID[q.id];
-      const title = document.createElement("div");
-      title.className = "cont-title";
-      title.textContent = `${q.label} (continued)`;
-      Object.assign(title.style, { left: `${CONT.x}px`, top: `${y}px` });
-      overlay.append(title);
-      y += 20;
-      const qa = document.createElement("div");
-      qa.className = "qa cont";
-      qa.dataset.q = q.id;
-      qa.innerHTML = `<div class="qa-in"></div>${ctlHTML(q.id, true)}`;
-      const W = CONT.width - CTL - 2;
-      Object.assign(qa.style, { left: `${CONT.x}px`, top: `${y}px`, width: `${CONT.width}px`, height: `${CONT.bottom - y}px` });
-      overlay.append(qa);
-      const inner = qa.querySelector(".qa-in");
-      inner.style.width = `${W}px`;
-      inner.style.setProperty("--k", SIZE);
-      const els = renderPlan(inner, tail, q.id);
-      place(els, tail, W, CONT.bottom - y, sol.flow === "col" ? "row" : sol.flow, 0);
-      const used = Math.max(70, usedHeight(els));
-      qa.style.height = `${used}px`;
-      placeCtl(qa, els);
-      y += used + 26;
-    }
-    if (y > CONT.bottom) sheet.style.height = `${Math.ceil(y + 10)}px`;
-  }
-  for (const id of Object.keys(META)) {
-    const lines = world.querySelectorAll(`.ln[data-q="${id}"]`);
-    RENDERED[id] = [...lines].reduce((m, el) => Math.max(m, Number(el.dataset.i) + 1), 0);
-  }
-  return rest;
 }
 
 /** Shows the first n steps of a question; hidden steps keep their space. */

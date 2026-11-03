@@ -84,7 +84,7 @@ export const SOLUTIONS = [
         steps: [
           h("(b)"),
           lk("rhom", m("AB = BC", "prop. of rhombus")),
-          note("四邊相等。"),
+          note("All four sides are equal."),
           m("2y - 1 = 8 - y"),
           m("3y = 9"),
           m("y = \\underline{3}"),

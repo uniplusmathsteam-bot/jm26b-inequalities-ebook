@@ -22,12 +22,9 @@ flowchart TD
 - `book.js` reads `?book=`, loads the book, and exports `BOOK`, `BOOK_DIR`, `STORAGE`, `SOLUTION_BY_ID`, `hasGraphic`, `mountGraphic` and `pageImage`. With no book, or an unknown id, it sends the reader back to the library.
 - `app.js` builds one `.sheet` per page: a background `<img>`, an `.overlay` for answers and links, and canvases for highlighter and pen ink. It handles pan and zoom, which use a CSS transform rather than native scrolling, plus toolbars, thumbnails, the jump list, presentation mode and keyboard shortcuts.
 - In presentation mode, `showPage()` records the fitted scale in `present.base`. When a pinch has zoomed past it (`presentZoomed()`), one-finger drags pan with momentum instead of turning or springing back the page, and a resize that leaves the width unchanged (Safari bars sliding) keeps the zoom. A one-finger double tap, or pinching back below the fit, returns to `showPage()`.
-- `answers.js` fits each question's boxes into its region, trying the scales from 1 down to `minScale` in steps of 0.06:
-  1. at scales of 0.76 and above: the full answer, then without the optional number lines, then side-by-side columns (`split()` cuts tall boxes between rendered lines, never right after an `h()` label, and no line may wrap);
-  2. below 0.76, at each scale in turn: full, then lean, then columns;
-  3. then split the answer onto a continuation sheet (`c<page>-1`), whose header band copies the top `continuation.band` points of the page.
+- `answers.js` sets every answer at the book's type size (`BOOK.answerScale`, default 1). At reader size 100% it tries, in order: the authored layout, long equations broken before "=", tall boxes cut into side-by-side columns (`split()`), then a flowing wrap that may scroll inside the region (visible `.qa-bar`). Parts printed side by side as `(a)` `(b)` on one row get each answer box under its own label (`partColumns`). Authored `space` on a question opens the page under that region; a reader size other than 100% grows the region and opens the page the same way (`growSheet`). Reveal, wheel and drag scroll a long answer before moving the page.
 - `media.js` lays each `book.json` `media` entry over its page region: a `<video>` showing its poster (the last frame) plus a round button on the panel's corner. The button carries `data-media`, so the world click handler toggles play, pause and replay in every tool, as it does for `data-act` answer buttons.
-- `links.js` finds `q` phrases in `layout.json` text, measures the marked answer parts, and draws the markers, tags and leaders. Question-side markers are dashed (then solid) boxes; answer-side markers are coloured dotted underlines (solid when open), with a transparent hit area so a tap still toggles the link. Nested `.lk-*` pieces drop each underline by 2.6 pt so they stay readable. Steps that continue on an extra sheet get their underlines there too (`renderContLinks`); the question boxes, tags and leaders stay on the question's own sheet.
+- `links.js` finds `q` phrases in `layout.json` text, measures the marked answer parts, and draws the markers, tags and leaders. Question-side markers are dashed (then solid) boxes; answer-side markers are coloured dotted underlines (solid when open), with a transparent hit area so a tap still toggles the link. Nested `.lk-*` pieces drop each underline by 2.6 pt so they stay readable. On a scrolling answer only the lines in the window are marked.
 
 ## Coordinates
 
@@ -74,7 +71,7 @@ These cost real debugging time on JM26 (B). Keep them in mind when touching `eng
   - Holding still for 520 ms recognises a line, rectangle, ellipse or triangle (`shapes.js`).
   - The highlighter snaps to the text rows of `layout.json`, and to per-character boxes in the revealed answers, so part of a line can be highlighted.
 - **Stroke model.**
-  - Each stroke is `{ id, page, tool, color, size, points: [{x, y, p, t}], shape?, cut? }`. `page` is the sheet key: `p3`, or `c11-1` for a continuation sheet.
+  - Each stroke is `{ id, page, tool, color, size, points: [{x, y, p, t}], shape?, cut? }`. `page` is the sheet key (`p3`).
   - Undo history entries are `add`, `swap` (removed/added) and `clear`, capped at 120.
 - **Finger gestures.** A two-finger tap undoes and a three-finger tap redoes. Either is cancelled by more than 14 px of movement, or by holding longer than 450 ms.
 

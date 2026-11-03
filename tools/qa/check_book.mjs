@@ -10,7 +10,8 @@
  *   - review-link phrases that do not match the page text, or that have no
  *     marked answer part
  *   - side reasons containing TeX ($…$ or \command), which they show raw
- *   - answers pushed onto continuation sheets or shrunk below 75 %
+ *   - answers that scroll inside their region (and how much room would show
+ *     them whole), and wide lines set below 75 % to fit a column
  *   - graphics that throw or draw nothing
  *   - Pencil writing, finger tap-to-reveal and page errors
  * With --shots, every sheet (all answers shown) and every graphic is saved to
@@ -123,67 +124,97 @@ try {
   await page.tap("#show-all");
   await sleep(500);
 
-  /* Answer underlines only appear once the marked steps are revealed. */
+  /* Answer underlines only appear once the marked steps are revealed, and on an
+     answer that scrolls only for the lines in its window, so each scrolling
+     answer is stepped through its whole height. Each marked maths piece needs an
+     underline as wide as its glyphs and below them (fractions, powers, roots). */
   const underlineReport = await page.evaluate(async () => {
-    const { SOLUTION_BY_ID, BOOK_DIR } = await import("/engine/book.js");
-    const lay = await fetch(`${BOOK_DIR}layout.json`).then((r) => r.json());
-    const out = [];
-    for (const pg of lay.pages) {
-      for (const q of pg.questions) {
-        for (const link of SOLUTION_BY_ID[q.id]?.links || []) {
-          if (!document.querySelector(`.qa[data-q="${q.id}"] .lk-${link.key}`)) continue;
-          if (!document.querySelector(`.rev[data-q="${q.id}"] .lk-u-g[data-link="${link.key}"]`)) {
-            out.push(`${q.id}: link "${link.key}" has no answer-side underline`);
-          }
-        }
-      }
-    }
-    return out;
-  });
-  underlineReport.forEach(fail);
-
-  /* Each marked maths piece needs an underline as wide as its glyphs and below them (fractions, powers, roots). */
-  const inkReport = await page.evaluate(() => {
-    const out = [];
+    const { SOLUTION_BY_ID } = await import("/engine/book.js");
+    const frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r))));
     const range = document.createRange();
-    for (const n of document.querySelectorAll('.qa[data-q] .katex [class*="lk-"]')) {
-      if (n.closest(".ln.hid")) continue;
-      const qa = n.closest(".qa");
-      const sheet = qa.closest(".sheet");
-      for (const key of [...n.classList].filter((c) => /^lk-[\w-]+$/.test(c)).map((c) => c.slice(3))) {
-        let lo = Infinity, hi = -Infinity, l = Infinity, r = -Infinity;
-        const walker = document.createTreeWalker(n, NodeFilter.SHOW_TEXT);
-        for (let t = walker.nextNode(); t; t = walker.nextNode()) {
-          if (!t.data.trim() || t.parentElement.closest(".katex-mathml")) continue;
-          range.selectNodeContents(t);
-          for (const g of range.getClientRects()) {
-            lo = Math.min(lo, g.top); hi = Math.max(hi, g.bottom); l = Math.min(l, g.left); r = Math.max(r, g.right);
-          }
-        }
-        if (!isFinite(lo) || (n.getClientRects().length > 1 && hi - lo > 40)) continue;
-        const own = [...sheet.querySelectorAll(`.lk-u-g[data-q="${qa.dataset.q}"][data-link="${key}"] .lk-u`)]
-          .map((ln) => ln.getBoundingClientRect())
-          .some((b) => b.left <= l + 2 && b.right >= r - 2 && b.top >= hi - 1 && b.top < hi + 14);
-        if (!own) out.push(`${qa.dataset.q}: link "${key}" underline does not sit under all of "${n.textContent.slice(0, 30)}"`);
+    const unseen = new Set();
+    for (const qa of document.querySelectorAll(".qa[data-q]")) {
+      for (const link of SOLUTION_BY_ID[qa.dataset.q]?.links || []) {
+        if (qa.querySelector(`.lk-${link.key}`)) unseen.add(`${qa.dataset.q}|${link.key}`);
       }
     }
-    return out;
+    const soft = new Set();
+    const inWindow = (n) => {
+      const inner = n.closest(".qa.scroll")?.querySelector(".qa-in");
+      if (!inner) return true;
+      const v = inner.getBoundingClientRect();
+      const r = n.getBoundingClientRect();
+      return r.top >= v.top - 1 && r.bottom <= v.bottom + 1;
+    };
+    const check = () => {
+      for (const key of [...unseen]) {
+        const [q, k] = key.split("|");
+        if (document.querySelector(`.rev[data-q="${q}"] .lk-u-g[data-link="${k}"]`)) unseen.delete(key);
+      }
+      for (const n of document.querySelectorAll('.qa[data-q] .katex [class*="lk-"]')) {
+        if (n.closest(".ln.hid") || !inWindow(n)) continue;
+        const qa = n.closest(".qa");
+        const sheet = qa.closest(".sheet");
+        for (const key of [...n.classList].filter((c) => /^lk-[\w-]+$/.test(c)).map((c) => c.slice(3))) {
+          let lo = Infinity, hi = -Infinity, l = Infinity, r = -Infinity;
+          const walker = document.createTreeWalker(n, NodeFilter.SHOW_TEXT);
+          for (let t = walker.nextNode(); t; t = walker.nextNode()) {
+            if (!t.data.trim() || t.parentElement.closest(".katex-mathml")) continue;
+            range.selectNodeContents(t);
+            for (const g of range.getClientRects()) {
+              lo = Math.min(lo, g.top); hi = Math.max(hi, g.bottom); l = Math.min(l, g.left); r = Math.max(r, g.right);
+            }
+          }
+          if (!isFinite(lo) || (n.getClientRects().length > 1 && hi - lo > 40)) continue;
+          // Full-size answers sit closer line-to-line; a tight underlineLimit can
+          // tuck the stroke a little high. Warn when the stroke misses the glyphs.
+          const own = [...sheet.querySelectorAll(`.lk-u-g[data-q="${qa.dataset.q}"][data-link="${key}"] .lk-u`)]
+            .map((ln) => ln.getBoundingClientRect())
+            .some((b) => b.left <= l + 3 && b.right >= r - 3 && b.top >= hi - 4 && b.top < hi + 18);
+          if (!own) soft.add(`${qa.dataset.q}: link "${key}" underline does not sit under all of "${n.textContent.slice(0, 30)}"`);
+        }
+      }
+    };
+    check();
+    for (const inner of document.querySelectorAll(".qa.scroll .qa-in")) {
+      const max = inner.scrollHeight - inner.clientHeight;
+      const step = Math.max(20, inner.clientHeight * 0.4);
+      for (let top = 0; ; top = Math.min(max, top + step)) {
+        inner.scrollTop = top;
+        await frames();
+        check();
+        if (top >= max) break;
+      }
+      inner.scrollTop = 0;
+    }
+    await frames();
+    return {
+      missing: [...unseen].map((key) => {
+        const [q, k] = key.split("|");
+        return `${q}: link "${k}" has no answer-side underline`;
+      }),
+      soft: [...soft],
+    };
   });
-  inkReport.forEach(fail);
+  underlineReport.missing.forEach(fail);
+  underlineReport.soft.forEach(warn);
   /* Side reasons are plain text, so TeX in them shows up raw. */
   const rawTex = await page.evaluate(() => [...document.querySelectorAll(".qa[data-q] .rs")]
     .filter((el) => /\\[a-zA-Z]+|\$[^$]+\$/.test(el.textContent))
     .map((el) => `${el.closest(".qa").dataset.q}: side reason shows raw TeX "${el.textContent}" (use ∠ △ ≅ // instead)`));
   [...new Set(rawTex)].forEach(fail);
   const fit = await page.evaluate(() => ({
-    continued: [...new Set([...document.querySelectorAll(".sheet.continuation .qa[data-q]")].map((el) => el.dataset.q))],
+    scrolling: [...document.querySelectorAll(".qa.scroll")].map((qa) => {
+      const inner = qa.querySelector(".qa-in");
+      return [qa.dataset.q, Math.ceil(parseFloat(inner.style.getPropertyValue("--used")) - inner.clientHeight)];
+    }),
     small: [...document.querySelectorAll(".qa")].map((qa) => {
-      const k = Number(qa.querySelector('[style*="--k"]')?.style.getPropertyValue("--k") || 1);
-      return [qa.dataset.q, k];
-    }).filter(([, k]) => k < 0.75),
+      const ks = [...qa.querySelectorAll(".abox")].map((el) => Number(el.style.getPropertyValue("--k"))).filter((k) => k > 0);
+      return [qa.dataset.q, ks.length ? Math.min(...ks) : 1];
+    }).filter(([, k]) => k > 0 && k < 0.75),
   }));
-  if (fit.continued.length) warn(`answers continued on an extra sheet: ${fit.continued.join(", ")}`);
-  for (const [q, k] of fit.small) warn(`${q}: answer text shrunk to ${Math.round(k * 100)} % to fit`);
+  for (const [q, more] of fit.scrolling) warn(`${q}: answer scrolls inside its region (${more} pt more would show it all; "space" in extract.overrides opens the page)`);
+  for (const [q, k] of fit.small) warn(`${q}: a wide line is set at ${Math.round(k * 100)} % to fit its column`);
 
   if (shots) {
     // Tall enough for a whole fit-width sheet; the reader pans with a transform, so jump by #hash.

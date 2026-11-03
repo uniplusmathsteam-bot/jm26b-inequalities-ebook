@@ -99,12 +99,23 @@ class PageScene(Scene):
             out.add(Polygon(*pts, color=color, fill_color=color, fill_opacity=1, stroke_width=self.w(0.5)))
         return out
 
-    def corner(self, v, p1, p2, r=7, color=BLUE, n=1, fill=None, width=1.3):
-        """Arc(s) marking the angle p1-v-p2, with an optional tinted wedge."""
+    def corner(self, v, p1, p2, r=7, color=BLUE, n=1, fill=None, width=1.3, inside=None):
+        """Arc(s) marking the angle at v between p1 and p2. Pass `inside` as a
+        point in the interior of the shape so the wedge is the interior angle
+        (needed when that angle is obtuse). The arc always runs CCW so Manim's
+        Sector keeps its centre on the vertex."""
         c = self.P(*v)
         a1 = np.arctan2(*(self.P(*p1) - c)[1::-1])
         a2 = np.arctan2(*(self.P(*p2) - c)[1::-1])
         d = (a2 - a1 + PI) % (2 * PI) - PI
+        if inside is not None:
+            ai = np.arctan2(*(self.P(*inside) - c)[1::-1])
+            t = (ai - a1 + PI) % (2 * PI) - PI
+            if not (min(0, d) - 1e-9 <= t <= max(0, d) + 1e-9):
+                d = d - 2 * PI if d > 0 else d + 2 * PI
+        if d < 0:
+            a1 = a1 + d
+            d = -d
         out = VGroup()
         if fill:
             out.add(Sector(radius=r * self.k, start_angle=a1, angle=d, arc_center=c, fill_color=fill, fill_opacity=0.35, stroke_width=0))
@@ -296,25 +307,26 @@ class CardScene(PageScene):
 class Trapezium(CardScene):
     def construct(self):
         rows = self.card((36, 215, 387, 334), "A.   Trapezium", ["The bases are parallel sides", "The perpendicular between the bases is the height", "Area ="], 239)
-        U1, U2, L1, L2 = (453, 231), (521, 231), (437, 288), (561, 288)
+        # Small enough that the half-turned copy stays inside the panel (x ≤ 588).
+        U1, U2, L1, L2 = (400, 235), (448, 235), (388, 285), (478, 285)
         shape = self.poly(U1, U2, L2, L1, color=FRAME_BLUE, width=1.4)
         self.play(Create(shape), run_time=0.8)
         par = VGroup(self.chevrons(U1, U2, 1, INK, 4, 0.6), self.chevrons(L1, L2, 1, INK, 4, 0.6))
-        upper = self.span((U1[0], 225), (U2[0], 225))
-        lower = self.span((L1[0], 293.5), (L2[0], 293.5))
-        names = VGroup(self.label("upper base", (487, 219), 8, font=SERIF, weight=NORMAL), self.label("lower base", (499, 299.5), 8, font=SERIF, weight=NORMAL))
+        upper = self.span((U1[0], 229), (U2[0], 229))
+        lower = self.span((L1[0], 291), (L2[0], 291))
+        names = VGroup(self.label("upper base", (424, 223), 8, font=SERIF, weight=NORMAL), self.label("lower base", (433, 297), 8, font=SERIF, weight=NORMAL))
         self.play(Write(rows[0]), FadeIn(par), Create(upper), Create(lower), FadeIn(names), Indicate(self.line(U1, U2, FRAME_BLUE, 2)), run_time=1.2)
-        H = (458, 288)
+        H = (405, 285)
         height = VGroup(
-            self.line((458, 233), H, INK, 1.0), self.chevrons(H, (458, 233), 1, INK, 4, 1.0),
-            self.right(H, (458, 233), L2, 5, INK, None), self.label("height", (472, 259), 8, font=SERIF, weight=NORMAL),
+            self.line((405, 237), H, INK, 1.0), self.chevrons(H, (405, 237), 1, INK, 4, 1.0),
+            self.right(H, (405, 237), L2, 5, INK, None), self.label("height", (418, 260), 8, font=SERIF, weight=NORMAL),
         )
         self.play(Write(rows[1]), Create(height), run_time=1.4)
         # Two copies of the trapezium make a parallelogram with base (upper + lower).
         M = ((U2[0] + L2[0]) / 2, (U2[1] + L2[1]) / 2)
         copy = self.poly(U1, U2, L2, L1, color=ORANGE, width=1.4).set_fill(ORANGE, 0.25)
         self.play(Rotate(copy, PI, about_point=self.P(*M)), run_time=1.4)
-        whole = self.label("upper + lower", (540, 299.5), 8, color="#9a5b00", font=SERIF, weight=NORMAL)
+        whole = self.label("upper + lower", (468, 297), 8, color="#9a5b00", font=SERIF, weight=NORMAL)
         self.play(FadeOut(names[1]), FadeIn(whole), run_time=0.6)
         frac_top = self.text("(upper base+lower base) × height", 131, 304.5, 8.5, font=MATH)
         bar = self.line((131, 307.5), (270, 307.5), INK, 0.6)
@@ -326,6 +338,7 @@ class Trapezium(CardScene):
         title = self.text("Isosceles Trapezium", 452, 335, 12)
         A, B, D, C = (431, 432), (567, 432), (473, 356), (533, 356)
         mid = (A[0] + B[0]) / 2
+        centre = (mid, (A[1] + D[1]) / 2)
         K = (mid, A[1] + (D[1] - A[1]) * (B[0] - A[0]) / (B[0] - A[0] + C[0] - D[0]))
         iso = self.poly(A, B, C, D, color=GREY, width=1.1)
         purple = "#4a4ad0"
@@ -337,19 +350,25 @@ class Trapezium(CardScene):
         self.play(Write(title), Create(iso), FadeIn(names2[:4]), FadeIn(sides), FadeIn(VGroup(self.dot(D, purple, 1.4), self.dot(C, purple, 1.4))), Create(box), Create(arrow), run_time=1.2)
         axis = self.dashed((mid, 348), (mid, 436), GREY, 0.9, 3)
         self.play(Create(axis), run_time=0.5)
+        # Draw each pair of equal parts: the left one first, then a copy that
+        # lands on its mirror (a 3D flip left the angle wedges at C / B askew).
         facts = [
-            ("∠D = ∠C", self.corner(D, A, C, 8, "#e05050", 1, "#f3a0a0")),
-            ("∠A = ∠B", self.corner(A, B, D, 9, "#2a9d4a", 1, "#8fd19e")),
-            ("AC = BD", self.line(A, C, BLUE, 2.0)),
+            ("∠D = ∠C",
+             self.corner(D, A, C, 7, "#e05050", 1, "#f3a0a0", inside=centre),
+             self.corner(C, B, D, 7, "#e05050", 1, "#f3a0a0", inside=centre)),
+            ("∠A = ∠B",
+             self.corner(A, B, D, 8, "#2a9d4a", 1, "#8fd19e", inside=centre),
+             self.corner(B, A, C, 8, "#2a9d4a", 1, "#8fd19e", inside=centre)),
+            ("AC = BD", self.line(A, C, BLUE, 2.0), self.line(B, D, BLUE, 2.0)),
         ]
-        for n, (fact, part) in enumerate(facts):
+        for n, (fact, left, right) in enumerate(facts):
             row = VGroup(self.bullet(275, 375.5 + 24 * n), self.text(fact, 299, 375.5 + 24 * n, 12, font=MATH))
-            self.play(Write(row), Create(part), run_time=0.8)
-            mirror = part.copy()
-            self.play(Rotate(mirror, PI, axis=UP, about_point=self.P(mid, 390)), run_time=1.0)
+            self.play(Write(row), Create(left), run_time=0.8)
+            # Draw the twin in place: TransformFromCopy warped the obtuse wedges at C / B.
+            self.play(Create(right), run_time=1.0)
             if n == 2:
                 diagonals = VGroup(self.line(A, C, GREY, 1.1), self.line(B, D, GREY, 1.1))
-                self.play(FadeOut(part), FadeOut(mirror), FadeIn(diagonals), FadeIn(self.dot(K, purple, 1.4)), FadeIn(names2[4]), run_time=0.6)
+                self.play(FadeOut(left), FadeOut(right), FadeIn(diagonals), FadeIn(self.dot(K, purple, 1.4)), FadeIn(names2[4]), run_time=0.6)
         self.play(FadeOut(axis), run_time=0.4)
         self.wait(1.5)
 

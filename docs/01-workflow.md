@@ -98,7 +98,7 @@ Write `books/<id>/solutions.js`, one entry per question in `book.json`, in page 
 - [ ] Every **final answer checked** against the ANS, including MC letters.
 - [ ] Printed examples get `printed: true` and `ctlAt: [x, y]` for their graphic button.
 
-Preview as you go (`python -m http.server 8090`, then `http://127.0.0.1:8090/reader.html?book=<id>`). Tap through each question. If one doesn't fit its region, the engine shrinks the text, drops `nl()` number lines, and sets long boxes side by side in columns (order in [05-engine-notes.md](05-engine-notes.md)), and only then continues the answer on an extra sheet. Prefer `flow: "col"`, explicit box `w`, or a lower `minScale` over continuation sheets. If the regions came from a teacher's answer boxes (`extract.overrides`), first run `python tools/grow_regions.py <id> --write` to widen them into the blank space around them (check the previews in `reference/regions/`), then re-run `extract_pages.py`.
+Preview as you go (`python -m http.server 8090`, then `http://127.0.0.1:8090/reader.html?book=<id>`). Tap through each question. Answers keep one type size; a long answer scrolls inside its region (order in [05-engine-notes.md](05-engine-notes.md)). Prefer `flow: "col"`, explicit box `w`, or `space` in `extract.overrides` when a short answer should show without scrolling. If the regions came from a teacher's answer boxes (`extract.overrides`), first run `python tools/grow_regions.py <id> --write` to widen them into the blank space around them (check the previews in `reference/regions/`), then re-run `extract_pages.py`.
 
 ## Stage 4: Review links
 

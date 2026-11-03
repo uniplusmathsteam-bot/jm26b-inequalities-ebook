@@ -87,12 +87,12 @@ One crop per red box in `reference/ans/`. Solutions are transcribed from these c
 | `t(text, reason?)` | a sentence; `$inline$`, `**bold**`, `[[key\|words]]` |
 | `h("(a)")` | part heading; always visible, not counted |
 | `note(text)` | the teacher's pink margin remark |
-| `nl({min, max, op, at})` | HKDSE number line; dropped first when space is short |
+| `nl({min, max, op, at})` | HKDSE number line |
 | `L(key, tex)`, `lk(key, step)` | the answer side of a review link |
 
-One box per part where the key has side-by-side boxes. `flow: "col"` stacks long working beside options. `minScale` may go to 0.62 on dense pages; do not go lower. `printed: true` plus `ctlAt` when the working is already printed and only a graphic button belongs there. Leave `letter` off an MC question unless the teacher wants the letter filled in.
+One box per part where the key has side-by-side boxes. `flow: "col"` stacks long working beside options. `printed: true` plus `ctlAt` when the working is already printed and only a graphic button belongs there. Leave `letter` off an MC question unless the teacher wants the letter filled in.
 
-The engine fits an answer in this order: full text at scale ≥ 0.76, then the same without `nl()` lines, then side-by-side columns, then the same three tries below 0.76, and only then a continuation sheet. Columns must not wrap a line and must not end on an `h()` label. Prefer `flow`, a box `w`, or a lower `minScale` over a continuation sheet. `continuation.band` is how much of the page top the extra sheet copies; it must end above the first question line (JM29 uses 60).
+Every answer uses one type size. The engine tries the authored layout, then equations broken before "=", then side-by-side columns, then a flowing wrap; if the answer is still taller than its region it scrolls inside it (visible scroll bar). Parts printed as `(a)` `(b)` on one row get each box under its own label. Prefer `flow`, a box `w`, or `space` in `extract.overrides` (opens the page under the region) when a short answer should show in full without scrolling.
 
 ## 4. Review links
 

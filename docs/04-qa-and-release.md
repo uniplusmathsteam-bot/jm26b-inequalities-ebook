@@ -33,7 +33,7 @@ The script serves the site itself, and opens the book in Chrome emulating an iPa
 | FAIL graphic threw / drew nothing | A widget crashed. | Fix it in `widgets.js`. |
 | FAIL page error / HTTP 404 | Broken code or a missing file. | Read the message. |
 | FAIL Pencil stroke / finger tap | An input regression in the engine. | See [05-engine-notes.md](05-engine-notes.md). |
-| WARN continued on an extra sheet | The answer didn't fit its region. | Usually acceptable; try `flow`, box `w` or `minScale` first. |
+| WARN answer scrolls inside its region | The answer is taller than its region at the book's type size. | Acceptable for teaching; add `space` in `extract.overrides` when a short answer should show in full. |
 | WARN shrunk to N % | The text was scaled down to fit. | Acceptable down to about 62 %. |
 
 Exit code 0 means nothing blocks a release.
@@ -47,7 +47,7 @@ Open every `sheet-*.png` and `graphic-*.png` in `books/<id>/reference/qa/` and c
 - [ ] the maths renders properly: no raw LaTeX and no red KaTeX errors;
 - [ ] review link boxes sit on their words, and the tags stay inside the page;
 - [ ] graphics have no overlapping labels, and the question card matches the solution;
-- [ ] continuation sheets (if any) carry the page header band and read "Answers continued from page N".
+- [ ] a long answer scrolls inside its region with a visible bar; wheel and drag move the answer before the page.
 
 ## 4. iPad checklist (real device, Apple Pencil)
 

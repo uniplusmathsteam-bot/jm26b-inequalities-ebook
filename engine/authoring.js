@@ -13,7 +13,7 @@ export const m = (m, r) => ({ m, r });
 export const t = (t, r) => ({ t, r });
 export const h = (h) => ({ h });
 export const note = (note) => ({ note });
-export const nl = (spec) => ({ nl: spec, optional: true });
+export const nl = (spec) => ({ nl: spec });
 export const tree = (spec) => ({ tree: spec });
 export const table = (spec) => ({ table: spec });
 

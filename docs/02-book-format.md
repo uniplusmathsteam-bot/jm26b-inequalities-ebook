@@ -30,7 +30,6 @@ Coordinates are always in **PDF points**, measured from the top left of the page
   "storage": "jm26b",
   "source": { "que": "source/…(QUE).pdf", "ans": "source/…(ANS).pdf", "ansPageOffset": -1 },
   "sections": [{ "id": "practical", "label": "Practical" }],
-  "continuation": { "top": 96, "x": 48, "width": 499, "bottom": 812 },
   "extract": { "zoom": 3, "regionX": [66, 546], "footer": 822, "questions": [], "anchors": {}, "fixedAnchors": {}, "overrides": {} }
 }
 ```
@@ -44,16 +43,16 @@ Coordinates are always in **PDF points**, measured from the top left of the page
 | `source.que`, `source.ans` | PDF paths relative to the book folder. |
 | `source.ansPageOffset` | ANS page minus QUE page. It is −1 when the ANS has no cover page. |
 | `sections` | Top-bar buttons, in order. Each jumps to the first question with that `section`. |
-| `continuation` | The writable area of an extra "answers continued" sheet, below the page's header band. Change it only if a chapter's header band has a different height: `band` is how much of the page top is copied (72 by default) and must end above the first question line. |
 | `media` | Optional animations laid over printed panels: `[{ "page", "region": [x0, y0, x1, y1], "scene": "module:Class", "src": "media/x.mp4", "poster": "media/x.jpg", "title" }]`. The scene is a Manim class in `tools/manim/<module>.py`; `python tools/render_media.py <id>` renders `src` and `poster` (its last frame), and `--still` saves layout previews to `reference/media/`. The poster covers the panel until the round ▶ button on its corner is tapped. |
 | `widgets` | Set to `false` if the book has no `widgets.js`. |
+| `answerScale` | Optional book-wide type size at reader 100% (default 1). Every answer uses this size; a long answer scrolls inside its region. |
 | `extract.zoom` | Render scale for the page images. Keep 3: sharp on a Retina iPad at about 200 KB per page. |
 | `extract.regionX` | Left and right edges of a default answer region. |
 | `extract.footer` | y where the page footer starts; the last region on a page stops 4 pt above it. |
 | `extract.questions` | `[{ "id", "page", "label", "section" }]` in reading order. `--scan` drafts this. |
 | `extract.anchors` | `{ id: regex }` for headings such as "Example 1". Numbered questions are found automatically from "12." at the left margin. |
 | `extract.fixedAnchors` | `{ id: [y0, y1] }` when there is no searchable text (e.g. a second method under one example). |
-| `extract.overrides` | `{ id: { "region": [x0, y0, x1, y1], "square": [...], "ring": [...] } }`, merged into the generated item. `square` is an MC answer box, filled with `letter` once all steps show. `ring` circles a printed option when the answer is complete. |
+| `extract.overrides` | `{ id: { "region": [x0, y0, x1, y1], "square": [...], "ring": [...], "space": N } }`, merged into the generated item. `square` is an MC answer box, filled with `letter` once all steps show. `ring` circles a printed option when the answer is complete. `space` opens N points of blank page under the region (cut at the region's own bottom) so a short answer can show in full without scrolling. |
 
 ---
 
@@ -62,7 +61,7 @@ Coordinates are always in **PDF points**, measured from the top left of the page
 Re-run `python tools/extract_pages.py <id>` after any `book.json → extract` change. Never edit layout.json by hand. It contains:
 
 - `pages[n].width`, `height`;
-- `questions[]`: `{ id, label, section, anchor: [y0, y1], region: [x0, y0, x1, y1], square?, ring? }`;
+- `questions[]`: `{ id, label, section, anchor: [y0, y1], region: [x0, y0, x1, y1], square?, ring?, space? }`;
 - `text[]`: printed rows `[y0, y1, [[x0, x1, "word"], …]]`. The highlighter snaps to these, and review links search them for `q` phrases.
 
 ---
@@ -102,8 +101,7 @@ export const SOLUTIONS = [
 | `boxes[].left` | Page x where this box should start, to line it up under a part of the question. |
 | `boxes[].bare` | No padding or fill, only the red outline: for a `table` with `at` that fills a grid printed on the page. |
 | `flow: "col"` | Stack the boxes in columns instead of rows. Good for long MC working beside the options. |
-| `minScale` | The smallest text scale allowed before the answer continues on an extra sheet (default 0.82; MC questions often need 0.62). |
-| `nowrap: true` | Keep the boxes in one row; shrink instead of wrapping. |
+| `nowrap: true` | Keep the boxes in one row instead of wrapping. A long answer scrolls inside its region at the book's type size. |
 | `letter` | MC answer letter shown in the `square` override once all steps show. Leave it out to keep the square empty. |
 | `printed: true` | The worked solution is already printed on the page: no answer boxes, only a graphic button at `ctlAt: [x, y]`. |
 | `links` | Review links (below). |
