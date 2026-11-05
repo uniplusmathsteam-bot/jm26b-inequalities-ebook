@@ -16,7 +16,8 @@ The background was rebuilt with `tools/make_que.py` (cache v17). The first versi
 
 - **2026-11 — teaching pass.** Answers keep one type size and scroll inside the region when they need more room (no shrink, no continuation sheets). Side-by-side `(a)`/`(b)` answers sit under their printed labels. Q1–Q3 open extra page space so the short answers show in full. Q3's Chinese margin note is English. Q14 has a rhombus figure behind the graphic button. Trapezium animation: half-turned copy stays in the panel; isosceles angle wedges are drawn as interior angles at D/C and A/B.
 - **2026-11 — second pass.** Trapezium animation sits with a clear margin from the purple panel. Reasons stay beside their steps: Q6 (b) "property of rectangle" was under "OD = OB"; a broken step (Q6 (a), Q9 (b)) now carries its reason on its last row. Q6 opens 100 pt of page space so it shows in full.
+- **2026-11 — third pass.** The trapezium's play button stays inside the page. The QUE was rebuilt (cache v28): the white line that hid each removed frame no longer runs across figures, so the Q21 figure and the "18 cm" label in Q1(b) are clean.
 
 ## Known warnings
 
-Long Level-2 answers (q9, q12, q13, q16, q21, …) scroll inside their regions. The "18 cm" label in q1(b) has a hairline through it where the teacher's box frame crossed it. Accepted.
+Long Level-2 answers (q9, q12, q13, q16, q21, …) scroll inside their regions. Accepted.

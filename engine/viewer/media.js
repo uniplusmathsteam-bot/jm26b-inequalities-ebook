@@ -1,5 +1,11 @@
 import { BOOK, BOOK_DIR } from "../book.js";
 
+const PAGE_W = 595.32;
+/** Half the play button: it straddles the panel's top-right corner. */
+const HALF = 12;
+/** Clearance between the button and the page edge. */
+const EDGE = 4;
+
 /**
  * Animations (book.json "media") laid over the printed summary panels they
  * replace. The poster is the last frame, so a panel that is never played still
@@ -20,6 +26,8 @@ export function addMedia(pageNo, overlay) {
     button.type = "button";
     button.className = "media-play";
     button.dataset.media = String(n);
+    button.style.right = `${-Math.min(HALF, PAGE_W - EDGE - x1)}px`;
+    button.style.top = `${-Math.min(HALF, y0 - EDGE)}px`;
     const title = item.title || "Play the animation";
     const label = (text, what) => {
       button.textContent = text;

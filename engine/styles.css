@@ -174,7 +174,8 @@ body[data-mode="laser"] #viewport { cursor: crosshair; }
 
 .media { position: absolute; background: #fff; pointer-events: none; }
 .media video { display: block; width: 100%; height: 100%; object-fit: fill; background: #fff; }
-/* Sits on the panel's top-right corner so it never covers the panel's own labels. */
+/* Sits on the panel's top-right corner so it never covers the panel's own labels;
+   media.js moves it in when that corner is close to the page edge. */
 .media-play {
   position: absolute;
   right: -12px;

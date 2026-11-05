@@ -58,6 +58,24 @@ def answer_boxes(page, stamp):
     return boxes, frames
 
 
+def frame_edges(r, width, figures):
+    """The four sides of a frame as line segments, less the stretches that lie over a figure."""
+    half = (width + 0.5) / 2
+    out = []
+    for horizontal, fixed, lo, hi in ((True, r.y0, r.x0, r.x1), (True, r.y1, r.x0, r.x1),
+                                      (False, r.x0, r.y0, r.y1), (False, r.x1, r.y0, r.y1)):
+        cuts = sorted((f.x0, f.x1) if horizontal else (f.y0, f.y1) for f in figures
+                      if (f.y0 <= fixed <= f.y1 if horizontal else f.x0 <= fixed <= f.x1))
+        start = lo - half
+        for c0, c1 in cuts + [(hi + half, hi + half)]:
+            end = min(c0, hi + half)
+            if end > start:
+                a, b = (start, fixed), (end, fixed)
+                out.append((fitz.Point(a if horizontal else a[::-1]), fitz.Point(b if horizontal else b[::-1])))
+            start = max(start, c1)
+    return out
+
+
 def recolour_red_text(doc, page):
     """Turn pure-red fill colours (text) black in the page's content stream."""
     page.clean_contents()
@@ -123,10 +141,12 @@ def blank(src, dest, red_text="list", stamp="Answer"):
             page.add_redact_annot(r + (-1, -1, 1, 1), fill=False)
         if pixel_cuts:
             page.apply_redactions(images=fitz.PDF_REDACT_IMAGE_PIXELS, graphics=fitz.PDF_REDACT_LINE_ART_NONE, text=fitz.PDF_REDACT_TEXT_NONE)
-        # Faint edges survive in overlapping transparency layers; a white line exactly over each frame hides them
-        # without eating into figures the frame crossed.
+        # Faint edges survive in overlapping transparency layers; a white line exactly over each frame hides them.
+        # Where a frame crossed a figure that stays, the line is left out so it does not cut through the figure.
+        figures = [fitz.Rect(i["bbox"]) for i in page.get_image_info()]
         for r, width in frames:
-            page.draw_rect(r, color=(1, 1, 1), width=width + 0.5, overlay=True)
+            for a, b in frame_edges(r, width, figures):
+                page.draw_line(a, b, color=(1, 1, 1), width=width + 0.5, overlay=True)
         if red_text == "black" and red_outside:
             recolour_red_text(doc, page)
         report.append(f"page {page.number + 1}: {len(boxes)} boxes, {len(text_cuts)} text cuts, {len(teacher)} images inside boxes, {len(red_outside)} red spans outside")

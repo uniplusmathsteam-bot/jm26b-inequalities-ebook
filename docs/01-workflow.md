@@ -57,7 +57,7 @@ This copies `books/_template/`, puts both PDFs in `books/<id>/source/`, fills in
 python tools/make_que.py "<path>\...(ANS).pdf" "<path>\...(QUE made).pdf" [--red-text list|cover|black]
 ```
 
-It removes the teacher's pure-red answer boxes (text, line art, and images mostly inside a box), the "Answer" stamp, and the `*` that marks an MC answer. Figures that only overlap a box are kept whole; a teacher image laid over a figure is deleted as an object, so the figure underneath shows again. Red text outside the boxes is listed by default; use `cover` for stray working or `black` when the correct MC option is printed in red. Then compare it with the ANS page by page: every figure must be there and no red working left. When a chapter does have a real QUE, `make_que` on its ANS should match it exactly (JM29 (B): 0 pixels different), which is a good check after changing the tool.
+It removes the teacher's pure-red answer boxes (text, line art, and images mostly inside a box), the "Answer" stamp, and the `*` that marks an MC answer. Figures that only overlap a box are kept whole; a teacher image laid over a figure is deleted as an object, so the figure underneath shows again. A thin white line over each removed frame hides faint leftover edges, except where the frame crossed a figure, so it never cuts through one. Red text outside the boxes is listed by default; use `cover` for stray working or `black` when the correct MC option is printed in red. Then compare it with the ANS page by page: every figure must be there and no red working left. When a chapter does have a real QUE, `make_que` on its ANS should match it exactly (JM29 (B): 0 pixels different), which is a good check after changing the tool.
 
 ## Stage 2: Extract pages and answer regions
 

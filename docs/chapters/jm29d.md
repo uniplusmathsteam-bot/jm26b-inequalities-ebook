@@ -12,6 +12,8 @@ Mid-point theorem (q1–q10), then Level 2 (q11–q20). The question paper was n
 
 The background was rebuilt with `tools/make_que.py` (cache v17). The first version removed every image that touched a red box, so the figures for q11–q14 and others on pages 4–6 were missing; they are back, including the parts of the q12 figure the teacher's box covered in the ANS. The answer regions were grown again around them.
 
+Rebuilt again for cache v28: the white line over each removed frame used to cut gaps in the figure lines on pages 4 and 5; it now skips figures.
+
 ## Known warnings
 
 q10 and q12 continue on an extra sheet; q12's link to "AB = 9 cm" is underlined there. Several answers shrink to about 62%. Accepted.
