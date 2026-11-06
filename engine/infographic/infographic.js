@@ -62,6 +62,11 @@ export function addInfographics(page, overlay) {
 
 let modal = null;
 let current = null;
+/* Presentation steps of the open board: render() output, how many show, when the last finishes drawing. */
+let steps = [];
+let shown = 0;
+let drawingUntil = 0;
+let still = false;
 
 function seedOf(id) {
   let h = 2166136261;
@@ -77,29 +82,49 @@ function build() {
     <div class="ig-card" role="dialog" aria-modal="true" aria-labelledby="ig-title">
       <header>
         <strong id="ig-title"></strong>
+        <span class="ig-steps">
+          <button type="button" data-ig="back" title="Previous step (←)">◂ Back</button>
+          <span class="ig-count" aria-live="polite"></span>
+          <button type="button" data-ig="next" class="ig-next" title="Next step (→, PageDown or tap the board)">Next ▸</button>
+          <button type="button" data-ig="all" title="Show every step">All</button>
+        </span>
         <button type="button" data-ig="replay" title="Draw the board again">Replay ↻</button>
         <button type="button" data-ig="close" title="Close (Esc)">Close ✕</button>
       </header>
       <div class="ig-board-wrap"><svg class="ig-board" xmlns="http://www.w3.org/2000/svg" role="img"></svg></div>
-      <p class="ig-hint">Tap the board to finish drawing.</p>
+      <p class="ig-hint"></p>
     </div>`;
   document.body.append(modal);
   modal.addEventListener("click", (event) => {
     const act = event.target.closest("[data-ig]")?.dataset.ig;
     if (act === "close" || event.target === modal) close();
     else if (act === "replay") draw(true);
-    else if (event.target.closest(".ig-board")) modal.querySelector(".ig-board").classList.remove("ig-anim");
+    else if (act === "next") next();
+    else if (act === "back") back();
+    else if (act === "all") showAll();
+    else if (event.target.closest(".ig-board")) next();
   });
   for (const type of ["pointerdown", "pointermove", "pointerup", "wheel", "touchstart", "touchmove"]) {
     modal.addEventListener(type, (event) => event.stopPropagation(), { passive: true });
   }
 }
 
+/* Presentation clickers send PageDown / PageUp or the arrow keys. */
+const NEXT_KEYS = new Set(["ArrowRight", "ArrowDown", "PageDown"]);
+const BACK_KEYS = new Set(["ArrowLeft", "ArrowUp", "PageUp"]);
+
 function onKey(event) {
   if (!current) return;
+  const onButton = event.target.closest?.("button");
   if (event.key === "Escape") {
     event.preventDefault();
     close();
+  } else if (NEXT_KEYS.has(event.key) || (event.key === " " && !onButton)) {
+    event.preventDefault();
+    next();
+  } else if (BACK_KEYS.has(event.key)) {
+    event.preventDefault();
+    back();
   }
   if (event.key !== "Tab") event.stopImmediatePropagation();
 }
@@ -113,8 +138,68 @@ async function draw(animate) {
   } catch {
     /* system handwriting fallback */
   }
-  const still = !animate || matchMedia("(prefers-reduced-motion: reduce)").matches;
-  render(svg, board, { seed: seedOf(current.q.id), animate: !still });
+  still = !animate || matchMedia("(prefers-reduced-motion: reduce)").matches;
+  steps = render(svg, board, { seed: seedOf(current.q.id) });
+  for (const s of steps) for (const g of s.groups) g.classList.add("ig-later");
+  shown = 0;
+  reveal();
+}
+
+function settle(s) {
+  for (const g of s.groups) g.classList.remove("ig-anim");
+}
+
+/** Shows the next hidden step, drawing it on unless motion is reduced. */
+function reveal() {
+  const s = steps[shown];
+  if (!s) return;
+  for (const g of s.groups) {
+    g.classList.remove("ig-later");
+    g.classList.toggle("ig-anim", !still);
+  }
+  drawingUntil = still ? 0 : performance.now() + s.dur;
+  shown += 1;
+  sync();
+}
+
+/** A tap while a step is still drawing finishes it; otherwise the next step starts. */
+function next() {
+  if (performance.now() < drawingUntil) {
+    settle(steps[shown - 1]);
+    drawingUntil = 0;
+    return;
+  }
+  reveal();
+}
+
+function back() {
+  if (shown <= 1) return;
+  shown -= 1;
+  for (const g of steps[shown].groups) {
+    g.classList.add("ig-later");
+    g.classList.remove("ig-anim");
+  }
+  settle(steps[shown - 1]);
+  drawingUntil = 0;
+  sync();
+}
+
+function showAll() {
+  while (shown < steps.length) reveal();
+  steps.forEach(settle);
+  drawingUntil = 0;
+}
+
+function sync() {
+  const many = steps.length > 1;
+  modal.querySelector(".ig-steps").hidden = !many;
+  modal.querySelector(".ig-count").textContent = `Step ${shown} of ${steps.length}`;
+  modal.querySelector('[data-ig="back"]').disabled = shown <= 1;
+  modal.querySelector('[data-ig="next"]').disabled = shown >= steps.length;
+  modal.querySelector('[data-ig="all"]').disabled = shown >= steps.length;
+  modal.querySelector(".ig-hint").textContent = many
+    ? "Tap the board, press → or use a clicker for the next step. ← goes back."
+    : "Tap the board to finish drawing.";
 }
 
 function open(q, trigger) {
@@ -125,7 +210,9 @@ function open(q, trigger) {
   modal.hidden = false;
   window.addEventListener("keydown", onKey, true);
   modal.querySelector('[data-ig="close"]').focus({ preventScroll: true });
-  draw(true);
+  draw(true).then(() => {
+    if (steps.length > 1) modal.querySelector('[data-ig="next"]').focus({ preventScroll: true });
+  });
 }
 
 function close() {

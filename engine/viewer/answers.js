@@ -1,4 +1,5 @@
-import { BOOK, SOLUTION_BY_ID, hasGraphic } from "../book.js";
+import { BOOK, SOLUTION_BY_ID, hasGraphic, hasGuide } from "../book.js";
+import { guideButton } from "./guide.js";
 
 const GAP = 7;
 const CTL = 30;
@@ -510,6 +511,7 @@ function ctlHTML(id) {
     <button type="button" data-act="back" data-q="${id}" title="Hide the last step">◂</button>
     <button type="button" data-act="reset" data-q="${id}" title="Hide all steps">↺</button>
     ${hasGraphic(id) ? graphicButton(id) : ""}
+    ${hasGuide(id) ? guideButton(id) : ""}
     <span class="prog" data-q="${id}"></span>
   </div>`;
 }
@@ -612,12 +614,12 @@ export function buildOverlay(page, overlay) {
     if (!sol) continue;
     const [x0, y0, x1, y1] = q.region;
     if (sol.printed) {
-      if (!hasGraphic(q.id)) continue;
+      if (!hasGraphic(q.id) && !hasGuide(q.id)) continue;
       const [cx, cy] = sol.ctlAt;
       const chip = document.createElement("div");
       chip.className = "ctl printed";
       Object.assign(chip.style, { left: `${cx}px`, top: `${cy}px` });
-      chip.innerHTML = graphicButton(q.id);
+      chip.innerHTML = (hasGraphic(q.id) ? graphicButton(q.id) : "") + (hasGuide(q.id) ? guideButton(q.id) : "");
       overlay.append(chip);
       continue;
     }

@@ -42,6 +42,13 @@ export function mountGraphic(id, root) {
   widgets.mountGraphic?.(id, root);
 }
 
+/** Solution-guide videos (book.json "guides"), keyed by question id. */
+export const GUIDE_BY_ID = Object.fromEntries((BOOK.guides || []).map((g) => [g.q, g]));
+
+export function hasGuide(id) {
+  return Boolean(GUIDE_BY_ID[id]);
+}
+
 export function pageImage(n) {
   return `${BOOK_DIR}pages/p${String(n).padStart(2, "0")}.jpg`;
 }

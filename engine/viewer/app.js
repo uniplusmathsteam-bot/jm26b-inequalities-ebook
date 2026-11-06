@@ -6,6 +6,7 @@ import {
 } from "./answers.js";
 import { renderLinks, clearLinks } from "./links.js";
 import { addMedia, toggleMedia } from "./media.js";
+import { openGuide } from "./guide.js";
 import { addInfographics } from "../infographic/infographic.js";
 
 const PAGE_W = 595.32;
@@ -165,6 +166,7 @@ function act(name, id) {
   else if (name === "all") setReveal(id, totalSteps(id));
   else if (name === "reset") setReveal(id, 0);
   else if (name === "graphic") openGraphic(id);
+  else if (name === "guide") openGuide(id, questionLabel(id));
 }
 
 /* ---------- sheets ---------- */
@@ -984,11 +986,15 @@ function buildJump() {
   });
 }
 
+/** "Q5" for a numbered question, otherwise its own label ("Example 1"). */
+function questionLabel(id) {
+  const item = questions().find((q) => q.id === id);
+  return item ? (/^\d/.test(item.label) ? `Q${item.label}` : item.label) : "";
+}
+
 function openGraphic(id) {
   const drawer = document.getElementById("graphic");
-  const item = questions().find((q) => q.id === id);
-  const label = item ? (/^\d/.test(item.label) ? `Q${item.label}` : item.label) : "";
-  document.getElementById("graphic-title").textContent = `${label}: interactive graphic`;
+  document.getElementById("graphic-title").textContent = `${questionLabel(id)}: interactive graphic`;
   mountGraphic(id, document.getElementById("graphic-body"));
   drawer.classList.add("open");
   drawer.setAttribute("aria-hidden", "false");

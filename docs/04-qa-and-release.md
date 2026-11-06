@@ -38,6 +38,14 @@ The script serves the site itself, and opens the book in Chrome emulating an iPa
 
 Exit code 0 means nothing blocks a release.
 
+For a book with scenario boards (`"infographics": true`):
+
+```powershell
+node check_boards.mjs <id> [q1 q5 ...]
+```
+
+It draws every board with all its steps showing and reports handwriting that overlaps other handwriting, is crossed by a table rule, or runs off the board. Open the screenshots in `books/<id>/reference/boards/`: rings and braces must not cut through numbers, and labels must not sit on bar edges.
+
 ## 3. Visual pass (screenshots)
 
 Open every `sheet-*.png` and `graphic-*.png` in `books/<id>/reference/qa/` and check:

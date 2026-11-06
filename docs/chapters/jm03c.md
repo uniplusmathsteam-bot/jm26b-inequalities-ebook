@@ -52,6 +52,25 @@ One bar picture per question, with a slider and a live check. No function graphs
 | 15 | the two discounts and the stationery | slider is the stationery's marked price |
 | 16 | selling price and cost | slider is x |
 
+## Scenario boards
+
+`infographics.js`, one landscape board (960 wide) per question, presented a step at a time (tap, →, PageDown or a clicker). Step 1 lays the question's data out as the teacher would draw it; each later step is one line of the ANS working and fills its value into the picture. Blue is given, green worked out, red the answer.
+
+| Question | Board |
+| --- | --- |
+| 1 | two-way table: male / female by train / not by train, totals and % of all workers; the empty row is the last-step check |
+| 2 | bar model C, 1.1C, 1.43C; (b) 200 → 220 → 286 |
+| 3, 4, 9, 14 | item tables: cost, selling, profit or loss, (c) or (b) new prices |
+| 5 | yesterday / today table, n and n − 120 |
+| 6 | January / February / March table with the ±20% arrows; I set in serif italic so it is not read as 1 |
+| 7 | the 80 bulbs as strips, then one row per part |
+| 8 | price line: 0.4y, cost, 0.8y, marked |
+| 10 | the printed option table, extended row by row |
+| 11 | discount slabs on one scale for $320, $480 and $(400 + x) |
+| 12 | shop A / shop B table |
+| 13, 16 | bar models in units of the cost |
+| 15 | stationery / books / total table, method 1 and method 2 rows |
+
 ## Review links
 
 Every question is linked. Nothing was skipped.
@@ -61,6 +80,7 @@ Every question is linked. Nothing was skipped.
 | Date | Request | What changed |
 | --- | --- | --- |
 | 2026-11-03 | Import S1 JM03 (C) Percentages I. The QUE is the reference. | First build |
+| 2026-11-06 | Boards should follow the question, for presenting in a lesson; Q1 as a male / female × train / not by train table with totals and percentages. | All 16 boards redrawn as tables, bar models, a price line and slabs; step-by-step presenting; `check_boards.mjs` |
 
 ## Known warnings
 

@@ -462,5 +462,18 @@
       "title": "Animate the quadrilateral family"
     }
   ],
+  "guides": [
+    { "q": "q1", "scene": "jm29c_guides:Q1", "src": "media/guide-q1.mp4", "poster": "media/guide-q1.jpg" },
+    { "q": "q2", "scene": "jm29c_guides:Q2", "src": "media/guide-q2.mp4", "poster": "media/guide-q2.jpg" },
+    { "q": "q3", "scene": "jm29c_guides:Q3", "src": "media/guide-q3.mp4", "poster": "media/guide-q3.jpg" },
+    { "q": "q5", "scene": "jm29c_guides:Q5", "src": "media/guide-q5.mp4", "poster": "media/guide-q5.jpg" },
+    { "q": "q6", "scene": "jm29c_guides:Q6", "src": "media/guide-q6.mp4", "poster": "media/guide-q6.jpg" },
+    { "q": "q9", "scene": "jm29c_guides:Q9", "src": "media/guide-q9.mp4", "poster": "media/guide-q9.jpg" },
+    { "q": "q11", "scene": "jm29c_guides:Q11", "src": "media/guide-q11.mp4", "poster": "media/guide-q11.jpg" },
+    { "q": "q14", "scene": "jm29c_guides:Q14", "src": "media/guide-q14.mp4", "poster": "media/guide-q14.jpg" },
+    { "q": "q18", "scene": "jm29c_guides:Q18", "src": "media/guide-q18.mp4", "poster": "media/guide-q18.jpg" },
+    { "q": "q21", "scene": "jm29c_guides:Q21", "src": "media/guide-q21.mp4", "poster": "media/guide-q21.jpg" },
+    { "q": "q23", "scene": "jm29c_guides:Q23", "src": "media/guide-q23.mp4", "poster": "media/guide-q23.jpg" }
+  ],
   "widgets": true
 }

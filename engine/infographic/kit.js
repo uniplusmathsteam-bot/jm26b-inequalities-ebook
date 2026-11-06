@@ -1,8 +1,9 @@
 /**
  * Whiteboard infographics: a question's scenario drawn like a teacher's
  * marker sketch. A board is { title, w, h, items }, and `items` is built from
- * the helpers below (text, arrow, bar, flow ...). Items draw in order; `with`
- * starts an item together with the one before it. See docs/06-infographics.md.
+ * the helpers below (text, arrow, bar, flow, table ...). Items draw in order;
+ * `with` starts an item together with the one before it, and `step()` makes the
+ * rest wait for the presenter. See docs/06-infographics.md.
  */
 
 const NS = "http://www.w3.org/2000/svg";
@@ -36,8 +37,12 @@ export function title(str, o = {}) {
   return { k: "text", str, x: o.x ?? 24, y: o.y ?? 44, size: o.size ?? 30, color: o.color ?? "ink", under: o.mark ?? "yellow", ...o };
 }
 
+/* A letter the hand font draws like a digit (I next to 1) is set as a serif italic variable. */
+const VAR_FONT = '"Times New Roman", Times, serif';
+
 /**
- * Handwritten text. `{blue:words}` colours part of the line.
+ * Handwritten text. `{blue:words}` colours part of the line; `{v:I}` sets a
+ * variable in serif italic.
  * Options: size, color, anchor ("start" | "middle" | "end"), mark (highlighter
  * behind), ring (marker loop round it), after (continue the previous line).
  */
@@ -45,9 +50,9 @@ export function text(x, y, str, o = {}) {
   return { k: "text", str, x, y, size: 22, color: "ink", anchor: "start", ...o };
 }
 
-/** Continue the previous text on the same baseline. */
+/** Continue the previous text on the same baseline, at its size. */
 export function then(str, o = {}) {
-  return { k: "text", str, after: true, size: 22, color: "ink", ...o };
+  return { k: "text", str, after: true, color: "ink", ...o };
 }
 
 /** The answer of a line: red, highlighted and continuing the line. */
@@ -99,6 +104,59 @@ export function brace(a, b, o = {}) {
 
 export function pause(ms = 400) {
   return { k: "pause", ms };
+}
+
+/** Starts the next presentation step: what follows waits for a tap, → or PageDown. */
+export function step() {
+  return { k: "step" };
+}
+
+/**
+ * Hand-ruled table from (x, y). `cols` and `rows` are cell widths and heights.
+ * Options: headRows / headCols (tinted, default 1), totals (rule the last row
+ * and column off), size (cell text). Returns the ruling as one item with
+ *   .cell(r, c, str, o)  text centred in a cell. In a two-line cell `o.line`
+ *                        is "top" or "sub" (smaller, under it); `o.sub` writes both.
+ *   .at(r, c)            cell centre, .left(c) / .right(c) / .top(r) / .bottom(r) edges.
+ */
+export function table(x, y, cols, rows, o = {}) {
+  const xs = cols.reduce((a, w) => [...a, a[a.length - 1] + w], [x]);
+  const ys = rows.reduce((a, h) => [...a, a[a.length - 1] + h], [y]);
+  const g = { k: "grid", xs, ys, color: "ink", width: 2, headRows: 1, headCols: 1, ...o };
+  const size = o.size ?? 22;
+  const at = (r, c) => [(xs[c] + xs[c + 1]) / 2, (ys[r] + ys[r + 1]) / 2];
+  g.at = at;
+  g.left = (c) => xs[c];
+  g.right = (c) => xs[c + 1];
+  g.top = (r) => ys[r];
+  g.bottom = (r) => ys[r + 1];
+  g.cell = (r, c, str, opt = {}) => {
+    const [cx, cy] = at(r, c);
+    const { sub, subColor, line: where, ...rest } = opt;
+    if (where === "sub") return text(cx, cy + size * 0.86, str, { anchor: "middle", color: "grey", ...rest, size: rest.size ?? size - 5 });
+    const s = rest.size ?? size;
+    const main = text(cx, sub || where === "top" ? cy - 2 : cy + s * 0.34, str, { anchor: "middle", ...rest, size: s });
+    if (!sub) return main;
+    return [main, g.cell(r, c, sub, { line: "sub", color: subColor ?? rest.color ?? "grey" })];
+  };
+  return g;
+}
+
+/**
+ * Bar model: boxes side by side from (x, y), each `h` high.
+ * parts: [{ w, color, text, below, fill, hatch }]; `text` sits inside, `below` under the box.
+ */
+export function strip(x, y, h, parts, o = {}) {
+  const items = [];
+  let cx = x;
+  parts.forEach((p, i) => {
+    const color = p.color ?? "blue";
+    items.push(box(cx, y, p.w, h, { color, fill: p.fill ?? markFor(color), hatch: p.hatch ?? false, dash: p.dash, with: i > 0 && o.together }));
+    if (p.text) items.push(text(cx + p.w / 2, y + h / 2 + (p.size ?? 20) * 0.34, p.text, { anchor: "middle", size: p.size ?? 20, color: p.textColor ?? color }));
+    if (p.below) items.push(text(cx + p.w / 2, y + h + 22, p.below, { anchor: "middle", size: 18, color: p.belowColor ?? "grey" }));
+    cx += p.w;
+  });
+  return items;
 }
 
 /**
@@ -263,7 +321,8 @@ function quad(a, c, b, t) {
 
 /* ---------- renderer ---------- */
 
-const DUR = { text: 0, frac: 420, arrow: 650, bar: 750, box: 450, ring: 520, hl: 320, line: 380, brace: 480 };
+const DUR = { text: 0, frac: 420, arrow: 650, bar: 750, box: 450, ring: 520, hl: 320, line: 380, brace: 480, grid: 900 };
+const TINT = "rgba(120, 140, 170, 0.13)";
 
 function el(name, attrs = {}, parent) {
   const node = document.createElementNS(NS, name);
@@ -296,7 +355,7 @@ function swipe(box, color, del, parent, under) {
 
 /** Write `str` with optional {colour:words} spans; returns the <text>. */
 function writeText(item, del, layer, state) {
-  const size = item.size;
+  const size = item.size ?? (item.after && state.last?.size) ?? 22;
   let x = item.x;
   let y = item.y;
   if (item.after && state.last) {
@@ -320,7 +379,10 @@ function writeText(item, del, layer, state) {
   for (const [c, s] of parts) {
     for (const ch of s) {
       const span = el("tspan", { class: "ig-c" }, node);
-      if (c) span.setAttribute("fill", col(c));
+      if (c === "v") {
+        span.setAttribute("font-family", VAR_FONT);
+        span.setAttribute("font-style", "italic");
+      } else if (c) span.setAttribute("fill", col(c));
       span.textContent = ch;
       span.style.setProperty("--del", `${Math.round(t)}ms`);
       t += step;
@@ -334,7 +396,7 @@ function writeText(item, del, layer, state) {
     ink(roughEllipse(box.x + box.width / 2, box.y + box.height / 2, box.width / 2 + 10, box.height / 2 + 6), item.ring === true ? "red" : item.ring, 2.2, t, DUR.ring, r);
     t += DUR.ring;
   }
-  state.last = { end: box.x + box.width, y };
+  state.last = { end: box.x + box.width, y, size };
   return t - del;
 }
 
@@ -357,7 +419,7 @@ function drawFrac(item, del, layer, state) {
   num.setAttribute("x", cx);
   den.setAttribute("x", cx);
   ink(seg([x, y - s * 0.28], [x + w, y - s * 0.28], 0.8), item.color, 1.8, del, 200, layer.ink);
-  state.last = { end: x + w, y };
+  state.last = { end: x + w, y, size: state.last?.size };
   return DUR.frac;
 }
 
@@ -420,6 +482,30 @@ function drawBar(item, del, layer) {
   return used;
 }
 
+function drawGrid(item, del, layer) {
+  const { xs, ys, headRows, headCols } = item;
+  const x0 = xs[0];
+  const x1 = xs[xs.length - 1];
+  const y0 = ys[0];
+  const y1 = ys[ys.length - 1];
+  const tint = (x, y, w, h) => {
+    if (w <= 0 || h <= 0) return;
+    const r = el("rect", { x, y, width: w, height: h, fill: item.head || TINT, class: "ig-f" }, layer.marks);
+    timing(r, del, 300);
+  };
+  if (item.head !== false) {
+    tint(x0, y0, x1 - x0, ys[headRows] - y0);
+    tint(x0, ys[headRows], xs[headCols] - x0, y1 - ys[headRows]);
+  }
+  const strongY = new Set([0, ys.length - 1, headRows, ...(item.totals ? [ys.length - 2] : [])]);
+  const strongX = new Set([0, xs.length - 1, headCols, ...(item.totals ? [xs.length - 2] : [])]);
+  let d = "";
+  ys.forEach((y, i) => { d += roughLine([x0 - 4, y], [x1 + 4, y], 1.2, strongY.has(i) ? 2 : 1); });
+  xs.forEach((x, i) => { d += roughLine([x, y0 - 4], [x, y1 + 4], 1.2, strongX.has(i) ? 2 : 1); });
+  ink(d, item.color, item.width, del, DUR.grid, layer.ink);
+  return DUR.grid;
+}
+
 function markFor(color) {
   return { blue: "blue", red: "pink", pink: "pink", green: "green", orange: "orange", purple: "blue" }[color] || "yellow";
 }
@@ -450,24 +536,39 @@ function drawBrace(item, del, layer) {
 }
 
 /**
- * Draw `board` into `svg`. `animate` false shows the finished board at once.
- * Returns the total animation time in ms.
+ * Draw `board` into `svg` with every step showing. Returns the steps as
+ * [{ groups, dur }]: the step's <g> in each layer and its drawing time in ms.
+ * The caller hides later steps and adds `ig-anim` to a step's groups to play it.
  */
-export function render(svg, board, { seed = 1, animate = true } = {}) {
+export function render(svg, board, { seed = 1 } = {}) {
   R = seeded(seed);
   const w = board.w || 600;
   const h = board.h || 480;
   svg.replaceChildren();
   svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
-  svg.classList.toggle("ig-anim", animate);
-  const layer = { marks: el("g", { class: "ig-marks" }, svg), ink: el("g", {}, svg), text: el("g", {}, svg) };
+  svg.classList.remove("ig-anim");
+  const root = { marks: el("g", { class: "ig-marks" }, svg), ink: el("g", {}, svg), text: el("g", {}, svg) };
+  const steps = [];
+  let layer;
+  const begin = () => {
+    layer = { marks: el("g", { class: "ig-step" }, root.marks), ink: el("g", { class: "ig-step" }, root.ink), text: el("g", { class: "ig-step" }, root.text) };
+    steps.push({ groups: [layer.marks, layer.ink, layer.text], dur: 0 });
+  };
+  begin();
   const state = {};
   let t = 150;
   let prev = t;
-  for (const item of (board.items || []).flat(2)) {
+  for (const item of (board.items || []).flat(3)) {
     if (!item) continue;
     if (item.k === "pause") {
       t += item.ms;
+      continue;
+    }
+    if (item.k === "step") {
+      steps[steps.length - 1].dur = t;
+      begin();
+      t = 150;
+      prev = t;
       continue;
     }
     const del = item.with ? prev : t;
@@ -477,6 +578,7 @@ export function render(svg, board, { seed = 1, animate = true } = {}) {
     else if (item.k === "arrow") used = drawArrow(item, del, layer);
     else if (item.k === "bar") used = drawBar(item, del, layer);
     else if (item.k === "brace") used = drawBrace(item, del, layer);
+    else if (item.k === "grid") used = drawGrid(item, del, layer);
     else if (item.k === "box") {
       ink(roughRect(item.x, item.y, item.w, item.h), item.color, item.width, del, DUR.box, layer.ink, item.dash ? { "stroke-dasharray": item.dash } : {});
       if (item.fill) {
@@ -504,5 +606,6 @@ export function render(svg, board, { seed = 1, animate = true } = {}) {
     prev = del;
     t = del + used + (item.gapAfter ?? 60);
   }
-  return t;
+  steps[steps.length - 1].dur = t;
+  return steps.filter((s) => s.groups.some((g) => g.childNodes.length));
 }

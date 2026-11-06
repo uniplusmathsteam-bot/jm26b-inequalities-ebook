@@ -104,6 +104,8 @@ A slider graphic goes in `books/<id>/widgets.js`, registered in `REGISTRY`, buil
 
 A printed concept panel (a theorem box, a law, a family tree) is an animation instead. Follow [animate-summary](../animate-summary/SKILL.md).
 
+A question marked with the green diamond gets a solution guide: its printed figure animated through the teacher's steps, opened from a film button (`guides` in `book.json`, scenes in `tools/manim/<id>_guides.py` built on `guide.py`). There are no written lines, because a narrator speaks over it. Colour equal parts alike, and show each reason as a motion (fold, half-turn, slide, angles gathering on a line). Answers appear in bold red with no box. Labels keep clear of wedges, arcs and lines, and words never grow (unknowns flash red in place): `python -X utf8 tools/audit_guides.py <id>` must report every scene clean. After re-rendering, bump `CACHE` in `sw.js`, because the service worker would keep serving the old video under the same name. Check every scene with `python -X utf8 tools/render_media.py <id> <Class> --still` (`reference/guides/<Class>_cmp.png` and `_sheet.png`), one render at a time. See `docs/01-workflow.md`.
+
 ## 6. QA
 
 ```powershell

@@ -43,7 +43,7 @@
 .ig-card {
   display: flex;
   flex-direction: column;
-  width: min(820px, 100%);
+  width: min(1120px, 100%);
   max-height: 100%;
   border-radius: 14px;
   background: #fff;
@@ -72,6 +72,15 @@
   cursor: pointer;
 }
 .ig-card header button:hover { background: #e7eaf2; }
+.ig-card header button:disabled { opacity: 0.45; cursor: default; }
+.ig-steps { display: inline-flex; align-items: center; gap: 6px; }
+.ig-steps[hidden] { display: none; }
+.ig-count { min-width: 6.5em; text-align: center; font-weight: 600; color: #4a5562; }
+.ig-card header .ig-next { border-color: #2463c9; background: #2463c9; color: #fff; }
+.ig-card header .ig-next:hover { background: #1c50a6; }
+
+/* Steps the presenter has not reached yet. */
+.ig-board .ig-later { display: none; }
 
 .ig-board-wrap {
   overflow: auto;
@@ -79,11 +88,13 @@
   padding: 12px;
   background: #eef0f3;
 }
-/* The whiteboard: off-white with a marker-tray shadow. */
+/* The whiteboard: off-white with a marker-tray shadow. It fits the screen height so a projected board never scrolls. */
 .ig-board {
   display: block;
   width: 100%;
   height: auto;
+  max-height: calc(100vh - 150px);
+  max-height: calc(100dvh - 150px);
   border-radius: 10px;
   background: #fffffb;
   box-shadow: inset 0 0 0 2px #d9dde4, 0 2px 0 #c9ced8;
