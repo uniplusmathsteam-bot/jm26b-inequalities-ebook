@@ -26,7 +26,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-from manim import tempconfig
+sys.path.insert(0, str(Path(__file__).resolve().parent / "manim"))
+import textsvg  # noqa: E402
+
+textsvg.install()
+from manim import tempconfig  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 SCALE = 2.5

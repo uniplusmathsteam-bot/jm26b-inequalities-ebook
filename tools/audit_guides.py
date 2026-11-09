@@ -20,7 +20,12 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from manim import AnimationGroup, BackgroundRectangle, Indicate, Text, VMobject, tempconfig
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "manim"))
+import textsvg  # noqa: E402
+
+textsvg.install()
+from manim import AnimationGroup, BackgroundRectangle, Indicate, Text, VMobject, tempconfig  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT / "tools" / "_manim"

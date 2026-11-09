@@ -457,6 +457,18 @@ body:not([data-mode="read"]) .ln.hid.next::after { content: "▸"; }
 .thumb { position: relative; padding: 4px; min-width: 0; width: 100%; border: 2px solid transparent; }
 .thumb.on { border-color: var(--ink); }
 .thumb img { width: 100%; display: block; }
+.thumb-blank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 595 / 842;
+  padding: 6px;
+  background: linear-gradient(160deg, #3b1f8c, #2f6fd6);
+  color: #fff;
+  font-weight: 700;
+  font-size: var(--fs-sm);
+  text-align: center;
+}
 .thumb span { position: absolute; right: 8px; bottom: 6px; font-size: var(--fs-xs); background: var(--ink); color: #fff; border-radius: 6px; padding: 0 5px; }
 
 /* ---------- ink toolbar ---------- */

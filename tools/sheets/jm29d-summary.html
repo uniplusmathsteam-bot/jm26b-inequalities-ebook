@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>JM29 (D) summary: the mid-point and intercept theorems</title>
+<!--
+  The last page of books/jm29d. Render with
+    node tools/qa/render_sheet.mjs tools/sheets/jm29d-summary.html books/jm29d/pages/summary.png
+  Colours: blue = the equal parts you are given, red arrows = parallel lines, green = what the theorem gives you.
+-->
+<style>
+  :root {
+    --ink: #1a1a1a; --soft: #5b6270; --blue: #2f6fd6; --red: #e02424; --green: #1f9d55;
+    --mid: #e46c0a; --mid-bg: #fff3e8; --icp: #7b4fd0; --icp-bg: #f4efff; --paper: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 595.32px; height: 841.92px; overflow: hidden; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif; color: var(--ink); font-size: 10.5px; line-height: 1.35;
+    background: linear-gradient(180deg, #f3f0fb 0%, #eef4fc 100%);
+  }
+  .m { font-family: "Cambria Math", "Times New Roman", serif; font-style: italic; padding-right: 1.5px; }
+  .blue { color: var(--blue); } .red { color: var(--red); } .green { color: var(--green); }
+  b { font-weight: 700; }
+
+  header {
+    height: 80px; padding: 12px 24px 0; color: #fff; position: relative;
+    background: linear-gradient(105deg, #3b1f8c 0%, #5a3cc0 45%, #2f6fd6 100%);
+  }
+  header .kicker { font-size: 10px; letter-spacing: 1.6px; text-transform: uppercase; opacity: 0.85; font-weight: 600; }
+  header h1 { font-size: 25px; font-weight: 800; letter-spacing: 0.2px; margin-top: 2px; }
+  .legend { display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: 9.5px; }
+  .legend .lead { font-weight: 600; opacity: 0.9; margin-right: 2px; }
+  .legend .chip {
+    display: inline-flex; align-items: center; gap: 5px; background: rgba(255, 255, 255, 0.96); color: var(--ink);
+    border-radius: 7px; padding: 1px 7px 1px 5px; box-shadow: 0 1px 3px rgba(20, 10, 60, 0.25);
+  }
+  .legend svg { flex: none; }
+
+  main { padding: 9px 22px 0; display: flex; flex-direction: column; gap: 8px; }
+  .card { background: var(--paper); border-radius: 12px; box-shadow: 0 1px 4px rgba(30, 30, 80, 0.13); overflow: hidden; }
+  .card h2 {
+    display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800; padding: 6px 12px; color: #fff;
+  }
+  .card.mid h2 { background: var(--mid); }
+  .card.icp h2 { background: var(--icp); }
+  .card.which h2 { background: #26324a; }
+  .num {
+    width: 20px; height: 20px; border-radius: 50%; background: #fff; display: inline-flex; align-items: center;
+    justify-content: center; font-size: 12px; font-weight: 800;
+  }
+  .mid .num { color: var(--mid); } .icp .num { color: var(--icp); }
+  .tag { margin-left: auto; font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.22); border-radius: 6px; padding: 1px 8px; }
+
+  .row { display: flex; align-items: center; gap: 10px; padding: 8px 12px 10px; }
+  .says { flex: 1; }
+  .says .line { font-size: 12.5px; margin: 1px 0; }
+  .says .big { font-size: 14px; font-weight: 700; margin: 2px 0 2px 14px; }
+  .kw { font-weight: 800; color: var(--soft); text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.8px; margin-right: 4px; }
+  .spot {
+    margin-top: 7px; border-radius: 8px; padding: 5px 8px; font-size: 10.5px; display: flex; gap: 6px; align-items: flex-start;
+  }
+  .mid .spot { background: var(--mid-bg); border-left: 4px solid var(--mid); }
+  .icp .spot { background: var(--icp-bg); border-left: 4px solid var(--icp); margin: 0 12px 10px; }
+  .spot .k { font-weight: 800; white-space: nowrap; }
+  .mid .spot .k { color: var(--mid); } .icp .spot .k { color: var(--icp); }
+
+  .two { display: flex; gap: 10px; padding: 8px 12px 8px; }
+  .half { flex: 1; background: #fbfaff; border: 1px solid #e6def8; border-radius: 10px; padding: 6px 8px 7px; }
+  .half h3 { font-size: 11.5px; font-weight: 800; color: var(--icp); margin-bottom: 2px; }
+  .half svg { display: block; margin: 0 auto; }
+  .half .line { font-size: 11px; text-align: center; margin-top: 2px; white-space: nowrap; }
+  .half .kw { font-size: 9.5px; letter-spacing: 0.4px; margin-right: 1px; }
+  .half .note { font-size: 9.8px; color: var(--soft); text-align: center; margin-top: 2px; }
+
+  table { border-collapse: separate; border-spacing: 0; width: calc(100% - 24px); margin: 8px 12px 6px; font-size: 10.8px; }
+  th, td { padding: 4px 8px; text-align: left; vertical-align: top; }
+  th { font-size: 12px; color: #fff; }
+  th.mid { background: var(--mid); border-radius: 8px 0 0 0; }
+  th.icp { background: var(--icp); border-radius: 0 8px 0 0; }
+  td.k { white-space: nowrap; font-weight: 800; color: var(--soft); text-transform: uppercase; font-size: 9.5px; letter-spacing: 0.6px; width: 74px; padding-top: 6px; }
+  tr:nth-child(2) td.c1, tr:nth-child(4) td.c1 { background: var(--mid-bg); }
+  tr:nth-child(2) td.c2, tr:nth-child(4) td.c2 { background: var(--icp-bg); }
+  tr:last-child td.c1 { border-radius: 0 0 0 8px; } tr:last-child td.c2 { border-radius: 0 0 8px 0; }
+  td.c1, td.c2 { width: 44%; }
+  .chain {
+    margin: 2px 12px 10px; padding: 6px 9px; border-radius: 9px; background: #eef4fc; border: 1px dashed #9db7e6; font-size: 10.6px;
+  }
+  .chain .k { font-weight: 800; color: #26324a; }
+  .flow { display: flex; align-items: center; gap: 5px; margin-top: 3px; flex-wrap: nowrap; font-size: 9.8px; }
+  .pill { border-radius: 7px; padding: 2px 6px; font-weight: 600; white-space: nowrap; }
+  .pill.mid { background: var(--mid-bg); border: 1px solid #f3b47e; }
+  .pill.icp { background: var(--icp-bg); border: 1px solid #c4aef0; }
+  .arrow { font-weight: 800; color: #26324a; }
+
+  footer {
+    position: absolute; left: 22px; right: 22px; bottom: 10px; height: 26px; border-radius: 10px;
+    background: #26324a; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 14px;
+    font-size: 11px;
+  }
+  footer b { color: #ffd27a; }
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker">S3 JM29 (D) · Quadrilaterals · Summary</div>
+  <h1>Mid-point &amp; Intercept Theorems</h1>
+  <div class="legend">
+    <span class="lead">Colour code:</span>
+    <span class="chip"><svg width="24" height="10"><line x1="1" y1="5" x2="23" y2="5" stroke="#2f6fd6" stroke-width="2.4"/><line x1="12" y1="1" x2="12" y2="9" stroke="#2f6fd6" stroke-width="1.6"/></svg>equal parts you are <b class="blue">given</b></span>
+    <span class="chip"><svg width="24" height="10"><line x1="1" y1="5" x2="23" y2="5" stroke="#1a1a1a" stroke-width="1.4"/><path d="M16 5 L8 1 L10.5 5 L8 9 Z" fill="#e02424"/></svg><b class="red">parallel</b> lines</span>
+    <span class="chip"><svg width="24" height="10"><line x1="1" y1="5" x2="23" y2="5" stroke="#1f9d55" stroke-width="2.4"/><line x1="10.5" y1="1" x2="10.5" y2="9" stroke="#1f9d55" stroke-width="1.6"/><line x1="13.5" y1="1" x2="13.5" y2="9" stroke="#1f9d55" stroke-width="1.6"/></svg>what the theorem <b class="green">gives you</b></span>
+  </div>
+</header>
+
+<main>
+  <section class="card mid">
+    <h2><span class="num">1</span>Mid-point theorem<span class="tag">[mid-pt. theorem]</span></h2>
+    <div class="row">
+      <svg id="fig-mid" width="236" height="152"></svg>
+      <div class="says">
+        <p class="line"><span class="kw">If</span> <span class="m">M</span> and <span class="m">N</span> are the <b class="blue">mid-points</b> of <span class="m">AB</span> and <span class="m">AC</span>,</p>
+        <p class="big blue"><span class="m">AM</span> = <span class="m">MB</span> and <span class="m">AN</span> = <span class="m">NC</span></p>
+        <p class="line"><span class="kw">then</span></p>
+        <p class="big"><span class="red"><span class="m">MN</span> // <span class="m">BC</span></span> &nbsp;and&nbsp; <span class="green"><span class="m">MN</span> = ½ <span class="m">BC</span></span></p>
+        <p class="line" style="font-size:10.5px;color:var(--soft);margin-top:3px">Two copies of <span class="m">MN</span> fill <span class="m">BC</span>: so <span class="m">BC</span> = 2<span class="m">MN</span>.</p>
+        <div class="spot"><span class="k">Spot it</span><span><b>Two</b> mid-points on two sides of a triangle. Use it to <b>halve or double</b> a length, or to <b>prove lines parallel</b>.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card icp">
+    <h2><span class="num">2</span>Intercept theorem<span class="tag">[intercept theorem]</span></h2>
+    <div class="two">
+      <div class="half">
+        <h3>In a triangle</h3>
+        <svg id="fig-tri" width="238" height="116"></svg>
+        <p class="line"><span class="kw">If</span> <span class="blue"><span class="m">AE</span> = <span class="m">EB</span></span> and <span class="red"><span class="m">EF</span> // <span class="m">BC</span></span>, <span class="kw">then</span> <b class="green"><span class="m">AF</span> = <span class="m">FC</span></b></p>
+        <p class="note">A line through one mid-point, parallel to a side, meets the third side at its mid-point.</p>
+      </div>
+      <div class="half">
+        <h3>Across three parallel lines</h3>
+        <svg id="fig-lines" width="238" height="116"></svg>
+        <p class="line"><span class="kw">If</span> <span class="red"><span class="m">L</span>₁ // <span class="m">L</span>₂ // <span class="m">L</span>₃</span> and <span class="blue"><span class="m">AB</span> = <span class="m">BC</span></span>, <span class="kw">then</span> <b class="green"><span class="m">DE</span> = <span class="m">EF</span></b></p>
+        <p class="note">Equal parts cut on one line give equal parts on any other line across them.</p>
+      </div>
+    </div>
+    <div class="spot"><span class="k">Spot it</span><span><b>One</b> mid-point (or equal parts) <b>and parallel lines</b>. It gives <b>another mid-point</b> (two equal lengths).</span></div>
+  </section>
+
+  <section class="card which">
+    <h2>Which theorem do I use?</h2>
+    <table>
+      <tr><th></th><th class="mid">Mid-point theorem</th><th class="icp">Intercept theorem</th></tr>
+      <tr><td class="k">You know</td><td class="c1"><b>two</b> mid-points</td><td class="c2"><b>one</b> mid-point <b>+</b> a <b>parallel</b> line</td></tr>
+      <tr><td class="k">You get</td><td class="c1">a parallel line <b>and</b> a length that is <b>half</b></td><td class="c2"><b>another mid-point</b>: two equal lengths</td></tr>
+      <tr><td class="k">Asked to</td><td class="c1">find <span class="m">MN</span> or <span class="m">BC</span>; prove <span class="m">MN</span> // <span class="m">BC</span></td><td class="c2">prove <span class="m">AF</span> = <span class="m">FC</span>; show two lengths are equal</td></tr>
+    </table>
+    <div class="chain">
+      <span class="k">Chain them (Q13).</span> The parallel line from the mid-point theorem sets up the intercept theorem:
+      <div class="flow">
+        <span class="pill mid">△<span class="m">ACF</span>: <span class="m">AB</span> = <span class="m">BC</span>, <span class="m">AE</span> = <span class="m">EF</span></span>
+        <span class="arrow">⟹</span>
+        <span class="pill mid"><span class="m">BE</span> // <span class="m">CF</span> [mid-pt. theorem]</span>
+        <span class="arrow">⟹</span>
+        <span class="pill icp">△<span class="m">DBG</span>: <span class="m">DF</span> = <span class="m">FG</span> [intercept theorem]</span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><span>Next page: <b>Which theorem?</b> flashcards. Read each scenario and tap your choice.</span><span>▶</span></footer>
+
+<script>
+  const NS = "http://www.w3.org/2000/svg";
+  const INK = "#1a1a1a", BLUE = "#2f6fd6", RED = "#e02424", GREEN = "#1f9d55";
+
+  function el(svg, tag, attrs, text) {
+    const node = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+    if (text != null) node.textContent = text;
+    svg.append(node);
+    return node;
+  }
+  const mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+  const along = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+  const unit = (p, q) => { const d = Math.hypot(q[0] - p[0], q[1] - p[1]); return [(q[0] - p[0]) / d, (q[1] - p[1]) / d]; };
+
+  function seg(svg, p, q, color = INK, w = 1.5) {
+    return el(svg, "line", { x1: p[0], y1: p[1], x2: q[0], y2: q[1], stroke: color, "stroke-width": w, "stroke-linecap": "round" });
+  }
+  /** n equal-length ticks across the middle of pq. */
+  function ticks(svg, p, q, n, color, size = 5, w = 1.6) {
+    const [ux, uy] = unit(p, q);
+    const c = mid(p, q);
+    for (let i = 0; i < n; i++) {
+      const o = (i - (n - 1) / 2) * 3.4;
+      const x = c[0] + ux * o, y = c[1] + uy * o;
+      seg(svg, [x - uy * size, y + ux * size], [x + uy * size, y - ux * size], color, w);
+    }
+  }
+  /** Filled parallel arrowheads on pq, pointing from p to q, like the printed notes. */
+  function arrows(svg, p, q, n = 1, at = 0.5, s = 7, color = RED) {
+    const [ux, uy] = unit(p, q);
+    const c = along(p, q, at);
+    for (let i = 0; i < n; i++) {
+      const o = (i - (n - 1) / 2) * s * 1.05;
+      const x = c[0] + ux * o, y = c[1] + uy * o;
+      const tip = [x + ux * s * 0.55, y + uy * s * 0.55];
+      const back = [x - ux * s * 0.45, y - uy * s * 0.45];
+      const notch = [x - ux * s * 0.1, y - uy * s * 0.1];
+      const pts = [tip, [back[0] - uy * s * 0.62, back[1] + ux * s * 0.62], notch, [back[0] + uy * s * 0.62, back[1] - ux * s * 0.62]];
+      el(svg, "path", { d: `M${pts.map((pt) => pt.join(" ")).join(" L")} Z`, fill: color, stroke: color, "stroke-width": 0.6, "stroke-linejoin": "round" });
+    }
+  }
+  function dot(svg, p, color = INK, r = 2.4) {
+    return el(svg, "circle", { cx: p[0], cy: p[1], r, fill: "#fff", stroke: color, "stroke-width": 1.4 });
+  }
+  function name(svg, s, x, y, color = INK, size = 12.5) {
+    return el(svg, "text", {
+      x, y, fill: color, "font-size": size, "font-family": "Cambria Math, Times New Roman, serif", "font-style": "italic",
+      "text-anchor": "middle", "dominant-baseline": "central",
+    }, s);
+  }
+
+  // 1. Mid-point theorem: M, N the mid-points of AB, AC; MN // BC; two copies of MN fill BC.
+  {
+    const svg = document.getElementById("fig-mid");
+    const A = [118, 14], B = [14, 112], C = [222, 112];
+    const M = mid(A, B), N = mid(A, C);
+    el(svg, "polygon", { points: [A, B, C].map((p) => p.join(",")).join(" "), fill: "#fff7ef" });
+    seg(svg, A, M, BLUE, 2.6); seg(svg, M, B, BLUE, 2.6);
+    seg(svg, A, N, BLUE, 2.6); seg(svg, N, C, BLUE, 2.6);
+    ticks(svg, A, M, 1, BLUE); ticks(svg, M, B, 1, BLUE);
+    ticks(svg, A, N, 2, BLUE); ticks(svg, N, C, 2, BLUE);
+    seg(svg, B, C, INK, 1.8);
+    seg(svg, M, N, GREEN, 3);
+    arrows(svg, M, N, 1, 0.5); arrows(svg, B, C, 1, 0.5);
+    const y = 128, H = mid(B, C);
+    for (const [p, q] of [[B, H], [H, C]]) {
+      const a = [p[0] + 1.5, y], b = [q[0] - 1.5, y];
+      seg(svg, a, b, GREEN, 2.4);
+      seg(svg, [a[0], y - 4], [a[0], y + 4], GREEN, 1.4); seg(svg, [b[0], y - 4], [b[0], y + 4], GREEN, 1.4);
+      name(svg, "MN", (a[0] + b[0]) / 2, y + 12, GREEN, 11.5);
+    }
+    name(svg, "MN", 118, mid(M, N)[1] - 10, GREEN, 11.5);
+    dot(svg, M, BLUE); dot(svg, N, BLUE);
+    name(svg, "A", A[0], A[1] - 10); name(svg, "B", B[0] - 2, B[1] - 12); name(svg, "C", C[0] + 2, C[1] - 12);
+    name(svg, "M", M[0] - 12, M[1] - 2, BLUE); name(svg, "N", N[0] + 12, N[1] - 2, BLUE);
+  }
+
+  // 2a. Intercept theorem in a triangle: AE = EB and EF // BC, so AF = FC.
+  {
+    const svg = document.getElementById("fig-tri");
+    const A = [119, 12], B = [16, 100], C = [222, 100];
+    const E = mid(A, B), F = mid(A, C);
+    el(svg, "polygon", { points: [A, B, C].map((p) => p.join(",")).join(" "), fill: "#f8f4ff" });
+    seg(svg, A, E, BLUE, 2.6); seg(svg, E, B, BLUE, 2.6);
+    ticks(svg, A, E, 1, BLUE); ticks(svg, E, B, 1, BLUE);
+    seg(svg, A, F, GREEN, 2.6); seg(svg, F, C, GREEN, 2.6);
+    ticks(svg, A, F, 2, GREEN); ticks(svg, F, C, 2, GREEN);
+    seg(svg, E, F, INK, 1.8); seg(svg, B, C, INK, 1.8);
+    arrows(svg, E, F, 1, 0.5); arrows(svg, B, C, 1, 0.5);
+    dot(svg, E, BLUE); dot(svg, F, GREEN);
+    name(svg, "A", A[0], A[1] - 9); name(svg, "B", B[0] - 1, B[1] + 11); name(svg, "C", C[0] + 1, C[1] + 11);
+    name(svg, "E", E[0] - 12, E[1] - 1, BLUE); name(svg, "F", F[0] + 12, F[1] - 1, GREEN);
+  }
+
+  // 2b. Three parallel lines: AB = BC on one line across them, so DE = EF on another.
+  {
+    const svg = document.getElementById("fig-lines");
+    const ys = [18, 56, 94];
+    const t1 = (y) => [58 - (y - 18) * 0.34, y];
+    const t2 = (y) => [168 + (y - 18) * 0.42, y];
+    ys.forEach((y, i) => {
+      seg(svg, [14, y], [212, y], INK, 1.6);
+      arrows(svg, [14, y], [212, y], 1, 0.52);
+      el(svg, "text", { x: 224, y, fill: RED, "font-size": 12, "font-family": "Cambria Math, Times New Roman, serif", "font-style": "italic", "text-anchor": "middle", "dominant-baseline": "central" }, `L${"₁₂₃"[i]}`);
+    });
+    const [A, B, C] = ys.map(t1), [D, E, F] = ys.map(t2);
+    seg(svg, t1(4), A, INK, 1.4); seg(svg, C, t1(110), INK, 1.4);
+    seg(svg, A, B, BLUE, 2.6); seg(svg, B, C, BLUE, 2.6);
+    ticks(svg, A, B, 1, BLUE); ticks(svg, B, C, 1, BLUE);
+    seg(svg, t2(4), D, INK, 1.4); seg(svg, F, t2(110), INK, 1.4);
+    seg(svg, D, E, GREEN, 2.6); seg(svg, E, F, GREEN, 2.6);
+    ticks(svg, D, E, 2, GREEN); ticks(svg, E, F, 2, GREEN);
+    for (const p of [A, B, C]) dot(svg, p, BLUE);
+    for (const p of [D, E, F]) dot(svg, p, GREEN);
+    [["A", A], ["B", B], ["C", C]].forEach(([s, p]) => name(svg, s, p[0] - 12, p[1] - 9, BLUE));
+    [["D", D], ["E", E], ["F", F]].forEach(([s, p]) => name(svg, s, p[0] + 12, p[1] - 9, GREEN));
+  }
+</script>
+</body>
+</html>

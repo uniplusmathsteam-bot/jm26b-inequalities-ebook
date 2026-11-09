@@ -8,6 +8,7 @@ import { renderLinks, clearLinks } from "./links.js";
 import { addMedia, toggleMedia } from "./media.js";
 import { openGuide } from "./guide.js";
 import { addInfographics } from "../infographic/infographic.js";
+import { END_PAGES, mountEndPage } from "./endpages.js";
 
 const PAGE_W = 595.32;
 const PAGE_H = 841.92;
@@ -185,29 +186,54 @@ function makeCanvases() {
   return [hl, pen];
 }
 
+function makeSheet(key, n, thumb) {
+  const sheet = document.createElement("article");
+  sheet.className = "sheet";
+  sheet.dataset.key = key;
+  sheet.dataset.page = String(n);
+  if (thumb) sheet.dataset.thumb = thumb;
+  sheet.style.width = `${PAGE_W}px`;
+  sheet.style.height = `${PAGE_H}px`;
+  return sheet;
+}
+
+function pageBackground(src) {
+  const img = document.createElement("img");
+  img.className = "bg";
+  img.alt = "";
+  img.draggable = false;
+  img.src = src;
+  return img;
+}
+
 function buildPages() {
   world.replaceChildren();
   for (const page of state.layout.pages) {
-    const sheet = document.createElement("article");
-    sheet.className = "sheet";
-    sheet.dataset.key = `p${page.page}`;
-    sheet.dataset.page = String(page.page);
-    sheet.style.width = `${PAGE_W}px`;
-    sheet.style.height = `${PAGE_H}px`;
-    const img = document.createElement("img");
-    img.className = "bg";
-    img.alt = "";
-    img.draggable = false;
-    img.src = pageImage(page.page);
+    const sheet = makeSheet(`p${page.page}`, page.page, pageImage(page.page));
     const overlay = document.createElement("div");
     overlay.className = "overlay";
     buildOverlay(page, overlay);
     addMedia(page.page, overlay);
     addInfographics(page, overlay);
     ink.setText(sheet.dataset.key, page.text);
-    sheet.append(img, overlay, ...makeCanvases());
+    sheet.append(pageBackground(pageImage(page.page)), overlay, ...makeCanvases());
     world.append(sheet);
   }
+  END_PAGES.forEach((item, i) => {
+    const sheet = makeSheet(item.sheetKey, state.layout.pages.length + i + 1, item.src);
+    sheet.dataset.label = item.label || item.key;
+    const overlay = document.createElement("div");
+    overlay.className = "overlay";
+    if (item.deck) {
+      // Cards change under the pen, so a deck takes the laser pointer but no ink.
+      sheet.classList.add("deck");
+      sheet.dataset.noInk = "";
+    }
+    mountEndPage(item, overlay);
+    ink.setText(sheet.dataset.key, []);
+    sheet.append(...(item.src ? [pageBackground(item.src)] : []), overlay, ...makeCanvases());
+    world.append(sheet);
+  });
 }
 
 function layout() {
@@ -314,8 +340,8 @@ function updateIndicator() {
   }
   if (!best) return;
   const label = document.getElementById("page-label");
-  const total = state.layout.pages.length;
-  label.textContent = `Page ${best.dataset.page} / ${total}`;
+  const total = sheets().length;
+  label.textContent = best.dataset.label ? `${best.dataset.label} · ${best.dataset.page} / ${total}` : `Page ${best.dataset.page} / ${total}`;
   document.getElementById("bar-show-label").textContent = label.textContent;
   document.getElementById("pr-label").textContent = `${best.dataset.page} / ${total}`;
   if (state.currentKey !== best.dataset.key) {
@@ -960,13 +986,20 @@ function buildThumbs() {
     btn.type = "button";
     btn.className = "thumb";
     btn.dataset.key = sheet.dataset.key;
-    const page = sheet.dataset.page;
-    const img = document.createElement("img");
-    img.src = pageImage(page);
-    img.alt = `Page ${page}`;
+    const name = sheet.dataset.label || sheet.dataset.page;
+    let face;
+    if (sheet.dataset.thumb) {
+      face = document.createElement("img");
+      face.src = sheet.dataset.thumb;
+      face.alt = sheet.dataset.label || `Page ${name}`;
+    } else {
+      face = document.createElement("div");
+      face.className = "thumb-blank";
+      face.textContent = name;
+    }
     const cap = document.createElement("span");
-    cap.textContent = page;
-    btn.append(img, cap);
+    cap.textContent = name;
+    btn.append(face, cap);
     btn.addEventListener("click", () => scrollToSheet(sheet));
     bar.append(btn);
   }
@@ -1136,7 +1169,7 @@ function bindChrome() {
       relayoutKeepingView();
     }
     try {
-      await exportPdf(sheets(), ink.toJSON(), `${BOOK_NAME.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "")}-solutions.pdf`);
+      await exportPdf(sheets().filter((s) => !s.classList.contains("deck")), ink.toJSON(), `${BOOK_NAME.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "")}-solutions.pdf`);
     } finally {
       btn.disabled = false;
       if (size !== 1) {

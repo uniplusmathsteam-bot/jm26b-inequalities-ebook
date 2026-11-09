@@ -953,6 +953,7 @@ export function createInk({ dbName }) {
     }
     if (event.pointerType === "touch") return;
     if (tool.type === "hand" || tool.type === "read") return;
+    if ("noInk" in sheet.dataset && tool.type !== "laser") return;
     event.preventDefault();
     activeId = event.pointerId;
     if (tool.type === "laser") {
@@ -1168,7 +1169,7 @@ export function createInk({ dbName }) {
         return;
       }
       const sheet = event.target.closest?.(".sheet");
-      if (!sheet) {
+      if (!sheet || "noInk" in sheet.dataset) {
         hide();
         return;
       }

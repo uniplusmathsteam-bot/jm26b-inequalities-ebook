@@ -25,6 +25,7 @@ flowchart TD
 - `answers.js` sets every answer at the book's type size (`BOOK.answerScale`, default 1). At reader size 100% it tries, in order: the authored layout, long equations broken before "=", tall boxes cut into side-by-side columns (`split()`), then a flowing wrap that may scroll inside the region (visible `.qa-bar`). In a wrapped box (`fitInWidth`) a step that is too long breaks before "=", and its reason moves to the end of the last row (`.ln.tuck`); a reason drops under its step (`.ln.drop`) only when even that row has no room. When the region's width forces such a break, the answer (or its last part column) may also use the button strip if that avoids the break, and the buttons move into the page margin (`answerRight`). Parts printed side by side as `(a)` `(b)` on one row get each answer box under its own label (`partColumns`). Authored `space` on a question opens the page under that region; a reader size other than 100% grows the region and opens the page the same way (`growSheet`). Reveal, wheel and drag scroll a long answer before moving the page.
 - `media.js` lays each `book.json` `media` entry over its page region: a `<video>` showing its poster (the last frame) plus a round button on the panel's corner. The button carries `data-media`, so the world click handler toggles play, pause and replay in every tool, as it does for `data-act` answer buttons.
 - `guide.js` makes the film button (`guideButton`, `data-act="guide"`) that `answers.js` puts in the control strip of a question listed in `book.json` `guides`, and `openGuide` shows its video in a modal sized to the video's aspect ratio. The modal has its own bar (play/pause, a seek slider and the time), not the native controls, so nothing covers the figure. Escape closes it; Space or K toggles play, and the arrow keys seek by 5 s.
+- `endpages.js` reads `book.json` `endPages`. `app.js` adds one sheet per entry after the printed pages, with `data-label` (shown in the page label and thumbnail) and `data-thumb` (the thumbnail image; a sheet without one gets a coloured tile). A deck sheet has class `deck` and `data-no-ink`, which `ink.js` honours for every tool except the laser. `engine/deck/deck.js` draws the cards and keeps progress in localStorage (`<storage>-deck-<key>`); its `checkDeck()` is what `check_book.mjs` uses to validate a deck, before tapping through every card with a finger.
 - `links.js` finds `q` phrases in `layout.json` text, measures the marked answer parts, and draws the markers, tags and leaders. Question-side markers are dashed (then solid) boxes; answer-side markers are coloured dotted underlines (solid when open), with a transparent hit area so a tap still toggles the link. Nested `.lk-*` pieces drop each underline by 2.6 pt so they stay readable. On a scrolling answer only the lines in the window are marked.
 
 ## Coordinates
@@ -37,6 +38,7 @@ Everything on a sheet uses PDF points (595.32 × 841.92 for A4), the same units 
 | --- | --- | --- |
 | `<storage>-ebook` | IndexedDB, store `kv`, key `strokes` | all ink for the book |
 | `<storage>-ui` | localStorage | revealed steps per question, tool, toolbar dock, link hints on or off |
+| `<storage>-deck-<key>` | localStorage | flashcard order, answers and current card for an end-page deck |
 | `library-last` | localStorage | the last opened book, for the library's Continue button |
 
 `storage` comes from `book.json`. JM26 (B) uses `jm26b`, which keeps the names from before the databank (`jm26b-ebook`, `jm26b-ui`), so existing ink survived the change.
@@ -66,7 +68,8 @@ These cost real debugging time on JM26 (B). Keep them in mind when touching `eng
 - **Smoothing and pressure.**
   - perfect-freehand with `smoothing` 0.5, `streamline` 0.3 and `last: true`;
   - a pressure curve that lifts light touches;
-  - taper scaled to stroke length, so dots survive;
+  - taper scaled to stroke length (at most 8 pt, 30 % of the length), so short strokes keep their body;
+  - a pen mark whose bounding box has a diagonal under size + 3.5 pt is drawn as round dabs (`dab()` in `render.js`), not by perfect-freehand. perfect-freehand drops the points of such a short stroke and tapers both ends to nothing, so a Pencil tap, which always wobbles a little, drew a mark 0.02 pt wide: dots were nearly impossible and short dashes vanished. `check_book.mjs` taps a jittery pen and fails if no dot shows;
   - predicted events where Safari provides them.
 - **Snapping.**
   - Holding still for 520 ms recognises a line, rectangle, ellipse or triangle (`shapes.js`).

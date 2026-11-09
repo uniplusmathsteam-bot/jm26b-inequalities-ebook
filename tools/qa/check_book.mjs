@@ -13,9 +13,11 @@
  *   - answers that scroll inside their region (and how much room would show
  *     them whole), and wide lines set below 75 % to fit a column
  *   - graphics that throw or draw nothing
- *   - Pencil writing, finger tap-to-reveal and page errors
- * With --shots, every sheet (all answers shown) and every graphic is saved to
- * books/<id>/reference/qa/ (not published).
+ *   - Pencil writing (and a Pencil tap leaving a dot), finger tap-to-reveal and page errors
+ *   - end pages (book.json "endPages"): the picture loads; a deck passes checkDeck()
+ *     and every card answers a finger tap, up to the score
+ * With --shots, every sheet (all answers shown), every graphic and every deck card
+ * (before and after answering) is saved to books/<id>/reference/qa/ (not published).
  * Exit code 1 when something must be fixed; warnings do not fail.
  */
 
@@ -80,7 +82,11 @@ try {
   });
   await page.setViewport({ width: 1180, height: 820, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   await page.goto(`${base}reader.html?book=${id}`, { waitUntil: "networkidle0" });
-  await page.evaluate((key) => { indexedDB.deleteDatabase(`${key}-ebook`); localStorage.removeItem(`${key}-ui`); }, book.storage || id);
+  await page.evaluate((key) => {
+    indexedDB.deleteDatabase(`${key}-ebook`);
+    localStorage.removeItem(`${key}-ui`);
+    for (const k of Object.keys(localStorage)) if (k.startsWith(`${key}-deck-`)) localStorage.removeItem(k);
+  }, book.storage || id);
   await page.reload({ waitUntil: "networkidle0" });
   await sleep(1200);
 
@@ -269,6 +275,9 @@ try {
   await page.evaluate(() => document.getElementById("graphic").classList.remove("open"));
 
   /* ---------- input ---------- */
+  // Back to a printed page: the screenshots end on the last sheet, which may be a deck (no ink).
+  await page.evaluate(() => { location.hash = document.querySelector(".sheet:not([data-no-ink])").dataset.key; });
+  await sleep(400);
   await page.tap("#hide-all");
   const cdp = await page.createCDPSession();
   await page.tap('[data-tool="pen"]');
@@ -282,6 +291,26 @@ try {
   await sleep(100);
   const inked = await page.evaluate(() => [...document.querySelectorAll("canvas[data-layer='ink']")].some((c) => c.width > 1));
   if (!inked) fail("Pencil stroke did not reach the ink layer");
+
+  // A Pencil tap jitters by a fraction of a point; it must still leave a dot.
+  await pen("mousePressed", 320, 360);
+  await pen("mouseMoved", 320.6, 360.4);
+  await pen("mouseMoved", 320.3, 360.9);
+  await pen("mouseReleased", 320.3, 360.9);
+  await sleep(100);
+  const dotPixels = await page.evaluate((x, y) => {
+    let n = 0;
+    for (const c of document.querySelectorAll("canvas[data-layer='ink']")) {
+      const r = c.getBoundingClientRect();
+      if (c.width < 2 || x < r.left || x > r.right || y < r.top || y > r.bottom) continue;
+      const px = Math.round(((x - r.left) / r.width) * c.width);
+      const py = Math.round(((y - r.top) / r.height) * c.height);
+      const data = c.getContext("2d").getImageData(px - 6, py - 6, 13, 13).data;
+      for (let i = 3; i < data.length; i += 4) if (data[i] > 128) n += 1;
+    }
+    return n;
+  }, 320.4, 360.4);
+  if (dotPixels < 6) fail(`a Pencil tap left no visible dot (${dotPixels} inked pixels)`);
 
   await page.tap('[data-tool="read"]');
   const target = await page.evaluate(() => {
@@ -299,6 +328,73 @@ try {
   await sleep(300);
   const shownAfter = await page.evaluate((q) => document.querySelectorAll(`.ln[data-q="${q}"]:not(.hid)`).length, target);
   if (shownAfter !== shownBefore + 1) fail(`finger tap on ${target} did not reveal one step (${shownBefore} → ${shownAfter})`);
+
+  /* ---------- end pages (book.json "endPages") ---------- */
+  for (const item of book.endPages || []) {
+    const key = `end-${item.key}`;
+    const img = await page.evaluate((k) => {
+      const sheet = document.querySelector(`.sheet[data-key="${k}"]`);
+      return sheet ? sheet.querySelector("img.bg")?.naturalWidth ?? -1 : null;
+    }, key);
+    if (img === null) {
+      fail(`end page ${item.key}: no sheet in the reader`);
+      continue;
+    }
+    if (item.image && img < 1) fail(`end page ${item.key}: ${item.image} did not load`);
+    if (!item.deck) continue;
+    const deck = await page.evaluate(async (file) => {
+      const { checkDeck } = await import("/engine/deck/deck.js");
+      const { DECK } = await import(file);
+      return { problems: checkDeck(DECK), cards: DECK.cards?.length || 0 };
+    }, `/books/${id}/${item.deck}`);
+    deck.problems.forEach((p) => fail(`end page ${item.key}: ${p}`));
+    // A whole fit-width sheet on screen, so every button can take a finger tap.
+    await page.setViewport({ width: 1180, height: 1800, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+    await page.evaluate((k) => { location.hash = k; }, key);
+    await sleep(700);
+    const centre = (sel) => page.evaluate((s) => {
+      const r = document.querySelector(s)?.getBoundingClientRect();
+      return r && r.width ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+    }, sel);
+    const snap = async (name) => {
+      if (!shots) return;
+      const clip = await page.evaluate((k) => {
+        const r = document.querySelector(`.sheet[data-key="${k}"]`).getBoundingClientRect();
+        return { x: Math.max(0, r.left), y: Math.max(0, r.top), width: r.width, height: Math.min(r.height, innerHeight - Math.max(0, r.top)) };
+      }, key);
+      await page.screenshot({ path: path.join(outDir, `${key}-${name}.png`), clip });
+    };
+    for (let i = 1; i <= deck.cards; i++) {
+      const choiceAt = await centre(".dk-choice:not(:disabled)");
+      if (!choiceAt) {
+        fail(`end page ${item.key}: card ${i} has no choice to tap`);
+        break;
+      }
+      await snap(`${String(i).padStart(2, "0")}a`);
+      await page.touchscreen.tap(choiceAt.x, choiceAt.y);
+      await sleep(200);
+      const answered = await page.evaluate(() => /\b(right|wrong)\b/.test(document.querySelector(".dk-feedback")?.className || ""));
+      if (!answered) {
+        fail(`end page ${item.key}: a finger tap on card ${i} gave no feedback`);
+        break;
+      }
+      await snap(`${String(i).padStart(2, "0")}b`);
+      const nextAt = await centre(".dk-next");
+      if (!nextAt) {
+        fail(`end page ${item.key}: card ${i} has no Next button`);
+        break;
+      }
+      await page.touchscreen.tap(nextAt.x, nextAt.y);
+      await sleep(200);
+    }
+    if (!(await page.evaluate(() => Boolean(document.querySelector(".dk-card.end .dk-big"))))) {
+      fail(`end page ${item.key}: the score did not show after the last card`);
+    }
+    await snap("score");
+    await page.evaluate((k) => localStorage.removeItem(k), `${book.storage || id}-deck-${item.key}`);
+    await page.setViewport({ width: 1180, height: 820, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+    await sleep(300);
+  }
 
   /* ---------- library ---------- */
   await page.goto(base, { waitUntil: "networkidle0" });

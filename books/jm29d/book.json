@@ -351,5 +351,14 @@
       "title": "Animate the intercept theorems"
     }
   ],
+  "guides": [
+    { "q": "q3", "scene": "jm29d_guides:Q3", "src": "media/guide-q3.mp4", "poster": "media/guide-q3.jpg" },
+    { "q": "q13", "scene": "jm29d_guides:Q13", "src": "media/guide-q13.mp4", "poster": "media/guide-q13.jpg" },
+    { "q": "q20", "scene": "jm29d_guides:Q20", "src": "media/guide-q20.mp4", "poster": "media/guide-q20.jpg" }
+  ],
+  "endPages": [
+    { "key": "summary", "label": "Summary", "image": "pages/summary.png", "source": "tools/sheets/jm29d-summary.html" },
+    { "key": "cards", "label": "Flashcards", "deck": "flashcards.js" }
+  ],
   "widgets": false
 }
