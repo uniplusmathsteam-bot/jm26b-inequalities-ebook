@@ -230,30 +230,31 @@ export function mountDeck(root, deck, storeKey) {
   box.className = "dk";
   box.innerHTML = `
     <header class="dk-head">
-      <div class="dk-kicker">${rich(deck.kicker || "Flashcards")}</div>
-      <h2>${rich(deck.title || "")}</h2>
-      <p>${rich(deck.intro || "")}</p>
+      <div class="dk-brand">
+        <div class="dk-kicker">${rich(deck.kicker || "Flashcards")}</div>
+        <h2>${rich(deck.title || "")}</h2>
+      </div>
+      <div class="dk-dots" role="group" aria-label="Cards"></div>
       <div class="dk-score" aria-live="polite"></div>
     </header>
-    <div class="dk-dots" role="group" aria-label="Cards"></div>
     <section class="dk-card"></section>
-    <div class="dk-choices"></div>
-    <div class="dk-feedback" aria-live="polite"></div>
-    <nav class="dk-nav">
-      <button type="button" data-dk="prev">◀ Previous card</button>
-      <button type="button" data-dk="restart">Shuffle and start again ↻</button>
-    </nav>`;
+    <div class="dk-feedback" aria-live="polite"></div>`;
   root.append(box);
   const $ = (sel) => box.querySelector(sel);
 
-  for (const c of deck.choices) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "dk-choice";
-    btn.dataset.choice = c.id;
-    btn.style.setProperty("--c", c.color || "#26324a");
-    btn.innerHTML = `<b>${rich(c.label)}</b>${c.tag ? `<span>${rich(c.tag)}</span>` : ""}`;
-    $(".dk-choices").append(btn);
+  function choiceButtons() {
+    const wrap = document.createElement("div");
+    wrap.className = "dk-choices";
+    for (const c of deck.choices) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "dk-choice";
+      btn.dataset.choice = c.id;
+      btn.style.setProperty("--c", c.color || "#26324a");
+      btn.innerHTML = `<b>${rich(c.label)}</b>${c.tag ? `<span>${rich(c.tag)}</span>` : ""}`;
+      wrap.append(btn);
+    }
+    return wrap;
   }
 
   const tally = () => {
@@ -294,7 +295,6 @@ export function mountDeck(root, deck, storeKey) {
       <div class="dk-big">${right} / ${n}</div>
       <p class="dk-msg">${esc(message)}</p>
       <ol class="dk-list">${rows}</ol>`;
-    $(".dk-choices").hidden = true;
     const fb = $(".dk-feedback");
     fb.className = "dk-feedback";
     fb.innerHTML = `
@@ -308,8 +308,6 @@ export function mountDeck(root, deck, storeKey) {
     const { answered, right } = tally();
     $(".dk-score").innerHTML = answered ? `<b>${right}</b> / ${answered} right` : `${n} cards`;
     renderDots();
-    $('[data-dk="prev"]').disabled = st.at === 0;
-    $('.dk-nav [data-dk="restart"]').hidden = st.at >= n;
     if (st.at >= n) {
       renderEnd();
       return;
@@ -320,23 +318,23 @@ export function mountDeck(root, deck, storeKey) {
     const host = $(".dk-card");
     host.classList.remove("end");
     host.innerHTML = `
+      <div class="dk-figwrap"></div>
       <div class="dk-tag">Card ${st.at + 1} of ${n}</div>
       <p class="dk-text">${rich(card.text)}</p>
-      <div class="dk-figwrap"></div>
       <p class="dk-ask">${rich(card.ask)}</p>`;
     if (card.fig) host.querySelector(".dk-figwrap").append(drawFigure(card.fig));
-    else host.querySelector(".dk-figwrap").remove();
-    $(".dk-choices").hidden = false;
-    for (const btn of box.querySelectorAll(".dk-choice")) {
+    host.append(choiceButtons());
+    for (const btn of host.querySelectorAll(".dk-choice")) {
       const id = btn.dataset.choice;
       btn.disabled = Boolean(got);
       btn.classList.toggle("right", Boolean(got) && id === card.answer);
       btn.classList.toggle("wrong", Boolean(got) && id === got && id !== card.answer);
     }
     const fb = $(".dk-feedback");
+    const back = st.at > 0 ? `<button type="button" class="dk-prev" data-dk="prev">◀ Previous</button>` : "";
     if (!got) {
       fb.className = "dk-feedback";
-      fb.innerHTML = `<p class="dk-prompt">Tap the theorem you would use.</p>`;
+      fb.innerHTML = `<div class="dk-fbrow">${back}<p class="dk-prompt">Tap the theorem you would use.</p></div>`;
       return;
     }
     const ok = got === card.answer;
@@ -344,6 +342,7 @@ export function mountDeck(root, deck, storeKey) {
     const verdict = ok ? `✓ Right: the ${choice[card.answer].label.toLowerCase()}` : `✗ Not this time: it is the ${choice[card.answer].label.toLowerCase()}`;
     fb.innerHTML = `
       <div class="dk-fbrow">
+        ${back}
         <div><div class="dk-verdict">${rich(verdict)}</div><p class="dk-why">${rich(card.why)}</p></div>
         <button type="button" class="dk-next" data-dk="next">${st.at + 1 < n ? "Next card ▶" : "See my score ▶"}</button>
       </div>`;

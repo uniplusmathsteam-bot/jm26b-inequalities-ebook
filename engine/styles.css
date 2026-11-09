@@ -469,6 +469,7 @@ body:not([data-mode="read"]) .ln.hid.next::after { content: "▸"; }
   font-size: var(--fs-sm);
   text-align: center;
 }
+.thumb-blank.landscape { aspect-ratio: 595 / 380; }
 .thumb span { position: absolute; right: 8px; bottom: 6px; font-size: var(--fs-xs); background: var(--ink); color: #fff; border-radius: 6px; padding: 0 5px; }
 
 /* ---------- ink toolbar ---------- */

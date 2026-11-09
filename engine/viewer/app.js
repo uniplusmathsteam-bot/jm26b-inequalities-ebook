@@ -186,14 +186,14 @@ function makeCanvases() {
   return [hl, pen];
 }
 
-function makeSheet(key, n, thumb) {
+function makeSheet(key, n, thumb, height = PAGE_H) {
   const sheet = document.createElement("article");
   sheet.className = "sheet";
   sheet.dataset.key = key;
   sheet.dataset.page = String(n);
   if (thumb) sheet.dataset.thumb = thumb;
   sheet.style.width = `${PAGE_W}px`;
-  sheet.style.height = `${PAGE_H}px`;
+  sheet.style.height = `${height}px`;
   return sheet;
 }
 
@@ -220,7 +220,7 @@ function buildPages() {
     world.append(sheet);
   }
   END_PAGES.forEach((item, i) => {
-    const sheet = makeSheet(item.sheetKey, state.layout.pages.length + i + 1, item.src);
+    const sheet = makeSheet(item.sheetKey, state.layout.pages.length + i + 1, item.src, item.height);
     sheet.dataset.label = item.label || item.key;
     const overlay = document.createElement("div");
     overlay.className = "overlay";
@@ -994,7 +994,7 @@ function buildThumbs() {
       face.alt = sheet.dataset.label || `Page ${name}`;
     } else {
       face = document.createElement("div");
-      face.className = "thumb-blank";
+      face.className = `thumb-blank${sheet.classList.contains("deck") ? " landscape" : ""}`;
       face.textContent = name;
     }
     const cap = document.createElement("span");

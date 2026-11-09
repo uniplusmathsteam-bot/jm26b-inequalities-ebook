@@ -22,7 +22,7 @@ Q3, Q13 and Q20 have guide videos (`tools/manim/jm29d_guides.py`), which follow 
 
 Two end pages follow page 8 (`endPages` in book.json):
 - `end-summary`: `pages/summary.png`, rendered from `tools/sheets/jm29d-summary.html`. It covers the mid-point theorem, both forms of the intercept theorem, a "which theorem?" table and the Q13 chain. Colour code: blue = equal parts given, red arrows = parallel, green = what the theorem gives. Tags are worded as printed: `[mid-pt. theorem]`, `[intercept theorem]`.
-- `end-cards`: ten "Which theorem?" cards (`flashcards.js`), five for each theorem, in an order that does not alternate. Each card has a figure, two answer buttons, the reason, and a score at the end. "Which comes first?" is the one chained case: the intercept theorem first, then the mid-point theorem.
+- `end-cards`: ten "Which theorem?" cards (`flashcards.js`), five for each theorem, in an order that does not alternate. The sheet is a landscape slide at the notes' width (595 × 380 pt): figure on the left, prompt and two buttons on the right, so presentation mode shows the whole card and the score on one page. "Which comes first?" is the one chained case: the intercept theorem first, then the mid-point theorem.
 
 Do not rename `summary` or `cards`: ink on the summary page is saved under `end-summary`.
 
