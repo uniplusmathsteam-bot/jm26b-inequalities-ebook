@@ -27,6 +27,15 @@ No `widgets.js`. Three concept panels are Manim animations (`tools/manim/jm30.py
 | 4 (top) | `TreeVsTable` | The two-stage tree, then each outcome moves into its cell of the table. |
 | 4 (bottom) | `RemoveImpossible` | The table of two draws is filled; the same-ball cells are struck out; then 2 of the 6 remaining outcomes are counted. |
 
+Every question has a solution guide (`tools/manim/jm30b_guides.py`). Q1–Q6, Q11, Q12 and Q15–Q18 grow the tree one stage at a time, then mark the favourable outcomes. Q7–Q10 and Q13–Q14, Q17 fill the table, cross out the impossible cells, then count. A second part keeps the first highlight and adds its own in green. q7b, q8b and q9b play the same film as the table. Q19 and Q20 keep the printed board and map; the grid, the routes and the tree are lines drawn on top, so a thin stroke is not lost when the video is compressed.
+
+| Question | Scene | What it shows |
+| --- | --- | --- |
+| 1–6, 11, 12, 15, 16, 18 | `Q1`–`Q6`, `Q11`, `Q12`, `Q15`, `Q16`, `Q18` | The tree grows, the favourable outcomes turn pink (then green for a second part), and the probability is a stacked fraction. |
+| 7–10, 13, 14, 17 | `Q7`–`Q10`, `Q13`, `Q14`, `Q17` | The table is drawn and filled. Impossible cells are crossed out, then the count is written the same way. |
+| 19 | `Q19` | The six ways the last three moves can go. 132 and 231 win, both by filling the middle column, so the probability is 2/6 = 1/3. Every line that starts in grid 3 is a draw. |
+| 20 | `Q20` | The six routes of two east and two south. Four of them pass through T, and 4/6 = 2/3 is greater than 0.5. |
+
 ## Review links
 
 Every question has links.

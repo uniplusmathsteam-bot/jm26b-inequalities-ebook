@@ -423,5 +423,30 @@
       "poster": "media/remove.jpg",
       "title": "Animate removing impossible outcomes"
     }
+  ],
+  "guides": [
+    { "q": "q1", "scene": "jm30b_guides:Q1", "src": "media/guide-q1.mp4", "poster": "media/guide-q1.jpg" },
+    { "q": "q2", "scene": "jm30b_guides:Q2", "src": "media/guide-q2.mp4", "poster": "media/guide-q2.jpg" },
+    { "q": "q3", "scene": "jm30b_guides:Q3", "src": "media/guide-q3.mp4", "poster": "media/guide-q3.jpg" },
+    { "q": "q4", "scene": "jm30b_guides:Q4", "src": "media/guide-q4.mp4", "poster": "media/guide-q4.jpg" },
+    { "q": "q5", "scene": "jm30b_guides:Q5", "src": "media/guide-q5.mp4", "poster": "media/guide-q5.jpg" },
+    { "q": "q6", "scene": "jm30b_guides:Q6", "src": "media/guide-q6.mp4", "poster": "media/guide-q6.jpg" },
+    { "q": "q7", "scene": "jm30b_guides:Q7", "src": "media/guide-q7.mp4", "poster": "media/guide-q7.jpg" },
+    { "q": "q7b", "scene": "jm30b_guides:Q7", "src": "media/guide-q7.mp4", "poster": "media/guide-q7.jpg" },
+    { "q": "q8", "scene": "jm30b_guides:Q8", "src": "media/guide-q8.mp4", "poster": "media/guide-q8.jpg" },
+    { "q": "q8b", "scene": "jm30b_guides:Q8", "src": "media/guide-q8.mp4", "poster": "media/guide-q8.jpg" },
+    { "q": "q9", "scene": "jm30b_guides:Q9", "src": "media/guide-q9.mp4", "poster": "media/guide-q9.jpg" },
+    { "q": "q9b", "scene": "jm30b_guides:Q9", "src": "media/guide-q9.mp4", "poster": "media/guide-q9.jpg" },
+    { "q": "q10", "scene": "jm30b_guides:Q10", "src": "media/guide-q10.mp4", "poster": "media/guide-q10.jpg" },
+    { "q": "q11", "scene": "jm30b_guides:Q11", "src": "media/guide-q11.mp4", "poster": "media/guide-q11.jpg" },
+    { "q": "q12", "scene": "jm30b_guides:Q12", "src": "media/guide-q12.mp4", "poster": "media/guide-q12.jpg" },
+    { "q": "q13", "scene": "jm30b_guides:Q13", "src": "media/guide-q13.mp4", "poster": "media/guide-q13.jpg" },
+    { "q": "q14", "scene": "jm30b_guides:Q14", "src": "media/guide-q14.mp4", "poster": "media/guide-q14.jpg" },
+    { "q": "q15", "scene": "jm30b_guides:Q15", "src": "media/guide-q15.mp4", "poster": "media/guide-q15.jpg" },
+    { "q": "q16", "scene": "jm30b_guides:Q16", "src": "media/guide-q16.mp4", "poster": "media/guide-q16.jpg" },
+    { "q": "q17", "scene": "jm30b_guides:Q17", "src": "media/guide-q17.mp4", "poster": "media/guide-q17.jpg" },
+    { "q": "q18", "scene": "jm30b_guides:Q18", "src": "media/guide-q18.mp4", "poster": "media/guide-q18.jpg" },
+    { "q": "q19", "scene": "jm30b_guides:Q19", "src": "media/guide-q19.mp4", "poster": "media/guide-q19.jpg" },
+    { "q": "q20", "scene": "jm30b_guides:Q20", "src": "media/guide-q20.mp4", "poster": "media/guide-q20.jpg" }
   ]
 }
