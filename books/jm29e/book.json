@@ -547,5 +547,10 @@
       }
     }
   },
-  "widgets": false
+  "widgets": false,
+  "guides": [
+    { "q": "q1", "scene": "jm29e_guides:Q1", "src": "media/guide-q1.mp4", "poster": "media/guide-q1.jpg" },
+    { "q": "q6", "scene": "jm29e_guides:Q6", "src": "media/guide-q6.mp4", "poster": "media/guide-q6.jpg" },
+    { "q": "q27", "scene": "jm29e_guides:Q27", "src": "media/guide-q27.mp4", "poster": "media/guide-q27.jpg" }
+  ]
 }

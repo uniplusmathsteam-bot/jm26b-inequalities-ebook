@@ -14,6 +14,8 @@ The background was rebuilt with `tools/make_que.py` (cache v17). The first versi
 
 Made with `tools/make_que.py --red-text black`. Rebuilt for cache v28 so the white line over a removed frame no longer cuts the figure on page 5. Answers that needed the page margin were drawing over the figures (q26, q27, q31 and the same layout on the other questions); they now stop 14 pt short of each figure, and the step buttons stay in that margin. A hidden step's grey bar is only as wide as that step, so the placeholder does not run past the text onto the figure.
 
+Q1, Q6 and Q27 have a film button. Each guide is the matching motion from an earlier quadrilaterals book, redrawn on this page's figure: Q1 is the opposite-angle half-turn, Q6 is the square-and-equilateral chase from JM29 (C) Q11, and Q27 is the mid-point slide from JM29 (D) Q3. `tools/audit_guides.py` reports all three clean.
+
 ## Known warnings
 
 The working boxes beside the options are grown into the blank space around them. q23 and q36 continue on an extra sheet. Text often shrinks to about 62% or sits in side-by-side columns. Accepted.
