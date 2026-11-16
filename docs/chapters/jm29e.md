@@ -12,7 +12,7 @@ Multiple choice, q1–q36. Level 2 starts at q16. The question paper was not sup
 
 The background was rebuilt with `tools/make_que.py` (cache v17). The first version removed every image that touched a red box, so figures were missing on pages 5 and 8 (the q36 figure and its degree sign among them); they are back. A `*` that sat in its own text span ("*D.") is now removed too.
 
-Made with `tools/make_que.py --red-text black`. Rebuilt for cache v28 so the white line over a removed frame no longer cuts the figure on page 5.
+Made with `tools/make_que.py --red-text black`. Rebuilt for cache v28 so the white line over a removed frame no longer cuts the figure on page 5. Answers that needed the page margin were drawing over the figures (q26, q27, q31 and the same layout on the other questions); they now stop 14 pt short of each figure, and the step buttons stay in that margin.
 
 ## Known warnings
 

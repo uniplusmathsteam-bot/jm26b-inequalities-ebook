@@ -483,7 +483,8 @@ function ctlGrid(qa, h) {
 /**
  * Puts the controls just right of the boxes; a side counter may stick out past
  * the region. An answer that scrolls is clipped at its right edge, with the
- * scroll bar between it and the controls.
+ * scroll bar between it and the controls. Neither the boxes nor the buttons
+ * may cross a figure beside the region.
  */
 function placeCtl(qa, els) {
   const ctl = qa.querySelector(".ctl");
@@ -497,9 +498,13 @@ function placeCtl(qa, els) {
     qa.querySelector(".qa-bar").style.left = `${Math.ceil(right) + 3}px`;
   }
   const limit = qa.offsetWidth - width - (side ? 24 : 0);
-  let left = Math.min(right + 6 + bar, limit);
-  if (left < right + 2 + bar) left = right + 6 + bar;
-  ctl.style.left = `${left}px`;
+  const x0 = parseFloat(qa.style.left) || 0;
+  const y0 = parseFloat(qa.style.top) || 0;
+  const fig = figureLeft(qa, y0, y0 + qa.offsetHeight, x0);
+  const figLimit = fig == null ? Infinity : fig - x0 - FIG_MARGIN - width - (side ? 24 : 0);
+  let left = Math.min(right + 6 + bar, limit, figLimit);
+  if (left < right + 2 + bar) left = Math.min(right + 6 + bar, figLimit);
+  ctl.style.left = `${Math.max(0, left)}px`;
   ctl.style.right = "auto";
   ctl.dataset.home = ctl.style.left;
 }
@@ -703,9 +708,9 @@ function fit(page, q, qa) {
   }
   const x0 = q.region[0];
   const H = regionHeight(q);
-  // One control column stays clear. Extra button columns may sit past the
-  // region, so a reason can remain beside its step instead of leaving the box.
-  const W = q.region[2] - x0 - CTL - 2;
+  // One control column stays clear. The width also stops a margin short of a
+  // figure beside the region, so the working and the step buttons leave it clear.
+  const W = answerRight(q, qa, 0, false);
   const inner = qa.querySelector(".qa-in");
   inner.style.width = `${W}px`;
   inner.style.setProperty("--k", BASE);
@@ -781,17 +786,25 @@ function flowFit(q, qa, k, mode) {
   finish(q, qa, out.els, out.used, mode);
 }
 
+/** Clear paper kept between an answer (and its step buttons) and a figure. */
+const FIG_MARGIN = 14;
+
 /**
  * Right edge of the answer, in region coordinates. `wide` lets the answer use
  * the strip kept for the step buttons, which then sit in the page margin, so a
- * reason can stay beside its step.
+ * reason can stay beside its step. That strip stops short of a figure.
  */
 function answerRight(q, qa, bar, wide) {
   const x0 = q.region[0];
   const right = q.region[2] - x0 - CTL - 2;
-  if (!wide) return right - bar;
   const { width, side } = ctlGrid(qa, regionHeight(q));
-  return Math.max(right, PAGE_W - 4 - width - (side ? 24 : 0) - 6 - x0) - bar;
+  const buttons = width + (side ? 24 : 0);
+  const pageEdge = PAGE_W - 4 - buttons - 6 - x0;
+  const ink = figureLeft(qa, q.region[1], q.region[3], x0);
+  const clear = ink == null ? pageEdge : ink - FIG_MARGIN - buttons - 6 - x0;
+  const room = Math.min(pageEdge, clear);
+  if (!wide) return Math.min(right, room) - bar;
+  return room - bar;
 }
 
 /**
@@ -946,6 +959,52 @@ const PAGE_W = 595.32;
 const PAGE_H = 841.92;
 /** Per page image: 1 for each point row that is blank across the whole page. */
 const BLANK = new Map();
+/** Page image pixels at 1px per point, so a figure's left edge can be found. */
+const PIXELS = new WeakMap();
+
+function pagePixels(img) {
+  if (PIXELS.has(img)) return PIXELS.get(img);
+  if (!img.complete || !img.naturalWidth) return null;
+  const w = Math.round(PAGE_W);
+  const h = Math.round(PAGE_H);
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, w, h);
+  let data;
+  try {
+    data = ctx.getImageData(0, 0, w, h).data;
+  } catch {
+    PIXELS.set(img, null);
+    return null;
+  }
+  PIXELS.set(img, data);
+  return data;
+}
+
+/**
+ * Left edge, in page points, of printed ink in the band `y0`…`y1` at or to the
+ * right of `xFrom`. Null when that side of the band is blank (no figure there).
+ */
+function figureLeft(qa, y0, y1, xFrom) {
+  const img = qa.closest(".sheet")?.querySelector("img.bg");
+  const data = img && pagePixels(img);
+  if (!data) return null;
+  const w = Math.round(PAGE_W);
+  const h = Math.round(PAGE_H);
+  const top = Math.max(0, Math.floor(y0));
+  const bot = Math.min(h - 1, Math.ceil(y1));
+  const from = Math.max(0, Math.floor(xFrom));
+  for (let x = from; x < w - 2; x++) {
+    let dark = 0;
+    for (let y = top; y <= bot; y++) {
+      const i = (y * w + x) * 4;
+      if (data[i] + data[i + 1] + data[i + 2] < 560 && ++dark >= 4) return x;
+    }
+  }
+  return null;
+}
 let rowsReady = null;
 
 /** Called once a page image that a reflow had to guess at has loaded. */
