@@ -550,7 +550,10 @@
   "widgets": false,
   "guides": [
     { "q": "q1", "scene": "jm29e_guides:Q1", "src": "media/guide-q1.mp4", "poster": "media/guide-q1.jpg" },
+    { "q": "q3", "scene": "jm29e_guides:Q3", "src": "media/guide-q3.mp4", "poster": "media/guide-q3.jpg" },
     { "q": "q6", "scene": "jm29e_guides:Q6", "src": "media/guide-q6.mp4", "poster": "media/guide-q6.jpg" },
+    { "q": "q18", "scene": "jm29e_guides:Q18", "src": "media/guide-q18.mp4", "poster": "media/guide-q18.jpg" },
+    { "q": "q21", "scene": "jm29e_guides:Q21", "src": "media/guide-q21.mp4", "poster": "media/guide-q21.jpg" },
     { "q": "q27", "scene": "jm29e_guides:Q27", "src": "media/guide-q27.mp4", "poster": "media/guide-q27.jpg" }
   ]
 }
