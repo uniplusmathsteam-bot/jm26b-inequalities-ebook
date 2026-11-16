@@ -1288,7 +1288,7 @@ async function main() {
   onPageRows(() => {
     clearTimeout(rowsTimer);
     rowsTimer = setTimeout(() => {
-      if (answerSize() !== 1) relayoutKeepingView();
+      relayoutKeepingView();
     }, 150);
   });
   const scrolledIds = new Set();

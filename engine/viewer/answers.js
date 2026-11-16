@@ -964,7 +964,10 @@ const PIXELS = new WeakMap();
 
 function pagePixels(img) {
   if (PIXELS.has(img)) return PIXELS.get(img);
-  if (!img.complete || !img.naturalWidth) return null;
+  if (!img.complete || !img.naturalWidth) {
+    img.addEventListener("load", () => rowsReady?.(), { once: true });
+    return null;
+  }
   const w = Math.round(PAGE_W);
   const h = Math.round(PAGE_H);
   const canvas = document.createElement("canvas");

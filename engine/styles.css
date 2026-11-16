@@ -205,7 +205,9 @@ body[data-mode="laser"] #viewport { cursor: crosshair; }
 /* A box that has to stay inside a column or the region's width: a long step
    breaks before "=" and its reason stays beside it. Only when the step still
    cannot fit does its reason drop under it (.ln.drop, see fitInWidth). */
-.abox.wrap .ln:has(.rs) { width: auto; max-width: 100%; }
+/* max-content, not auto: a short step must not stretch to the box, or its
+   grey placeholder bar (which fills the line) runs past the text and onto a figure. */
+.abox.wrap .ln:has(.rs) { width: max-content; max-width: 100%; }
 .abox.wrap .ln:has(.rs) > .lx { min-width: min-content; flex: 0 1 auto; }
 .abox.wrap .ln.m:has(.rs):not(.drop) > .lx:not(.segs) { white-space: nowrap; }
 .abox.wrap .ln.drop:has(.rs) { flex-wrap: wrap; }
@@ -250,6 +252,8 @@ i.baseline { display: inline-block; width: 0; height: 0; }
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
+  width: max-content;
+  max-width: 100%;
   column-gap: 0.7em;
   /* The extra bottom padding is the gutter a review underline sits in,
      so the dots stay under this line and off the line below. */
