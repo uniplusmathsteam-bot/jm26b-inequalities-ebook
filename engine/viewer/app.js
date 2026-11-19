@@ -9,6 +9,7 @@ import { addMedia, toggleMedia } from "./media.js";
 import { openGuide } from "./guide.js";
 import { addInfographics } from "../infographic/infographic.js";
 import { END_PAGES, mountEndPage } from "./endpages.js";
+import { FRONT_PAGES, mountFrontPage } from "./frontpages.js";
 
 const PAGE_W = 595.32;
 const PAGE_H = 841.92;
@@ -208,6 +209,19 @@ function pageBackground(src) {
 
 function buildPages() {
   world.replaceChildren();
+  FRONT_PAGES.forEach((item, i) => {
+    const sheet = makeSheet(item.sheetKey, item.label, item.src, item.height);
+    sheet.dataset.label = item.label;
+    sheet.dataset.page = "";
+    sheet.dataset.front = "1";
+    const overlay = document.createElement("div");
+    overlay.className = "overlay";
+    const video = mountFrontPage(item, overlay);
+    ink.setText(sheet.dataset.key, []);
+    sheet.append(overlay, ...makeCanvases());
+    world.append(sheet);
+    if (i === 0) video.play().catch(() => {});
+  });
   for (const page of state.layout.pages) {
     const sheet = makeSheet(`p${page.page}`, page.page, pageImage(page.page));
     const overlay = document.createElement("div");
@@ -341,9 +355,12 @@ function updateIndicator() {
   if (!best) return;
   const label = document.getElementById("page-label");
   const total = sheets().length;
-  label.textContent = best.dataset.label ? `${best.dataset.label} · ${best.dataset.page} / ${total}` : `Page ${best.dataset.page} / ${total}`;
-  document.getElementById("bar-show-label").textContent = label.textContent;
-  document.getElementById("pr-label").textContent = `${best.dataset.page} / ${total}`;
+  const where = best.dataset.front
+    ? best.dataset.label
+    : best.dataset.label ? `${best.dataset.label} · ${best.dataset.page} / ${total}` : `Page ${best.dataset.page} / ${total}`;
+  label.textContent = where;
+  document.getElementById("bar-show-label").textContent = where;
+  document.getElementById("pr-label").textContent = best.dataset.front ? best.dataset.label : `${best.dataset.page} / ${total}`;
   if (state.currentKey !== best.dataset.key) {
     state.currentKey = best.dataset.key;
     document.querySelectorAll(".thumb").forEach((t) => t.classList.toggle("on", t.dataset.key === state.currentKey));

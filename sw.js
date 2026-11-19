@@ -1,5 +1,5 @@
 // Bump on every release so iPads drop the old copy (docs/04-qa-and-release.md).
-const CACHE = "ebooks-v41";
+const CACHE = "ebooks-v44";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -59,5 +59,8 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(caches.match(request).then((hit) => hit || fetch(request).then(store)));
     return;
   }
-  event.respondWith(fetch(request).then(store).catch(() => caches.match(request)));
+  // Forward a reload's cache mode. A plain navigation must still revalidate, or a
+  // changed layout.json stays stale in the HTTP cache and the old answer box returns.
+  const fresh = new Request(request, { cache: request.cache === "default" ? "no-cache" : request.cache });
+  event.respondWith(fetch(fresh).then(store).catch(() => caches.match(request)));
 });
