@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>JM15 + JM17 intensive class</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #1c1c1c; color: #f4f4f4; font-family: "Segoe UI", Calibri, sans-serif; }
+  body { display: flex; flex-direction: column; }
+  header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 14px; background: #111; flex: none;
+  }
+  header h1 { margin: 0; font-size: 15px; font-weight: 650; }
+  header .name { opacity: 0.85; min-width: 0; }
+  header .count { margin-left: auto; font-variant-numeric: tabular-nums; opacity: 0.8; }
+  button {
+    font: inherit; color: inherit; background: #2a2a2a; border: 0;
+    border-radius: 8px; padding: 6px 12px; cursor: pointer;
+  }
+  button:hover { background: #3a3a3a; }
+  main { flex: 1; min-height: 0; display: grid; place-items: center; padding: 12px; }
+  .stage {
+    width: min(100%, calc((100vh - 120px) * 16 / 9));
+    aspect-ratio: 16 / 9;
+    background: #fff; border-radius: 4px; overflow: hidden;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  }
+  .stage img { display: block; width: 100%; height: 100%; object-fit: contain; background: #fff; }
+  footer {
+    flex: none; display: flex; gap: 6px; overflow-x: auto;
+    padding: 8px 12px 12px; background: #111;
+  }
+  footer button {
+    flex: none; width: 92px; padding: 0; background: transparent; border-radius: 4px;
+    outline: 2px solid transparent;
+  }
+  footer button.on { outline-color: #e0a020; }
+  footer img { display: block; width: 100%; height: 52px; object-fit: cover; background: #fff; border-radius: 3px; }
+</style>
+</head>
+<body>
+<header>
+  <button type="button" id="prev" title="Previous">‹</button>
+  <button type="button" id="next" title="Next">›</button>
+  <h1>JM15 + JM17 intensive class</h1>
+  <span class="name" id="name"></span>
+  <span class="count" id="count"></span>
+  <a id="animated" href="deck/index.html" style="color: inherit; background: #2a2a2a; border-radius: 8px; padding: 6px 12px; text-decoration: none;">Play animated</a>
+</header>
+<main><div class="stage"><img id="slide" alt=""></div></main>
+<footer id="strip"></footer>
+<script>
+const SLIDES = [
+  ["Slide1.PNG", "Title"],
+  ["Slide2.PNG", "Outline"],
+  ["Slide3.PNG", "Properties of congruent figures"],
+  ["Slide4.PNG", "Prove of congruent triangles"],
+  ["Slide5.PNG", "MC question 4"],
+  ["Slide6.PNG", "MC question 10"],
+  ["Slide7.PNG", "MC question 13"],
+  ["Slide8.PNG", "Short question 14 (a)"],
+  ["Slide9.PNG", "Short question 14 (b)"],
+  ["Slide10.PNG", "Short question 15 (a)"],
+  ["Slide11.PNG", "Short question 15 (b)"],
+  ["Slide12.PNG", "Short question 17"],
+  ["Slide13.PNG", "MC question 21"],
+  ["Slide14.PNG", "Practice: congruence"],
+  ["Slide15.PNG", "Properties of similar figures"],
+  ["Slide16.PNG", "Prove of similar triangles"],
+  ["Slide17.PNG", "MC question 25"],
+  ["Slide18.PNG", "Short question 29 (a)"],
+  ["Slide19.PNG", "Short question 29 (b)"],
+  ["Slide20.PNG", "Short question 35 (a)"],
+  ["Slide21.PNG", "Short question 35 (b)"],
+  ["Slide22.PNG", "Short question 41 (a)"],
+  ["Slide23.PNG", "Short question 41 (b)"],
+  ["Slide24.PNG", "Short question 41 (c)"],
+  ["Slide25.PNG", "MC question 45"],
+  ["Slide26.PNG", "Practice: similarity"],
+  ["Slide27.PNG", "Summary"],
+];
+// Steps per slide in the animated deck: the opening view plus one per PowerPoint click.
+const STEPS = [1, 1, 24, 41, 51, 50, 54, 41, 31, 44, 30, 68, 1, 1, 20, 21, 48, 40, 48, 30, 40, 45, 41, 42, 55, 1, 1];
+const animated = document.getElementById("animated");
+const src = (file) => `slides/${file}`;
+const slide = document.getElementById("slide");
+const name = document.getElementById("name");
+const count = document.getElementById("count");
+const strip = document.getElementById("strip");
+let index = 0;
+const buttons = SLIDES.map(([file, title], i) => {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.title = title;
+  const img = document.createElement("img");
+  img.src = src(file);
+  img.alt = title;
+  b.append(img);
+  b.addEventListener("click", () => show(i));
+  strip.append(b);
+  return b;
+});
+function show(n) {
+  index = Math.max(0, Math.min(SLIDES.length - 1, n));
+  const [file, title] = SLIDES[index];
+  slide.src = src(file);
+  slide.alt = title;
+  name.textContent = title;
+  count.textContent = `${index + 1} / ${SLIDES.length}`;
+  animated.href = `deck/index.html#/${STEPS.slice(0, index).reduce((a, b) => a + b, 0)}`;
+  buttons.forEach((b, i) => b.classList.toggle("on", i === index));
+  buttons[index].scrollIntoView({ inline: "center", block: "nearest" });
+  history.replaceState(null, "", `#${index + 1}`);
+}
+document.getElementById("prev").addEventListener("click", () => show(index - 1));
+document.getElementById("next").addEventListener("click", () => show(index + 1));
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") { e.preventDefault(); show(index + 1); }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); show(index - 1); }
+  if (e.key === "Home") show(0);
+  if (e.key === "End") show(SLIDES.length - 1);
+});
+show(Math.max(0, (parseInt(location.hash.slice(1), 10) || 1) - 1));
+</script>
+</body>
+</html>
