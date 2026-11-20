@@ -392,17 +392,47 @@ def to_dark(mob):
     return mob
 
 
+def to_marker(mob):
+    """Highlighter ink on black: a deep wash of its hue, which goes under the white text."""
+    for m in mob.family_members_with_points():
+        r, g, b = m.get_stroke_color().to_rgb()
+        h, l, s = colorsys.rgb_to_hls(r, g, b)
+        r, g, b = colorsys.hls_to_rgb(h, 0.45, max(s, 0.75))
+        m.set_stroke("#%02x%02x%02x" % tuple(round(v * 255) for v in (r, g, b)), opacity=0.55, family=False)
+    return mob
+
+
+def overlaps(a, b):
+    return not (a[2] < b[0] or b[2] < a[0] or a[3] < b[1] or b[3] < a[1])
+
+
 def slide_mobjects(n):
-    """Every drawable on slide n: list of (item, mobject), z-ordered."""
+    """Every drawable on slide n: list of (item, mobject), z-ordered.
+
+    On the dark page highlighter ink sits just below the lowest text or picture it
+    covers: drawn over white text, as PowerPoint does, it would tint and dim the words
+    it marks. (Sending it below the whole slide instead loses it in Manim's animated
+    frames, though a still draws it.)
+    """
     items = SCENE["slides"][n - 1]["items"]
     out = []
+    words = []
     for z, item in enumerate(items):
         mob = build_item(item, n)
         if mob is None:
             continue
-        if DARK:
-            to_dark(mob)
-        mob.set_z_index(z)
+        marker = DARK and getattr(mob, "highlighter", False)
+        if marker:
+            to_marker(mob)
+            box = (*mob.get_corner([-1, -1, 0])[:2], *mob.get_corner([1, 1, 0])[:2])
+            under = [wz for wz, wbox in words if overlaps(box, wbox)]
+            mob.set_z_index(min(under) - 0.5 if under else z)
+        else:
+            if DARK:
+                to_dark(mob)
+            mob.set_z_index(z)
+            if item["kind"] in ("text", "shape+text", "picture"):
+                words.append((z, (*mob.get_corner([-1, -1, 0])[:2], *mob.get_corner([1, 1, 0])[:2])))
         out.append((item, mob))
     return out
 
