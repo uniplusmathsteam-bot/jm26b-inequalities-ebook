@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>JM15 + JM17 intensive class</title>
 <style>
   * { box-sizing: border-box; }
@@ -11,9 +12,9 @@
     display: flex; align-items: center; gap: 12px;
     padding: 8px 14px; background: #111; flex: none;
   }
-  header h1 { margin: 0; font-size: 15px; font-weight: 650; }
-  header .name { opacity: 0.85; min-width: 0; }
-  header .count { margin-left: auto; font-variant-numeric: tabular-nums; opacity: 0.8; }
+  header h1 { margin: 0; font-size: 15px; font-weight: 650; white-space: nowrap; }
+  header .name { opacity: 0.85; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  header .count { margin-left: auto; font-variant-numeric: tabular-nums; opacity: 0.8; white-space: nowrap; }
   button {
     font: inherit; color: inherit; background: #2a2a2a; border: 0;
     border-radius: 8px; padding: 6px 12px; cursor: pointer;
@@ -26,7 +27,9 @@
     background: #fff; border-radius: 4px; overflow: hidden;
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
   }
-  .stage img { display: block; width: 100%; height: 100%; object-fit: contain; background: #fff; }
+  .stage:fullscreen { width: 100vw; height: 100vh; aspect-ratio: auto; border-radius: 0; }
+  .stage:-webkit-full-screen { width: 100vw; height: 100vh; border-radius: 0; }
+  .stage iframe { display: block; width: 100%; height: 100%; border: 0; background: #fff; }
   footer {
     flex: none; display: flex; gap: 6px; overflow-x: auto;
     padding: 8px 12px 12px; background: #111;
@@ -41,87 +44,135 @@
 </head>
 <body>
 <header>
-  <button type="button" id="prev" title="Previous">‹</button>
-  <button type="button" id="next" title="Next">›</button>
+  <button type="button" id="prev" title="Previous step (←)">‹</button>
+  <button type="button" id="next" title="Next step (→ or space)">›</button>
   <h1>JM15 + JM17 intensive class</h1>
   <span class="name" id="name"></span>
   <span class="count" id="count"></span>
-  <a id="animated" href="deck/index.html" style="color: inherit; background: #2a2a2a; border-radius: 8px; padding: 6px 12px; text-decoration: none;">Play animated</a>
+  <button type="button" id="full" title="Full screen (F)">Full screen</button>
 </header>
-<main><div class="stage"><img id="slide" alt=""></div></main>
+<main><div class="stage" id="stage"><iframe id="deck" title="JM15 + JM17 intensive class" allow="autoplay; fullscreen" allowfullscreen></iframe></div></main>
 <footer id="strip"></footer>
 <script>
-const SLIDES = [
-  ["Slide1.PNG", "Title"],
-  ["Slide2.PNG", "Outline"],
-  ["Slide3.PNG", "Properties of congruent figures"],
-  ["Slide4.PNG", "Prove of congruent triangles"],
-  ["Slide5.PNG", "MC question 4"],
-  ["Slide6.PNG", "MC question 10"],
-  ["Slide7.PNG", "MC question 13"],
-  ["Slide8.PNG", "Short question 14 (a)"],
-  ["Slide9.PNG", "Short question 14 (b)"],
-  ["Slide10.PNG", "Short question 15 (a)"],
-  ["Slide11.PNG", "Short question 15 (b)"],
-  ["Slide12.PNG", "Short question 17"],
-  ["Slide13.PNG", "MC question 21"],
-  ["Slide14.PNG", "Practice: congruence"],
-  ["Slide15.PNG", "Properties of similar figures"],
-  ["Slide16.PNG", "Prove of similar triangles"],
-  ["Slide17.PNG", "MC question 25"],
-  ["Slide18.PNG", "Short question 29 (a)"],
-  ["Slide19.PNG", "Short question 29 (b)"],
-  ["Slide20.PNG", "Short question 35 (a)"],
-  ["Slide21.PNG", "Short question 35 (b)"],
-  ["Slide22.PNG", "Short question 41 (a)"],
-  ["Slide23.PNG", "Short question 41 (b)"],
-  ["Slide24.PNG", "Short question 41 (c)"],
-  ["Slide25.PNG", "MC question 45"],
-  ["Slide26.PNG", "Practice: similarity"],
-  ["Slide27.PNG", "Summary"],
+const TITLES = [
+  "Title",
+  "Outline",
+  "Properties of congruent figures",
+  "Prove of congruent triangles",
+  "MC question 4",
+  "MC question 10",
+  "MC question 13",
+  "Short question 14 (a)",
+  "Short question 14 (b)",
+  "Short question 15 (a)",
+  "Short question 15 (b)",
+  "Short question 17",
+  "MC question 21",
+  "Practice: congruence",
+  "Properties of similar figures",
+  "Prove of similar triangles",
+  "MC question 25",
+  "Short question 29 (a)",
+  "Short question 29 (b)",
+  "Short question 35 (a)",
+  "Short question 35 (b)",
+  "Short question 41 (a)",
+  "Short question 41 (b)",
+  "Short question 41 (c)",
+  "MC question 45",
+  "Practice: similarity",
+  "Summary",
 ];
-// Steps per slide in the animated deck: the opening view plus one per PowerPoint click.
-const STEPS = [1, 1, 24, 41, 51, 50, 54, 41, 31, 44, 30, 68, 1, 1, 20, 21, 48, 40, 48, 30, 40, 45, 41, 42, 55, 1, 1];
-const animated = document.getElementById("animated");
-const src = (file) => `slides/${file}`;
-const slide = document.getElementById("slide");
+const frame = document.getElementById("deck");
+const stage = document.getElementById("stage");
 const name = document.getElementById("name");
 const count = document.getElementById("count");
 const strip = document.getElementById("strip");
-let index = 0;
-const buttons = SLIDES.map(([file, title], i) => {
+let reveal = null;
+// First deck step of each slide, and its step count, read from the deck's speaker notes ("Slide 6/27: ...").
+let starts = [];
+let steps = [];
+
+function fromHash() {
+  const [s, k] = location.hash.slice(1).split(".");
+  const slide = Math.max(1, Math.min(TITLES.length, parseInt(s, 10) || 1)) - 1;
+  return { slide, step: Math.max(0, parseInt(k, 10) || 0) };
+}
+
+const buttons = TITLES.map((title, i) => {
   const b = document.createElement("button");
   b.type = "button";
-  b.title = title;
+  b.title = `${i + 1}. ${title}`;
   const img = document.createElement("img");
-  img.src = src(file);
+  img.src = `thumbs/S${String(i + 1).padStart(2, "0")}.jpg`;
   img.alt = title;
+  img.loading = "lazy";
   b.append(img);
-  b.addEventListener("click", () => show(i));
+  b.addEventListener("click", () => go(i, 0));
   strip.append(b);
   return b;
 });
-function show(n) {
-  index = Math.max(0, Math.min(SLIDES.length - 1, n));
-  const [file, title] = SLIDES[index];
-  slide.src = src(file);
-  slide.alt = title;
-  name.textContent = title;
-  count.textContent = `${index + 1} / ${SLIDES.length}`;
-  animated.href = `deck/index.html#/${STEPS.slice(0, index).reduce((a, b) => a + b, 0)}`;
-  buttons.forEach((b, i) => b.classList.toggle("on", i === index));
-  buttons[index].scrollIntoView({ inline: "center", block: "nearest" });
-  history.replaceState(null, "", `#${index + 1}`);
+
+function go(slide, step) {
+  if (!reveal) return;
+  slide = Math.max(0, Math.min(TITLES.length - 1, slide));
+  reveal.slide(starts[slide] + Math.min(step, steps[slide] - 1));
 }
-document.getElementById("prev").addEventListener("click", () => show(index - 1));
-document.getElementById("next").addEventListener("click", () => show(index + 1));
-document.addEventListener("keydown", (e) => {
-  if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") { e.preventDefault(); show(index + 1); }
-  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); show(index - 1); }
-  if (e.key === "Home") show(0);
-  if (e.key === "End") show(SLIDES.length - 1);
+
+function sync() {
+  const h = reveal.getIndices().h;
+  let slide = 0;
+  while (slide + 1 < starts.length && starts[slide + 1] <= h) slide++;
+  const step = h - starts[slide];
+  name.textContent = TITLES[slide];
+  count.textContent = `Slide ${slide + 1} / ${TITLES.length} · step ${step + 1} / ${steps[slide]}`;
+  buttons.forEach((b, i) => b.classList.toggle("on", i === slide));
+  buttons[slide].scrollIntoView({ inline: "center", block: "nearest" });
+  history.replaceState(null, "", step ? `#${slide + 1}.${step}` : `#${slide + 1}`);
+}
+
+frame.addEventListener("load", () => {
+  const w = frame.contentWindow;
+  const ready = () => {
+    reveal = w.Reveal;
+    starts = [];
+    steps = [];
+    w.document.querySelectorAll(".slides > section").forEach((section, h) => {
+      const n = /Slide (\d+)\//.exec(section.querySelector("aside.notes")?.textContent || "");
+      if (!n) return;
+      const i = Number(n[1]) - 1;
+      if (starts[i] === undefined) { starts[i] = h; steps[i] = 0; }
+      steps[i]++;
+    });
+    reveal.on("slidechanged", sync);
+    const { slide, step } = fromHash();
+    go(slide, step);
+    sync();
+  };
+  if (w.Reveal.isReady()) ready(); else w.Reveal.on("ready", ready);
 });
-show(Math.max(0, (parseInt(location.hash.slice(1), 10) || 1) - 1));
+frame.src = "deck/index.html";
+
+function full() {
+  if (document.fullscreenElement || document.webkitFullscreenElement) {
+    (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  } else {
+    (stage.requestFullscreen || stage.webkitRequestFullscreen).call(stage);
+  }
+}
+
+document.getElementById("prev").addEventListener("click", () => reveal?.prev());
+document.getElementById("next").addEventListener("click", () => reveal?.next());
+document.getElementById("full").addEventListener("click", full);
+document.addEventListener("keydown", (e) => {
+  if (!reveal) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") { e.preventDefault(); reveal.next(); }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); reveal.prev(); }
+  if (e.key === "Home") go(0, 0);
+  if (e.key === "End") go(TITLES.length - 1, 0);
+  if (e.key === "f" || e.key === "F") full();
+});
+addEventListener("hashchange", () => { const { slide, step } = fromHash(); go(slide, step); });
 </script>
 </body>
 </html>
