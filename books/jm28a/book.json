@@ -1,0 +1,286 @@
+{
+  "id": "jm28a",
+  "form": "S3",
+  "code": "JM28 (A)",
+  "title": "Special Lines and Centres in Triangles",
+  "topic": "Triangles",
+  "year": 2023,
+  "status": "live",
+  "storage": "jm28a",
+  "source": {
+    "que": "source/S3 JM28 (A) - Special Lines and Centres in Triangles - 2023 (QUE).pdf",
+    "ans": "source/S3 JM28 (A) - Special Lines and Centres in Triangles - 2023 (ANS).pdf",
+    "ansPageOffset": 0
+  },
+  "sections": [
+    {
+      "id": "am",
+      "label": "Altitude & Median"
+    },
+    {
+      "id": "bis",
+      "label": "Angle Bisector"
+    },
+    {
+      "id": "mixed",
+      "label": "Mixed"
+    }
+  ],
+  "continuation": {
+    "top": 96,
+    "x": 48,
+    "width": 499,
+    "bottom": 812
+  },
+  "extract": {
+    "zoom": 3,
+    "regionX": [
+      66,
+      546
+    ],
+    "footer": 822,
+    "questions": [
+      {
+        "id": "q1",
+        "page": 1,
+        "label": "1",
+        "section": "am"
+      },
+      {
+        "id": "q2",
+        "page": 1,
+        "label": "2",
+        "section": "am"
+      },
+      {
+        "id": "q3",
+        "page": 1,
+        "label": "3",
+        "section": "bis"
+      },
+      {
+        "id": "q4",
+        "page": 2,
+        "label": "4",
+        "section": "bis"
+      },
+      {
+        "id": "q5",
+        "page": 2,
+        "label": "5",
+        "section": "bis"
+      },
+      {
+        "id": "q6",
+        "page": 2,
+        "label": "6",
+        "section": "bis"
+      },
+      {
+        "id": "q7",
+        "page": 2,
+        "label": "7",
+        "section": "bis"
+      },
+      {
+        "id": "q8",
+        "page": 3,
+        "label": "8",
+        "section": "mixed"
+      },
+      {
+        "id": "q9",
+        "page": 3,
+        "label": "9",
+        "section": "mixed"
+      },
+      {
+        "id": "q10",
+        "page": 3,
+        "label": "10",
+        "section": "mixed"
+      },
+      {
+        "id": "q11",
+        "page": 4,
+        "label": "11",
+        "section": "mixed"
+      },
+      {
+        "id": "q12",
+        "page": 4,
+        "label": "12",
+        "section": "mixed"
+      },
+      {
+        "id": "q13",
+        "page": 4,
+        "label": "13",
+        "section": "mixed"
+      }
+    ],
+    "anchors": {},
+    "fixedAnchors": {},
+    "overrides": {
+      "q1": {
+        "region": [
+          60.0,
+          220.6,
+          402.0,
+          348.6
+        ]
+      },
+      "q2": {
+        "region": [
+          60.0,
+          391.6,
+          486.0,
+          571.6
+        ]
+      },
+      "q3": {
+        "region": [
+          60.0,
+          613.7,
+          436.0,
+          807.7
+        ]
+      },
+      "q4": {
+        "region": [
+          60.0,
+          115.6,
+          398.0,
+          295.6
+        ]
+      },
+      "q5": {
+        "region": [
+          60.0,
+          338.3,
+          434.0,
+          428.3
+        ]
+      },
+      "q6": {
+        "region": [
+          60.0,
+          470.7,
+          406.0,
+          590.7
+        ]
+      },
+      "q7": {
+        "region": [
+          60.0,
+          635.8,
+          378.0,
+          807.8
+        ],
+        "space": 60
+      },
+      "q8": {
+        "region": [
+          60.0,
+          118.6,
+          402.0,
+          248.6
+        ]
+      },
+      "q9": {
+        "region": [
+          60.0,
+          292.7,
+          452.0,
+          596.7
+        ]
+      },
+      "q10": {
+        "region": [
+          60.0,
+          638.8,
+          404.0,
+          806.8
+        ],
+        "space": 42
+      },
+      "q11": {
+        "region": [
+          60.0,
+          115.1,
+          402.0,
+          317.1
+        ]
+      },
+      "q12": {
+        "region": [
+          60.0,
+          362.8,
+          414.0,
+          570.8
+        ]
+      },
+      "q13": {
+        "region": [
+          60.0,
+          615.1,
+          420.0,
+          807.1
+        ]
+      }
+    }
+  },
+  "media": [
+    {
+      "page": 1,
+      "region": [
+        35,
+        78,
+        573,
+        146
+      ],
+      "scene": "jm28:SpecialLines",
+      "src": "media/special-lines.mp4",
+      "poster": "media/special-lines.jpg",
+      "title": "Animate the four special lines"
+    }
+  ],
+  "guides": [
+    {
+      "q": "q2",
+      "scene": "jm28a_guides:Q2",
+      "src": "media/guide-q2.mp4",
+      "poster": "media/guide-q2.jpg"
+    },
+    {
+      "q": "q4",
+      "scene": "jm28a_guides:Q4",
+      "src": "media/guide-q4.mp4",
+      "poster": "media/guide-q4.jpg"
+    },
+    {
+      "q": "q6",
+      "scene": "jm28a_guides:Q6",
+      "src": "media/guide-q6.mp4",
+      "poster": "media/guide-q6.jpg"
+    },
+    {
+      "q": "q8",
+      "scene": "jm28a_guides:Q8",
+      "src": "media/guide-q8.mp4",
+      "poster": "media/guide-q8.jpg"
+    },
+    {
+      "q": "q10",
+      "scene": "jm28a_guides:Q10",
+      "src": "media/guide-q10.mp4",
+      "poster": "media/guide-q10.jpg"
+    },
+    {
+      "q": "q12",
+      "scene": "jm28a_guides:Q12",
+      "src": "media/guide-q12.mp4",
+      "poster": "media/guide-q12.jpg"
+    }
+  ]
+}
