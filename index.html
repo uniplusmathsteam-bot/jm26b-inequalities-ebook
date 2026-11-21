@@ -45,6 +45,8 @@
     .card strong { display: block; font-size: 14px; }
     .card span { font-size: 12.5px; color: #5b6170; }
     .card em { font-style: normal; font-size: 11px; color: #b04a00; }
+    .grid.wide { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+    .grid.wide .card img { aspect-ratio: 16 / 9; background: #000; }
     .empty { color: #5b6170; padding: 20px 0; }
   </style>
 </head>
@@ -64,6 +66,7 @@
     const { books: ids } = await fetch("books/catalog.json").then((r) => r.json());
     const books = (await Promise.all(ids.map((id) =>
       fetch(`books/${id}/book.json`).then((r) => (r.ok ? r.json() : null)).catch(() => null)))).filter(Boolean);
+    const { slides = [] } = await fetch("books/slides.json").then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
     const name = (b) => [b.code, b.title].filter(Boolean).join(" ");
     const href = (b) => `reader.html?book=${encodeURIComponent(b.id)}`;
 
@@ -77,14 +80,39 @@
       link.hidden = false;
     }
 
+    function card(b, link, cover) {
+      const card = document.createElement("a");
+      card.className = "card";
+      card.href = link;
+      const img = document.createElement("img");
+      img.src = cover;
+      img.alt = "";
+      img.loading = "lazy";
+      const text = document.createElement("div");
+      const title = document.createElement("strong");
+      title.textContent = b.title;
+      const meta = document.createElement("span");
+      meta.textContent = [b.code, b.year].filter(Boolean).join(" · ");
+      text.append(title, meta);
+      if (b.status && b.status !== "live") {
+        const tag = document.createElement("em");
+        tag.textContent = ` ${b.status}`;
+        meta.append(tag);
+      }
+      card.append(img, text);
+      return card;
+    }
+
     function render() {
       const words = filter.value.toLowerCase().split(/\s+/).filter(Boolean);
-      const shown = books.filter((b) => {
+      const match = (b) => {
         const hay = [b.form, b.code, b.title, b.topic, b.year].join(" ").toLowerCase();
         return words.every((w) => hay.includes(w));
-      });
+      };
+      const shown = books.filter(match);
+      const decks = slides.filter(match);
       shelf.replaceChildren();
-      if (!shown.length) {
+      if (!shown.length && !decks.length) {
         shelf.innerHTML = '<p class="empty">No chapters match.</p>';
         return;
       }
@@ -95,27 +123,16 @@
         const grid = document.createElement("div");
         grid.className = "grid";
         for (const b of shown.filter((x) => (x.form || "Other") === form).sort((a, c) => name(a).localeCompare(name(c)))) {
-          const card = document.createElement("a");
-          card.className = "card";
-          card.href = href(b);
-          const img = document.createElement("img");
-          img.src = `books/${b.id}/pages/p01.jpg`;
-          img.alt = "";
-          img.loading = "lazy";
-          const text = document.createElement("div");
-          const title = document.createElement("strong");
-          title.textContent = b.title;
-          const meta = document.createElement("span");
-          meta.textContent = [b.code, b.year].filter(Boolean).join(" · ");
-          text.append(title, meta);
-          if (b.status && b.status !== "live") {
-            const tag = document.createElement("em");
-            tag.textContent = ` ${b.status}`;
-            meta.append(tag);
-          }
-          card.append(img, text);
-          grid.append(card);
+          grid.append(card(b, href(b), `books/${b.id}/pages/p01.jpg`));
         }
+        shelf.append(h, grid);
+      }
+      if (decks.length) {
+        const h = document.createElement("h2");
+        h.textContent = "Slides";
+        const grid = document.createElement("div");
+        grid.className = "grid wide";
+        for (const s of decks) grid.append(card(s, s.href, s.cover));
         shelf.append(h, grid);
       }
     }
