@@ -1196,123 +1196,223 @@
   "guides": [
     {
       "q": "q11",
-      "scene": "jm3031_guides:Q11",
+      "scene": "jm3031_slides:Q11",
       "src": "media/guide-q11.mp4",
-      "poster": "media/guide-q11.jpg"
+      "poster": "media/guide-q11.jpg",
+      "stops": [
+        1.5,
+        5.4,
+        9.0
+      ]
     },
     {
       "q": "q12",
-      "scene": "jm3031_guides:Q12",
+      "scene": "jm3031_slides:Q12",
       "src": "media/guide-q12.mp4",
-      "poster": "media/guide-q12.jpg"
+      "poster": "media/guide-q12.jpg",
+      "stops": [
+        1.5,
+        5.4,
+        8.8,
+        12.8
+      ]
     },
     {
       "q": "q13",
-      "scene": "jm3031_guides:Q13",
+      "scene": "jm3031_slides:Q13",
       "src": "media/guide-q13.mp4",
-      "poster": "media/guide-q13.jpg"
+      "poster": "media/guide-q13.jpg",
+      "stops": [
+        1.5,
+        7.3,
+        10.9
+      ]
     },
     {
       "q": "q14",
-      "scene": "jm3031_guides:Q14",
+      "scene": "jm3031_slides:Q14",
       "src": "media/guide-q14.mp4",
-      "poster": "media/guide-q14.jpg"
+      "poster": "media/guide-q14.jpg",
+      "stops": [
+        1.5,
+        8.3,
+        11.9
+      ]
     },
     {
       "q": "q15",
-      "scene": "jm3031_guides:Q15",
+      "scene": "jm3031_slides:Q15",
       "src": "media/guide-q15.mp4",
-      "poster": "media/guide-q15.jpg"
+      "poster": "media/guide-q15.jpg",
+      "stops": [
+        1.5,
+        6.5,
+        10.1
+      ]
     },
     {
       "q": "q16",
-      "scene": "jm3031_guides:Q16",
+      "scene": "jm3031_slides:Q16",
       "src": "media/guide-q16.mp4",
-      "poster": "media/guide-q16.jpg"
+      "poster": "media/guide-q16.jpg",
+      "stops": [
+        1.5,
+        5.4,
+        8.9,
+        12.4
+      ]
     },
     {
       "q": "q17",
-      "scene": "jm3031_guides:Q17",
+      "scene": "jm3031_slides:Q17",
       "src": "media/guide-q17.mp4",
-      "poster": "media/guide-q17.jpg"
+      "poster": "media/guide-q17.jpg",
+      "stops": [
+        1.5,
+        5.4,
+        9.0
+      ]
     },
     {
       "q": "q18",
-      "scene": "jm3031_guides:Q18",
+      "scene": "jm3031_slides:Q18",
       "src": "media/guide-q18.mp4",
-      "poster": "media/guide-q18.jpg"
+      "poster": "media/guide-q18.jpg",
+      "stops": [
+        2.1,
+        6.0,
+        9.6
+      ]
     },
     {
       "q": "q19",
-      "scene": "jm3031_guides:Q19",
+      "scene": "jm3031_slides:Q19",
       "src": "media/guide-q19.mp4",
-      "poster": "media/guide-q19.jpg"
+      "poster": "media/guide-q19.jpg",
+      "stops": [
+        2.1,
+        6.4,
+        10.0
+      ]
     },
     {
       "q": "s6",
-      "scene": "jm3031_guides:S6",
+      "scene": "jm3031_slides:S6",
       "src": "media/guide-s6.mp4",
-      "poster": "media/guide-s6.jpg"
+      "poster": "media/guide-s6.jpg",
+      "stops": [
+        1.5,
+        7.3,
+        10.9,
+        15.0,
+        19.1
+      ]
     },
     {
       "q": "s7",
-      "scene": "jm3031_guides:S7",
+      "scene": "jm3031_slides:S7",
       "src": "media/guide-s7.mp4",
-      "poster": "media/guide-s7.jpg"
+      "poster": "media/guide-s7.jpg",
+      "stops": [
+        1.5,
+        7.3,
+        11.8,
+        15.4
+      ]
     },
     {
       "q": "s8",
-      "scene": "jm3031_guides:S8",
+      "scene": "jm3031_slides:S8",
       "src": "media/guide-s8.mp4",
-      "poster": "media/guide-s8.jpg"
+      "poster": "media/guide-s8.jpg",
+      "stops": [
+        2.1,
+        6.0,
+        9.5
+      ]
     },
     {
       "q": "s9",
-      "scene": "jm3031_guides:S9",
+      "scene": "jm3031_slides:S9",
       "src": "media/guide-s9.mp4",
-      "poster": "media/guide-s9.jpg"
+      "poster": "media/guide-s9.jpg",
+      "stops": [
+        2.1,
+        6.0
+      ]
     },
     {
       "q": "s10",
-      "scene": "jm3031_guides:S10",
+      "scene": "jm3031_slides:S10",
       "src": "media/guide-s10.mp4",
-      "poster": "media/guide-s10.jpg"
+      "poster": "media/guide-s10.jpg",
+      "stops": [
+        1.5,
+        5.4,
+        8.9,
+        12.7
+      ]
     },
     {
       "q": "q1",
-      "scene": "jm3031_count:Q1",
+      "scene": "jm3031_slides:Q1",
       "src": "media/guide-q1.mp4",
-      "poster": "media/guide-q1.jpg"
+      "poster": "media/guide-q1.jpg",
+      "stops": [
+        1.5,
+        5.0,
+        10.3
+      ]
     },
     {
       "q": "q2",
-      "scene": "jm3031_count:Q2",
+      "scene": "jm3031_slides:Q2",
       "src": "media/guide-q2.mp4",
-      "poster": "media/guide-q2.jpg"
+      "poster": "media/guide-q2.jpg",
+      "stops": [
+        1.5,
+        7.1
+      ]
     },
     {
       "q": "q3",
-      "scene": "jm3031_count:Q3",
+      "scene": "jm3031_slides:Q3",
       "src": "media/guide-q3.mp4",
-      "poster": "media/guide-q3.jpg"
+      "poster": "media/guide-q3.jpg",
+      "stops": [
+        1.5,
+        6.2
+      ]
     },
     {
       "q": "q4",
-      "scene": "jm3031_count:Q4",
+      "scene": "jm3031_slides:Q4",
       "src": "media/guide-q4.mp4",
-      "poster": "media/guide-q4.jpg"
+      "poster": "media/guide-q4.jpg",
+      "stops": [
+        1.5,
+        5.2
+      ]
     },
     {
       "q": "q5",
-      "scene": "jm3031_count:Q5",
+      "scene": "jm3031_slides:Q5",
       "src": "media/guide-q5.mp4",
-      "poster": "media/guide-q5.jpg"
+      "poster": "media/guide-q5.jpg",
+      "stops": [
+        1.5,
+        5.5
+      ]
     },
     {
       "q": "q6",
-      "scene": "jm3031_count:Q6",
+      "scene": "jm3031_slides:Q6",
       "src": "media/guide-q6.mp4",
-      "poster": "media/guide-q6.jpg"
+      "poster": "media/guide-q6.jpg",
+      "stops": [
+        1.5,
+        5.5
+      ]
     }
   ]
 }

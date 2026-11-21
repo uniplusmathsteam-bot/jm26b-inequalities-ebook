@@ -15,7 +15,9 @@ PAGE and REGION (the camera frame in page points) itself; the video is
 GUIDE_HEIGHT pixels tall and its poster is the first frame, the plain figure.
 --still renders the whole guide and writes reference/guides/<Class>_cmp.png
 (the printed figure above the opening frame) and <Class>_sheet.png (a frame
-every two seconds).
+every two seconds). A guide scene that keeps a list of times in `stops` (the
+ends of its slides) has them written to the entry's "stops"; the reader
+pauses the video at each one.
 Needs Manim Community, ffmpeg and Pillow.
 """
 
@@ -24,6 +26,7 @@ import json
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "manim"))
@@ -82,6 +85,7 @@ def render(book_dir, item, still, guide=False):
         writer = scene.renderer.file_writer
         out = Path(writer.image_file_path if still_frame else writer.movie_file_path)
         length = scene.renderer.time
+        stops = getattr(scene, "stops", None)
     if still_frame:
         dest = book_dir / "reference" / "media" / f"{name}.png"
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -110,8 +114,22 @@ def render(book_dir, item, still, guide=False):
     subprocess.run([ffmpeg, "-v", "error", "-y", "-i", str(out), "-an", "-c:v", "libx264", "-preset", "slow", "-crf", "26",
                     "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(video)], check=True)
     grab = ["-i", str(video)] if guide else ["-sseof", "-0.2", "-i", str(video)]
-    subprocess.run([ffmpeg, "-v", "error", "-y", *grab, "-frames:v", "1", "-q:v", "3", "-update", "1", str(poster)], check=True)
+    # Windows refuses to overwrite a poster another program has open, so write beside it and swap.
+    fresh = poster.with_name(f"_{poster.name}")
+    subprocess.run([ffmpeg, "-v", "error", "-y", *grab, "-frames:v", "1", "-q:v", "3", "-update", "1", str(fresh)], check=True)
+    for attempt in range(20):
+        try:
+            fresh.replace(poster)
+            break
+        except PermissionError:
+            if attempt == 19:
+                raise
+            time.sleep(0.5)
     print(f"video {video.relative_to(ROOT)} ({video.stat().st_size // 1024} KB, {length:.0f} s), poster {poster.name}")
+    if guide and stops is not None:
+        item["stops"] = stops
+        return True
+    return False
 
 
 def main():
@@ -121,10 +139,14 @@ def main():
     book_dir = ROOT / "books" / args[0]
     book = json.loads((book_dir / "book.json").read_text(encoding="utf-8"))
     wanted = set(args[1:])
+    path = book_dir / "book.json"
     for key in ("media", "guides"):
         for item in book.get(key, []):
             if not wanted or item["scene"].split(":")[1] in wanted:
-                render(book_dir, item, "--still" in sys.argv, guide=key == "guides")
+                if render(book_dir, item, "--still" in sys.argv, guide=key == "guides"):
+                    # After every guide, so a later failure cannot lose the stops of videos already made.
+                    path.write_text(json.dumps(book, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+                    print(f"slide stops written to {path.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

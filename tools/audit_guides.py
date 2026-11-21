@@ -219,7 +219,9 @@ def run(book_dir, item):
         audit_state(self, report)
 
     x0, y0, x1, y1 = cls.REGION
-    w, h = 320, max(2, int(round(320 * (y1 - y0) / (x1 - x0) / 2)) * 2)
+    # Pango wraps Text wider than the pixel width, and the text cache it shares with render_media
+    # ignores width, so a narrow audit would plant wrapped captions in the videos.
+    w, h = 1280, max(2, int(round(1280 * (y1 - y0) / (x1 - x0) / 2)) * 2)
     scene_cls = type(name, (cls,), {"play": play})
     options = {
         "pixel_width": w, "pixel_height": h, "frame_height": 8.0, "frame_width": 8.0 * w / h, "media_dir": str(WORK),

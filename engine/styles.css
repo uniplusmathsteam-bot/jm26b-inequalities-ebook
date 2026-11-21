@@ -689,6 +689,17 @@ body.tools-collapsed #tools-collapse { opacity: 1; }
 }
 .gd-seek { flex: 1 1 auto; min-width: 0; height: 28px; margin: 0; accent-color: #1d8a4a; cursor: pointer; }
 .gd-time { flex: none; min-width: 84px; text-align: right; font-variant-numeric: tabular-nums; }
+.gd-slide { flex: none; min-width: 84px; text-align: center; color: #26313d; font-variant-numeric: tabular-nums; }
+.gd-bar button[data-gd="prev"], .gd-bar button[data-gd="next"] { font-size: 20px; }
+.gd-card header button[aria-pressed="true"] { border-color: #1d8a4a; background: #e3f5e9; color: #12703a; }
+.gd-card:fullscreen { width: 100vw; height: 100vh; border-radius: 0; background: #0f172a; }
+.gd-card:fullscreen video { flex: 1 1 auto; min-height: 0; aspect-ratio: auto; object-fit: contain; background: #0f172a; }
+.gd-card:-webkit-full-screen { width: 100vw; height: 100vh; border-radius: 0; background: #0f172a; }
+.gd-card:-webkit-full-screen video { flex: 1 1 auto; min-height: 0; aspect-ratio: auto; object-fit: contain; background: #0f172a; }
+@media (max-width: 640px) {
+  .gd-card header { flex-wrap: wrap; }
+  .gd-time { display: none; }
+}
 
 .g-intro { margin: 0 0 10px; color: #3d4757; font-size: var(--fs-read); line-height: 1.45; }
 .g-q { margin: 0 0 10px; padding: 10px 14px; background: #fff; border: 1px solid #e4dccd; border-left: 4px solid var(--ink); border-radius: 10px; font-size: var(--fs-read); line-height: 1.5; color: #1f2a3d; }
@@ -737,6 +748,17 @@ body.tools-collapsed #tools-collapse { opacity: 1; }
 .g-check.proved { box-shadow: inset 0 0 0 2px #1d8a4a; }
 .g-check .g-state { font-size: var(--fs-sm); font-weight: 600; color: #3d4757; }
 .g-check button { min-height: 34px; font-size: var(--fs-sm); background: #fff; border: 1px solid #d5d9e2; }
+.g-avg { width: 100%; margin: 8px 0; border-collapse: separate; border-spacing: 0 6px; font-size: var(--fs-read); }
+.g-avg th, .g-avg td { padding: 7px 12px; background: #fff; border-top: 1px solid #e4dccd; border-bottom: 1px solid #e4dccd; }
+.g-avg th { text-align: left; border-left: 6px solid var(--c); border-radius: 10px 0 0 10px; color: var(--c); white-space: nowrap; }
+.g-avg td:last-child { border-right: 1px solid #e4dccd; border-radius: 0 10px 10px 0; }
+.g-avg .g-num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.g-avg .g-now { color: var(--c); font-size: 1.15em; }
+.g-avg .g-arrow { color: #8a8f98; text-align: center; width: 1.5em; }
+.g-verdict.ok { color: #1d8a4a; }
+.g-drag { cursor: grab; touch-action: none; outline: none; }
+.g-drag.on { cursor: grabbing; }
+.g-drag:focus-visible circle, .g-drag.on circle { stroke: #163a86; stroke-width: 3; }
 
 /* Touch screens have no hover; a tap would leave these stuck on. */
 @media (hover: hover) {
