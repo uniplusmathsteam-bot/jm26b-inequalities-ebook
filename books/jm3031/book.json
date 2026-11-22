@@ -251,6 +251,12 @@
         "section": "mc"
       },
       {
+        "id": "q36",
+        "page": 14,
+        "label": "36",
+        "section": "mc"
+      },
+      {
         "id": "q37",
         "page": 15,
         "label": "37",
@@ -522,6 +528,7 @@
       }
     ],
     "anchors": {
+      "q36": "^\\*36\\.",
       "s1": "^1\\.",
       "s2": "^2\\.",
       "s3": "^3\\.",
@@ -830,9 +837,18 @@
       "q35": {
         "region": [
           164.0,
-          619.3,
+          424.0,
           550.0,
-          807.3
+          558.0
+        ],
+        "space": 160
+      },
+      "q36": {
+        "region": [
+          164.0,
+          617.0,
+          550.0,
+          807.0
         ]
       },
       "q37": {
@@ -1317,7 +1333,8 @@
         1.5,
         7.3,
         11.8,
-        15.4
+        15.4,
+        19.5
       ]
     },
     {
@@ -1348,9 +1365,9 @@
       "poster": "media/guide-s10.jpg",
       "stops": [
         1.5,
-        5.4,
-        8.9,
-        12.7
+        7.0,
+        10.5,
+        14.3
       ]
     },
     {
@@ -1412,6 +1429,82 @@
       "stops": [
         1.5,
         5.5
+      ]
+    },
+    {
+      "q": "q9",
+      "scene": "jm3031_slides:Q9",
+      "src": "media/guide-q9.mp4",
+      "poster": "media/guide-q9.jpg",
+      "stops": [
+        3.3,
+        10.3,
+        14.6
+      ]
+    },
+    {
+      "q": "q10",
+      "scene": "jm3031_slides:Q10",
+      "src": "media/guide-q10.mp4",
+      "poster": "media/guide-q10.jpg",
+      "stops": [
+        2.1,
+        6.2,
+        12.1,
+        17.2
+      ]
+    },
+    {
+      "q": "q36",
+      "scene": "jm3031_slides:Q36",
+      "src": "media/guide-q36.mp4",
+      "poster": "media/guide-q36.jpg",
+      "stops": [
+        3.3,
+        8.1,
+        13.4,
+        17.7,
+        22.67
+      ]
+    },
+    {
+      "q": "s16",
+      "scene": "jm3031_slides:S16",
+      "src": "media/guide-s16.mp4",
+      "poster": "media/guide-s16.jpg",
+      "stops": [
+        3.9,
+        9.0,
+        13.5,
+        17.5,
+        21.5
+      ]
+    },
+    {
+      "q": "s19",
+      "scene": "jm3031_slides:S19",
+      "src": "media/guide-s19.mp4",
+      "poster": "media/guide-s19.jpg",
+      "stops": [
+        4.1,
+        8.8,
+        14.2,
+        19.3,
+        25.2
+      ]
+    },
+    {
+      "q": "s29",
+      "scene": "jm3031_slides:S29",
+      "src": "media/guide-s29.mp4",
+      "poster": "media/guide-s29.jpg",
+      "stops": [
+        3.5,
+        9.2,
+        14.2,
+        18.9,
+        23.6,
+        27.8
       ]
     }
   ]

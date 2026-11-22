@@ -15,8 +15,9 @@ behind words sit at z -3, below what the audit looks at.
 
 import numpy as np
 from manim import (
-    BOLD, DOWN, LEFT, NORMAL, PI, RIGHT, UP, AnimationGroup, Circle, Create, Dot, FadeIn, FadeOut,
-    GrowFromCenter, LaggedStart, Line, MoveToTarget, RoundedRectangle, Text, TransformFromCopy, VGroup, VMobject, linear,
+    BOLD, DEGREES, DOWN, LEFT, NORMAL, PI, RIGHT, UP, AnimationGroup, AnnularSector, ArcBetweenPoints, Circle, Create,
+    DashedLine, Dot, FadeIn, FadeOut, GrowFromCenter, GrowFromEdge, Indicate, LaggedStart, Line, MoveToTarget, Polygon,
+    ReplacementTransform, RoundedRectangle, Text, TransformFromCopy, VGroup, VMobject, linear,
 )
 
 from guide import GuideScene, Z_TEXT
@@ -38,6 +39,9 @@ VIOLET = "#a78bfa"
 ORANGE = "#fb923c"
 TINT = {GREEN: "#14532d", RED: "#7f1d1d", GOLD: "#713f12", BLUE: "#1e3a8a", PINK: "#831843", VIOLET: "#4c1d95", ORANGE: "#7c2d12"}
 FONT = "Cambria"
+# Glyphs Cambria draws as a solid box; they are set in SYMBOLS instead.
+MISSING = "♥"
+SYMBOLS = "Segoe UI Symbol"
 Z_BOX = -3
 MINUS = "\u2212"
 
@@ -75,7 +79,8 @@ class Slides(GuideScene):
         key = (FONT, weight, NORMAL)
         if key not in self._caps:
             self._caps[key] = Text("H", font=FONT, weight=weight, font_size=48).height
-        t = Text(s, font=FONT, weight=weight, font_size=48, color=color, t2c=t2c or {})
+        t2f = {g: SYMBOLS for g in MISSING if g in s}
+        t = Text(s, font=FONT, weight=weight, font_size=48, color=color, t2c=t2c or {}, t2f=t2f)
         t.scale(size * 0.7 * self.k / self._caps[key])
         x, y = self.P(*p)[:2]
         t.shift(np.array([x - (t.get_left()[0] if left else t.get_center()[0]), y - size * 0.35 * self.k - self._baseline(t), 0]))
@@ -254,6 +259,16 @@ class Slides(GuideScene):
 
     def show(self, *mobs, rt=0.6):
         self.play(*[FadeIn(m) for m in mobs], run_time=rt)
+
+    def jot(self, *mobs, rt=0.6):
+        """Working for this slide only: shown now, cleared by the next wipe()."""
+        self.scratch = getattr(self, "scratch", []) + list(mobs)
+        self.show(*mobs, rt=rt)
+
+    def wipe(self, rt=0.4):
+        if getattr(self, "scratch", None):
+            self.play(*[FadeOut(m) for m in self.scratch], run_time=rt)
+        self.scratch = []
 
     # ---------- letter tiles and bags ----------
 
@@ -626,6 +641,107 @@ class Q6(Slides):
         self.answer("D")
 
 
+class Q9(Slides):
+    Q = "Q9"
+    ASK = ("8◆9 is a 3-digit number, where ◆ is an integer from 0 to 9",
+           "inclusive. Find the probability that it is divisible by 7.")
+    ASK_RIGHT = 1040
+
+    def construct(self):
+        self.header()
+        self.step("◆ can be any digit from 0 to 9, so there are 10 equally likely numbers.")
+        xs = [640 + (d - 4.5) * 112 for d in range(10)]
+        tiles = []
+        for d, x in enumerate(xs):
+            t = self.tile(f"8{d}9", (x, 222), 100, 66, 34)
+            t[1][1].set_color(GOLD)
+            tiles.append(t)
+        self.play(LaggedStart(*[FadeIn(t, shift=DOWN * 0.2) for t in tiles], lag_ratio=0.08), run_time=1.2)
+        self.show(self.text("◆ = 0, 1, 2, …, 9: 10 numbers", (640, 150), 28, GOLD))
+        self.beat()
+
+        self.step("770 = 7 × 110 is divisible by 7, and so is every number we reach by adding 7s.")
+        y = 452
+
+        def X(v):
+            return 96 + (v - 770) * 8.4
+
+        axis = Line(self.P(X(766), y), self.P(X(905), y), color=WIRE, stroke_width=self.w(3))
+        steps = list(range(770, 900, 7))
+        dots = VGroup(*[Dot(self.P(X(v), y), radius=4.5 * self.k, color=TXT).set_z_index(1) for v in steps])
+        nums = VGroup(*[self.text(str(v), (X(v), y + 30), 17, MUTED) for v in steps])
+        hops = VGroup(*[ArcBetweenPoints(self.P(X(a), y - 6), self.P(X(a + 7), y - 6), angle=-PI / 2.2,
+                                         color=BLUE, stroke_width=self.w(2.2)) for a in steps[:-1]])
+        start = self.text("770 = 7 × 110", (X(770) + 40, y - 74), 26, BLUE)
+        plus = self.text("+7", ((X(770) + X(777)) / 2, y - 40), 22, BLUE)
+        self.play(Create(axis), FadeIn(dots), FadeIn(nums), FadeIn(start), run_time=0.9)
+        self.play(FadeIn(plus), LaggedStart(*[Create(h) for h in hops], lag_ratio=0.25), run_time=2.6)
+        links = VGroup(*[DashedLine(self.P(xs[d], 256), self.P(X(809 + 10 * d), y - 12), color=FAINT,
+                                    stroke_width=self.w(1.4), dash_length=0.08) for d in range(10)])
+        self.play(Create(links), run_time=0.8)
+        hint = self.label("dot", TXT, "a multiple of 7: where a hop lands", (640, 548), 26)
+        self.show(hint)
+        self.beat()
+
+        self.step("8◆9 ends in 9. The hops that land on a units digit 9: 770 + 49 and 770 + 70 + 49.")
+        hits = {1: 819, 8: 889}
+        rings = VGroup(*[Circle(radius=11 * self.k).set_stroke(GREEN, self.w(3)).move_to(self.P(X(v), y)) for v in hits.values()])
+        sums = VGroup(self.text("770 + 49 = 819", (X(819), y + 82), 28, GREEN),
+                      self.text("770 + 70 + 49 = 889", (X(889) - 40, y + 82), 28, GREEN))
+        self.play(*[AnimationGroup(tiles[d][0].animate.set_fill(TINT[GREEN], 1).set_stroke(GREEN, self.w(2.6)),
+                                   tiles[d][1].animate.set_color(GREEN)) for d in hits],
+                  *[tiles[d][1].animate.set_opacity(0.35) for d in range(10) if d not in hits],
+                  *[links[d].animate.set_opacity(0.15) for d in range(10) if d not in hits],
+                  *[links[d].animate.set_stroke(GREEN, self.w(2.4)) for d in hits],
+                  start.animate.set_opacity(0.3), FadeOut(hint), Create(rings), run_time=1.0)
+        self.show(sums)
+        key = VGroup(self.label("cell", GREEN, "divisible by 7", (460, 604), 26),
+                     self.label("dim", None, "not divisible by 7", (820, 604), 26))
+        self.show(key)
+        self.beat()
+
+        self.step("◆ = 1 or 8: 2 of the 10 numbers. P(divisible by 7) = 2/10 = 1/5.")
+        self.play(*[FadeOut(m) for m in (axis, dots, nums, hops, plus, start, links, rings, sums, key)], run_time=0.5)
+        self.show(self.text("◆ = 1 or 8", (640, 380), 40, GREEN))
+        self.show(self.eq(["P(divisible by 7)", "=", (2, 10, GREEN), "=", (1, 5)], (640, 486), 56))
+        self.answer("A", (640, 588))
+
+
+class Q10(Slides):
+    Q = "Q10"
+    ASK = ("7♣♥ is a 3-digit number, where ♣ and ♥ are integers from 0 to 9",
+           "inclusive. Find the probability that it is divisible by 7.")
+    ASK_RIGHT = 1040
+
+    def construct(self):
+        self.header()
+        self.step("♣ and ♥ each have 10 values: 10 × 10 = 100 numbers, from 700 to 799.")
+        T = self.table([str(i) for i in range(10)], [str(j) for j in range(10)], 120, 168, 54, 43,
+                       lambda i, j: f"7{i}{j}", hw=48, hh=36, size=19, row_title="♣  tens digit", col_title="♥  units digit")
+        self.add(T["frame"], T["titles"])
+        self.show(self.text("100 numbers", (980, 250), 30, MUTED))
+        self.beat()
+        self.step("Each cell is one number: the row gives ♣, the column gives ♥.")
+        self.fill(T, key=lambda ij: ij[0], rt=2.0)
+        self.beat()
+        value = {k: 700 + 10 * k[0] + k[1] for k in T["cells"]}
+        mult = sorted((k for k in value if value[k] % 7 == 0), key=value.get)
+        first = [k for k in mult if value[k] <= 770]
+        rest = [k for k in mult if value[k] > 770]
+        self.step("700 = 7 × 100. Keep adding 7: 700, 707, 714, …, 770. That is 11 numbers.")
+        self.play(LaggedStart(*[AnimationGroup(*self.paint(T, [k], GOLD)) for k in first], lag_ratio=0.6), run_time=3.2)
+        self.show(self.label("cell", GOLD, "700, 707, …, 770: 11 numbers", (760, 330), 28, left=True))
+        self.beat()
+        self.step("Then 777, 784, 791 and 798: 4 more. The next one, 805, is past 799.")
+        self.play(LaggedStart(*[AnimationGroup(*self.paint(T, [k], BLUE)) for k in rest], lag_ratio=0.6), run_time=1.8)
+        self.show(self.label("cell", BLUE, "777, 784, 791, 798: 4 numbers", (760, 384), 28, left=True))
+        self.show(self.text("11 + 4 = 15 numbers", (980, 440), 32, GREEN))
+        self.beat()
+        self.step("15 of the 100 equally likely numbers: P(divisible by 7) = 15/100 = 3/20.")
+        self.show(self.eq([(15, 100, GREEN), "=", (3, 20)], (980, 516), 46))
+        self.answer("D", (980, 612))
+
+
 # ======================= tree diagrams =======================
 
 FAV = "favourable path"
@@ -776,8 +892,27 @@ class S7(Slides):
         self.beat()
         self.step("(b) Exactly two correct answers: 4 of the 12 paths.")
         self.unlight(T, boxes)
-        self.light(T, [i for i, l in enumerate(T["leaves"]) if l["hits"] == 2])
+        boxes = self.light(T, [i for i, l in enumerate(T["leaves"]) if l["hits"] == 2])
         self.show(self.part("(b)", "only two correct", [(4, 12, GOLD), "=", (1, 3)], 790, 572, size=44, kind="path"))
+        self.beat()
+
+        self.step("Check: sort the 12 paths by how many answers are correct. 2 + 5 + 4 + 1 = 12.")
+        tree = [T["root"], T["heads"], boxes]
+        for level in T["levels"]:
+            tree += [m for n in level for m in (n["mob"], n["line"])]
+        tree += [m for leaf in T["leaves"] for m in (leaf["out"], leaf["extra"])]
+        self.play(*[FadeOut(m) for m in tree], run_time=0.6)
+        cols = []
+        for h, x in zip(range(4), (140, 290, 440, 590)):
+            words = [leaf["word"] for leaf in T["leaves"] if leaf["hits"] == h]
+            ink = GOLD if h in (1, 2) else MUTED
+            col = VGroup(self.text(f"{h} correct", (x, 196), 26, ink, BOLD))
+            col.add(*[self.tile(w, (x, 244 + 44 * i), 104, 36, 24, ink, TINT[GOLD] if h in (1, 2) else CELL,
+                                GOLD if h in (1, 2) else EDGE, r=8) for i, w in enumerate(words)])
+            col.add(self.text(f"{len(words)} path{'s' if len(words) > 1 else ''}", (x, 244 + 44 * 5 + 10), 26, ink))
+            cols.append(col)
+        self.play(LaggedStart(*[FadeIn(c, shift=UP * 0.2) for c in cols], lag_ratio=0.3), run_time=1.6)
+        self.show(self.eq(["2", "+", "5", "+", "4", "+", "1", "=", "12"], (365, 560), 40, colors={2: GOLD, 4: GOLD}))
         self.wait(2.5)
 
 
@@ -1035,13 +1170,17 @@ class S10(Slides):
                        size=36, head=head, row_title="Wrapping paper", col_title="Ribbon")
         self.add(T["frame"], T["titles"])
         self.beat()
-        self.step("Each cell is the total price.")
-        self.fill(T)
+        self.step("Each cell is paper + ribbon. For example, red paper $10 + green ribbon $8 = $18.")
+        demo = self.text("$10 + $8 = $18", (1000, 250), 34, GOLD)
+        self.play(Indicate(T["frame"][3], color=GOLD), Indicate(T["frame"][0], color=GOLD), FadeIn(demo), run_time=1.0)
+        self.play(TransformFromCopy(demo, T["cells"][(0, 0)][1]), run_time=0.8)
+        self.play(LaggedStart(*[FadeIn(t, scale=0.6) for k, (b, t) in T["cells"].items() if k != (0, 0)], lag_ratio=0.15),
+                  run_time=1.6)
         self.beat()
         self.step("(a) Gold: totals of more than $15.")
         cash = {k: int(T["cells"][k][1].text[1:]) for k in T["cells"]}
         a = [k for k in cash if cash[k] > 15]
-        self.play(*self.paint(T, a, GOLD), run_time=0.8)
+        self.play(FadeOut(demo), *self.paint(T, a, GOLD), run_time=0.8)
         self.show(self.part("(a)", "more than $15", [(6, 9, GOLD), "=", (2, 3)], 800, 330, kind="cell"))
         self.beat()
         self.step("(b) The two colours must differ: cross out red–red and yellow–yellow. 7 are left.")
@@ -1051,8 +1190,358 @@ class S10(Slides):
                   *[FadeIn(self.cross(self.pt(T["cells"][k][0].get_center()), 134, 94, RED, 3)) for k in same], run_time=0.7)
         self.show(self.label("cross", RED, "same colour: 2 removed, 7 left", (1010, 440), 26, ink=TXT))
         self.beat()
-        self.step("Green: totals of less than $20 among the 7 that are left.")
+        self.step("Green: less than $20 among the 7 left. $20 itself is not less than $20.")
         b = [k for k in cash if k not in same and cash[k] < 20]
-        self.play(*self.paint(T, b, GREEN), run_time=0.8)
-        self.show(self.part("(b)", "less than $20", [(5, 7, GREEN)], 800, 580, color=GREEN, kind="cell"))
+        no = [k for k in cash if k not in same and cash[k] >= 20]
+        self.play(*self.paint(T, b, GREEN), *self.mute(T, no), run_time=0.8)
+        self.show(self.label("dim", None, "$20 and $21: not less than $20", (1010, 482), 26))
+        self.show(self.part("(b)", "less than $20", [(5, 7, GREEN)], 800, 592, color=GREEN, kind="cell"))
+        self.wait(2.5)
+
+
+# ======================= central tendency and expected value =======================
+
+
+def nth(i):
+    return f"{i}{'st' if i == 1 else 'nd' if i == 2 else 'rd' if i == 3 else 'th'}"
+
+
+class Q36(Slides):
+    Q = "Q36"
+    ASK = ("The mean and the median of 2, 4, 4, 5, 5, 6, 7, 8, 11, a, b are both 6, where a and b",
+           "are positive integers. Which of the following must be true?",
+           "I  a ≥ 6        II  b ≤ 8        III  a + b = 14")
+
+    def construct(self):
+        self.header()
+        self.step("11 data: nine are known, and a and b are unknown.")
+        vals = ["2", "4", "4", "5", "5", "6", "7", "8", "11", "a", "b"]
+        xs = [640 + (i - 5) * 96 for i in range(11)]
+        tiles = [self.tile(v, (x, 226), 82, 68, 38, GOLD if v in "ab" else TXT, CELL, GOLD if v in "ab" else EDGE)
+                 for v, x in zip(vals, xs)]
+        self.play(LaggedStart(*[FadeIn(t, shift=DOWN * 0.2) for t in tiles], lag_ratio=0.08), run_time=1.2)
+        checks = {k: self.label("dot", GREEN, s, (900, y), 30, left=True)
+                  for k, s, y in (("I", "I    a ≥ 6", 390), ("II", "II   b ≤ 8", 440), ("III", "III  a + b = 14", 490))}
+        self.show(self.text("Must be true:", (900, 336), 28, MUTED, left=True))
+        self.beat()
+
+        self.step("Mean = 6, so the 11 data add up to 11 × 6 = 66. That gives a + b = 14.")
+        self.jot(self.bracket(xs[0] - 41, xs[8] + 41, 270, over=False, color=MUTED),
+                 self.text("2 + 4 + 4 + 5 + 5 + 6 + 7 + 8 + 11 = 52", ((xs[0] + xs[8]) / 2, 304), 26, MUTED))
+        self.jot(self.eq([("52 + a + b", "11"), "=", "6"], (420, 410), 42), rt=0.5)
+        self.jot(self.text("52 + a + b = 66", (420, 500), 36), rt=0.5)
+        self.jot(self.text("a + b = 14", (420, 566), 40, GOLD), rt=0.5)
+        self.show(checks["III"])
+        self.beat()
+
+        self.step("Median = 6: when the 11 data are in order, the 6th one must be 6.")
+        self.wipe()
+        self.play(*[AnimationGroup(tiles[i][0].animate.set_fill(TINT[RED], 1).set_stroke(RED, self.w(2.4)),
+                                   tiles[i][1].animate.set_color(RED)) for i in range(5)], run_time=0.7)
+        self.jot(self.text("5 data are already less than 6", (xs[2], 298), 26, RED))
+        row = []
+        for i, v in enumerate(["2", "4", "4", "5", "5", "a"]):
+            x = 160 + 82 * i
+            unknown = v == "a"
+            row.append(self.tile(v, (x, 444), 70, 58, 32, GOLD if unknown else RED, CELL if unknown else TINT[RED],
+                                 GOLD if unknown else RED))
+            row.append(self.text(nth(i + 1), (x, 498), 22, RED if unknown else MUTED))
+        self.jot(self.text("Suppose a were less than 6:", (120, 372), 28, TXT, left=True), VGroup(*row), rt=0.8)
+        self.jot(self.cross((570, 444), 70, 58, RED, 4),
+                 self.text("Then 6 data are less than 6, so the 6th datum is less than 6:", (120, 550), 28, TXT, left=True),
+                 self.text("the median could not be 6.", (120, 592), 28, RED, left=True), rt=0.7)
+        self.beat()
+
+        self.step("The same holds for b. Neither a nor b can be less than 6, so a ≥ 6.")
+        self.wipe()
+        self.play(*[AnimationGroup(tiles[i][0].animate.set_fill(CELL, 1).set_stroke(EDGE, self.w(1.6)),
+                                   tiles[i][1].animate.set_color(TXT)) for i in range(5)],
+                  *[tiles[i][0].animate.set_stroke(GREEN, self.w(3)) for i in (9, 10)], run_time=0.6)
+        self.jot(self.text("a ≥ 6   and   b ≥ 6", (420, 460), 46, GOLD))
+        self.show(checks["I"])
+        self.beat()
+
+        self.step("a + b = 14 and a ≥ 6, so b = 14 − a ≤ 14 − 6 = 8. That gives b ≤ 8.")
+        self.wipe()
+        for s, x, y, c in (("b = 14 − a", 240, 384, TXT), ("≤ 14 − 6", 266, 440, TXT), ("= 8", 266, 496, TXT),
+                           ("i.e.  b ≤ 8", 214, 570, GOLD)):
+            self.jot(self.text(s, (x, y), 40, c, left=True), rt=0.45)
+        self.show(checks["II"])
+        self.beat()
+
+        self.step("I, II and III must all be true, so the answer is D.")
+        self.answer("D", (1010, 590))
+
+
+class S16(Slides):
+    Q = "S16"
+    ASK = ("A fair game: David pays $15.8 to turn the wheel once and wins the prize of",
+           "the sector at the pointer. A 108°, $(x + 2); B 42°, $3x; C 75°, $9; D 135°, $x.",
+           "Find the probability that David loses money in the game.")
+
+    SECTORS = [("A", 108, BLUE, "$(x + 2)", 15, "3/10"), ("B", 42, PINK, "$3x", 39, "7/60"),
+               ("C", 75, VIOLET, "$9", 9, "5/24"), ("D", 135, ORANGE, "$x", 13, "3/8")]
+
+    def wheel(self, c, r):
+        parts, start = [], 0
+        for name, sweep, color, *_ in self.SECTORS:
+            s = AnnularSector(inner_radius=0, outer_radius=r * self.k, angle=-sweep * DEGREES,
+                              start_angle=(90 - start) * DEGREES, arc_center=self.P(*c),
+                              fill_color=TINT[color], fill_opacity=1, stroke_color=color, stroke_width=self.w(2.4))
+            mid = np.radians(start + sweep / 2)
+            reach = 0.72 if sweep < 60 else 0.58
+            p = (c[0] + r * reach * np.sin(mid), c[1] - r * reach * np.cos(mid))
+            words = VGroup(self.text(name, (p[0], p[1] - 14), 34, color, BOLD), self.text(f"{sweep}°", (p[0], p[1] + 22), 22, TXT))
+            parts.append(VGroup(s.set_z_index(Z_BOX), words))
+            start += sweep
+        tip = Polygon(self.P(c[0] - 12, c[1] - r - 22), self.P(c[0] + 12, c[1] - r - 22), self.P(c[0], c[1] - r - 2),
+                      color=TXT, fill_color=TXT, fill_opacity=1, stroke_width=self.w(1)).set_z_index(2)
+        return parts, tip
+
+    def construct(self):
+        self.header()
+        self.step("Where the pointer stops is random: each sector's chance is its angle out of 360°.")
+        parts, tip = self.wheel((270, 436), 170)
+        self.play(LaggedStart(*[FadeIn(p, scale=0.9) for p in parts], lag_ratio=0.25), FadeIn(tip), run_time=1.4)
+        T = self.table([s[0] for s in self.SECTORS], ["Angle", "Prize", "Probability"], 540, 182, 196, 56,
+                       lambda i, j: (f"{self.SECTORS[i][1]}°", self.SECTORS[i][3], self.SECTORS[i][5])[j], hw=70, hh=46, size=28,
+                       ink=lambda i, j, s, p: self.frac(*s.split("/"), p, 19) if j == 2 else self.text(s, p, 28))
+        for i, s in enumerate(self.SECTORS):
+            T["frame"][3 + i][1].set_color(s[2])
+        self.add(T["frame"])
+        self.play(LaggedStart(*[FadeIn(T["cells"][(i, j)][1]) for i in range(4) for j in (0, 1)], lag_ratio=0.1), run_time=1.0)
+        self.beat()
+
+        self.step("Probability = angle ÷ 360°: 108°/360° = 3/10, 42°/360° = 7/60, and so on.")
+        self.play(LaggedStart(*[AnimationGroup(Indicate(parts[i], scale_factor=1.04, color=self.SECTORS[i][2]),
+                                               FadeIn(T["cells"][(i, 2)][1])) for i in range(4)], lag_ratio=0.5), run_time=2.4)
+        self.jot(self.text("108° + 42° + 75° + 135° = 360°", (880, 490), 26, MUTED))
+        self.beat()
+
+        self.step("The game is fair, so the cost $15.8 equals the expected prize: Σ prize × probability.")
+        self.wipe()
+        self.jot(self.eq(["15.8", "=", "(x + 2)", "×", (3, 10), "+", "3x", "×", (7, 60), "+", "9", "×", (5, 24),
+                          "+", "x", "×", (3, 8)], (890, 518), 28), rt=0.8)
+        self.jot(self.eq(["15.8", "=", (99, 40), "+", ("41x", 40)], (800, 596), 28))
+        self.jot(self.text("x = 13", (1120, 596), 40, GOLD))
+        self.beat()
+
+        self.step("x = 13, so the prizes are A $15, B $39, C $9 and D $13.")
+        self.wipe()
+        swaps = []
+        for i, s in enumerate(self.SECTORS):
+            b, old = T["cells"][(i, 1)]
+            new = self.text(f"${s[4]}", self.pt(old.get_center()), 30, GOLD)
+            swaps.append(ReplacementTransform(old, new))
+            T["cells"][(i, 1)] = (b, new)
+        self.play(*swaps, run_time=0.9)
+        self.jot(self.text("A: 13 + 2 = 15     B: 3 × 13 = 39     D: 13", (880, 500), 26, GOLD))
+        self.beat()
+
+        self.step("David loses money when the prize is less than $15.8: sectors A, C and D.")
+        self.wipe()
+        lose = [0, 2, 3]
+        self.play(*self.paint(T, [(i, 1) for i in lose], RED), *self.paint(T, [(1, 1)], GREEN),
+                  *[parts[i][0].animate.set_stroke(RED, self.w(4)) for i in lose],
+                  parts[1].animate.set_opacity(0.35), run_time=0.9)
+        self.jot(self.label("cell", RED, "prize less than $15.8: loses money", (560, 500), 26, left=True),
+                 self.label("cell", GREEN, "prize more than $15.8: gains", (560, 540), 26, left=True))
+        self.beat()
+
+        self.step("P(losing money) = (108° + 75° + 135°) ÷ 360° = 318°/360° = 53/60.")
+        self.wipe()
+        self.show(self.eq(["P(losing money)", "=", ("108° + 75° + 135°", "360°"), "=", (53, 60, RED)], (890, 556), 34))
+        self.wait(2.5)
+
+
+class S19(Slides):
+    Q = "S19"
+    ASK = ("The table shows how many times a group of adults went hiking last year.",
+           "(a) Find the mean. (b) Are the median and the mode equal? (c) x more adults who",
+           "each went 6 times join. Find x for (i), (ii) and (iii).")
+
+    FREQ = [6, 22, 9, 2, 5, 2, 4]
+    BASE = 604
+    UNIT = 12
+
+    def bx(self, v):
+        return 168 + (v - 1) * 76
+
+    def bar(self, v, f, lift=0, color=WIRE, fill=CELL):
+        h = f * self.UNIT
+        return self.box((self.bx(v), self.BASE - lift * self.UNIT - h / 2), 54, max(h, 1), fill, color, r=4, width=2)
+
+    def construct(self):
+        self.header()
+        self.step("50 adults in all. Each bar shows how many adults went hiking that many times.")
+        T = self.table(["Frequency"], [str(v) for v in range(1, 8)], 96, 172, 70, 44, lambda i, j: str(self.FREQ[j]),
+                       hw=210, hh=44, size=26)
+        corner = self.text("Number of times", (96 + 105, 194), 24, PINK)
+        axis = VGroup(Line(self.P(120, self.BASE), self.P(700, self.BASE), color=TXT, stroke_width=self.w(2.4)),
+                      Line(self.P(120, self.BASE), self.P(120, self.BASE - 25 * self.UNIT), color=TXT, stroke_width=self.w(2.4)))
+        for n in range(0, 26, 5):
+            y = self.BASE - n * self.UNIT
+            axis.add(Line(self.P(114, y), self.P(120, y), color=TXT, stroke_width=self.w(2)), self.text(str(n), (100, y), 18, MUTED))
+        axis.add(*[self.text(str(v), (self.bx(v), self.BASE + 20), 22, TXT) for v in range(1, 8)])
+        bars = [self.bar(v, f) for v, f in zip(range(1, 8), self.FREQ)]
+        tops = [self.text(str(f), (self.bx(v), self.BASE - f * self.UNIT - 16), 22, TXT) for v, f in zip(range(1, 8), self.FREQ)]
+        self.add(T["frame"], corner, *[t for _, t in T["cells"].values()])
+        self.play(Create(axis), run_time=0.6)
+        self.play(LaggedStart(*[GrowFromEdge(b, DOWN) for b in bars], lag_ratio=0.15), FadeIn(VGroup(*tops)), run_time=1.4)
+        self.jot(self.text("6 + 22 + 9 + 2 + 5 + 2 + 4 = 50", (990, 330), 26, MUTED))
+        self.beat()
+
+        self.step("(a) Mean = total number of hikes ÷ number of adults = 150 ÷ 50 = 3.")
+        self.wipe()
+        top9 = self.BASE - 9 * self.UNIT - 36
+        mean = DashedLine(self.P(self.bx(3), 330), self.P(self.bx(3), top9), color=GOLD, stroke_width=self.w(2.4))
+        self.jot(self.text("1×6 + 2×22 + 3×9 + 4×2", (990, 330), 28),
+                 self.text("+ 5×5 + 6×2 + 7×4 = 150", (990, 372), 28), rt=0.7)
+        self.jot(self.text("(a)", (760, 470), 32, GOLD, BOLD, left=True),
+                 self.lefted(self.eq(["Mean", "=", ("150", "50"), "=", "3"], (0, 470), 44), 830))
+        self.play(Create(mean), run_time=0.6)
+        self.jot(mean, self.text("mean = 3", (self.bx(3), 312), 22, GOLD), rt=0.3)
+        self.beat()
+
+        self.step("(b) In order, the 25th and 26th adults both went 2 times: median = 2. Mode = 2.")
+        self.wipe()
+        self.play(bars[1].animate.set_fill(TINT[GOLD], 1).set_stroke(GOLD, self.w(2.6)), run_time=0.5)
+        self.jot(self.text("1st–6th", (self.bx(1), self.BASE - 6 * self.UNIT - 42), 20, MUTED),
+                 self.text("7th–28th", (self.bx(2), self.BASE - 22 * self.UNIT - 42), 20, GOLD))
+        self.jot(self.eq(["Median", "=", ("2 + 2", "2"), "=", "2"], (990, 350), 40))
+        self.jot(self.text("Mode = 2  (the tallest bar)", (990, 440), 30))
+        self.jot(self.label("dot", GREEN, "The median and the mode are equal.", (990, 516), 28))
+        self.beat()
+
+        self.step("(c)(i) x adults who went 6 times join, and the mean is increased by 2 to 5.")
+        self.wipe()
+        self.play(bars[1].animate.set_fill(CELL, 1).set_stroke(WIRE, self.w(2)), run_time=0.4)
+        ghost = DashedLine(self.P(self.bx(6) - 27, self.BASE - 2 * self.UNIT - 60), self.P(self.bx(6) + 27, self.BASE - 2 * self.UNIT - 60),
+                           color=GOLD, stroke_width=self.w(2.4))
+        self.jot(ghost, self.text("+ x", (self.bx(6), self.BASE - 2 * self.UNIT - 84), 26, GOLD))
+        self.jot(self.text("3 × 50 + 6 × x = (3 + 2) × (50 + x)", (990, 340), 28), rt=0.6)
+        self.jot(self.text("150 + 6x = 250 + 5x", (990, 410), 32), rt=0.5)
+        self.jot(self.text("x = 100", (990, 486), 42, GOLD), rt=0.5)
+        self.beat()
+
+        self.step("(c)(ii) For a median of 3, fewer adults went 1 or 2 times than 3 or more: 28 < 22 + x.")
+        self.wipe()
+        self.play(*[b.animate.set_fill(TINT[BLUE], 1).set_stroke(BLUE, self.w(2.2)) for b in bars[:2]],
+                  *[b.animate.set_fill(TINT[PINK], 1).set_stroke(PINK, self.w(2.2)) for b in bars[2:]], run_time=0.6)
+        self.jot(self.label("cell", BLUE, "1 or 2 times: 6 + 22 = 28", (760, 330), 28, left=True),
+                 self.label("cell", PINK, "3 to 7 times: 22 + x", (760, 374), 28, left=True))
+        self.jot(self.text("28 < 22 + x", (990, 440), 36), rt=0.5)
+        self.jot(self.text("x > 6", (990, 496), 36), rt=0.5)
+        extra = self.bar(6, 7, lift=2, color=GOLD, fill=TINT[GOLD])
+        self.play(GrowFromEdge(extra, DOWN), run_time=0.7)
+        self.jot(extra, self.text("+7", (self.bx(6), self.BASE - 9 * self.UNIT - 16), 22, GOLD),
+                 self.text("least x = 7", (990, 566), 40, GOLD), rt=0.5)
+        self.beat()
+
+        self.step("(c)(iii) The mode stays 2 while 2 + x < 22, i.e. x < 20: the greatest x is 19.")
+        self.wipe()
+        self.play(*[b.animate.set_fill(CELL, 1).set_stroke(WIRE, self.w(2)) for b in bars], run_time=0.4)
+        cap = DashedLine(self.P(120, self.BASE - 22 * self.UNIT), self.P(700, self.BASE - 22 * self.UNIT), color=RED,
+                         stroke_width=self.w(2))
+        extra = self.bar(6, 19, lift=2, color=GOLD, fill=TINT[GOLD])
+        self.play(Create(cap), run_time=0.5)
+        self.play(GrowFromEdge(extra, DOWN), run_time=1.2)
+        self.jot(cap, extra, self.text("22", (735, self.BASE - 22 * self.UNIT), 22, RED),
+                 self.text("2 + 19 = 21", (self.bx(6), self.BASE - 22 * self.UNIT - 22), 22, GOLD), rt=0.3)
+        self.jot(self.text("2 + x < 22", (990, 380), 36), self.text("x < 20", (990, 440), 36), rt=0.5)
+        self.jot(self.text("greatest x = 19", (990, 516), 40, GOLD))
+        self.wait(2.5)
+
+
+class S29(Slides):
+    Q = "S29"
+    ASK = ("A stem-and-leaf diagram of students' weights: mean 55.5 kg, mode 66 kg, median",
+           "58 kg. (a) Find a, b and c. (b) Amy, Paul and the two lightest students leave and",
+           "the mean is unchanged. Find their weights, and P(weight > 60 kg) after they leave.")
+
+    ROWS = [(4, ["1", "2", "a", "4", "4"]), (5, ["0", "1", "2", "b", "8", "9", "9"]), (6, ["1", "2", "6", "6", "c"]), (7, ["7"])]
+    ROW_Y = 270
+
+    def construct(self):
+        self.header()
+        self.step("18 students. The three unknown leaves a, b and c are in gold.")
+        heads = VGroup(self.text("Stem (10 kg)", (150, 194), 24, MUTED), self.text("Leaf (1 kg)", (340, 194), 24, MUTED))
+        bar = Line(self.P(212, 230), self.P(212, 520), color=TXT, stroke_width=self.w(2.4))
+        leaf, order, n = {}, {}, 0
+        stems = VGroup()
+        for r, (stem, leaves) in enumerate(self.ROWS):
+            y = self.ROW_Y + 72 * r
+            stems.add(self.text(str(stem), (170, y), 38))
+            for i, s in enumerate(leaves):
+                n += 1
+                unknown = s in "abc"
+                leaf[(stem, i)] = self.tile(s, (258 + 54 * i, y), 46, 52, 36, GOLD if unknown else TXT, CELL,
+                                            GOLD if unknown else CELL, r=8)
+                order[(stem, i)] = n
+        self.play(FadeIn(heads), Create(bar), FadeIn(stems), run_time=0.6)
+        self.play(LaggedStart(*[FadeIn(t, shift=LEFT * 0.15) for t in leaf.values()], lag_ratio=0.05), run_time=1.4)
+        self.beat()
+
+        def swap(key, s, color=GREEN):
+            t = leaf[key]
+            new = self.text(s, self.pt(t[1].get_center()), 36, color)
+            self.play(ReplacementTransform(t[1], new), t[0].animate.set_stroke(color, self.w(2.6)), run_time=0.6)
+            leaf[key] = VGroup(t[0], new)
+
+        self.step("Median = 58 kg: the 9th and 10th weights are 50 + b and 58, so b = 8.")
+        nums = VGroup(*[self.text(str(order[k]), (258 + 54 * k[1], self.ROW_Y + 72 * (k[0] - 4) - 38), 16, MUTED) for k in leaf])
+        self.jot(nums)
+        self.play(*[leaf[k][0].animate.set_stroke(BLUE, self.w(3)) for k in ((5, 3), (5, 4))], run_time=0.5)
+        self.jot(self.eq([("(50 + b) + 58", "2"), "=", "58"], (960, 300), 40))
+        self.jot(self.text("108 + b = 116", (960, 390), 34), rt=0.5)
+        self.jot(self.text("b = 8", (960, 450), 40, GOLD), rt=0.5)
+        swap((5, 3), "8")
+        self.play(leaf[(5, 4)][0].animate.set_stroke(CELL, self.w(1.6)), run_time=0.3)
+        self.beat()
+
+        self.step("Mode = 66 kg: 44, 58 and 59 appear twice, so 66 must appear 3 times: c = 6.")
+        self.wipe()
+        self.play(*[leaf[k][0].animate.set_stroke(PINK, self.w(3)) for k in ((6, 2), (6, 3))], run_time=0.5)
+        self.jot(self.text("44, 58 and 59 each appear twice,", (960, 300), 28),
+                 self.text("so the mode 66 must appear 3 times.", (960, 340), 28), rt=0.6)
+        self.jot(self.text("c = 6", (960, 420), 40, GOLD), rt=0.5)
+        swap((6, 4), "6")
+        self.play(*[leaf[k][0].animate.set_stroke(CELL, self.w(1.6)) for k in ((6, 2), (6, 3))], run_time=0.3)
+        self.beat()
+
+        self.step("Mean = 55.5 kg: the 18 weights add up to 18 × 55.5 = 999, so 996 + a = 999.")
+        self.wipe()
+        self.jot(self.text("41 + 42 + (40 + a) + 44 × 2 + … + 77", (960, 296), 26, MUTED),
+                 self.text("= 996 + a", (960, 336), 30), rt=0.6)
+        self.jot(self.eq([("996 + a", "18"), "=", "55.5"], (960, 420), 38), rt=0.5)
+        self.jot(self.text("996 + a = 999", (960, 500), 32), self.text("a = 3", (960, 556), 40, GOLD), rt=0.5)
+        swap((4, 2), "3")
+        self.beat()
+
+        self.step("(b)(i) The two lightest (41 kg, 42 kg), Amy (x kg) and Paul (y kg) leave; 14 are left.")
+        self.wipe()
+        gone = VGroup(*[self.cross(self.pt(leaf[k][0].get_center()), 46, 52, RED, 3.4) for k in ((4, 0), (4, 1))])
+        self.play(FadeIn(gone), *[leaf[k][1].animate.set_opacity(0.35) for k in ((4, 0), (4, 1))], run_time=0.5)
+        mean = self.eq([("999 − 41 − 42 − (x + y)", "14"), "=", "55.5"], (960, 300), 34)
+        mean[0][0].shift(UP * 4 * self.k)
+        self.jot(mean, rt=0.7)
+        self.jot(self.text("916 − (x + y) = 777", (960, 390), 32), rt=0.5)
+        self.jot(self.text("x + y = 139", (960, 450), 40, GOLD), rt=0.5)
+        self.beat()
+
+        self.step("By inspection, only 62 + 77 = 139: Amy weighs 62 kg and Paul weighs 77 kg.")
+        pair = [(6, 1), (7, 0)]
+        self.play(*[Indicate(leaf[k], color=GOLD) for k in pair], *[leaf[k][0].animate.set_stroke(GOLD, self.w(3)) for k in pair],
+                  run_time=0.9)
+        self.jot(self.text("Amy 62 kg,  Paul 77 kg", (960, 530), 34, GOLD))
+        self.play(FadeIn(VGroup(*[self.cross(self.pt(leaf[k][0].get_center()), 46, 52, RED, 3.4) for k in pair])),
+                  *[leaf[k][1].animate.set_opacity(0.35) for k in pair], run_time=0.6)
+        self.beat()
+
+        self.step("(b)(ii) 4 of the 14 students left weigh more than 60 kg: 61, 66, 66 and 66.")
+        self.wipe()
+        heavy = [(6, 0), (6, 2), (6, 3), (6, 4)]
+        self.play(*[AnimationGroup(leaf[k][0].animate.set_fill(TINT[GREEN], 1).set_stroke(GREEN, self.w(2.6)),
+                                   leaf[k][1].animate.set_color(GREEN)) for k in heavy], run_time=0.7)
+        self.show(self.tally(4, 14, (960, 420), "more than 60 kg", "students left", color=GREEN, simple=(2, 7), size=60, kind="cell"))
         self.wait(2.5)

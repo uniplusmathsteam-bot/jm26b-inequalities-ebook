@@ -500,7 +500,8 @@ function placeCtl(qa, els) {
   const limit = qa.offsetWidth - width - (side ? 24 : 0);
   const x0 = parseFloat(qa.style.left) || 0;
   const y0 = parseFloat(qa.style.top) || 0;
-  const fig = figureLeft(qa, y0, y0 + qa.offsetHeight, x0);
+  // Room opened with `space` is not on the page image; past the printed region it shows the next question.
+  const fig = figureLeft(qa, y0, y0 + Math.min(qa.offsetHeight, Number(qa.dataset.printed) || Infinity), x0);
   const figLimit = fig == null ? Infinity : fig - x0 - FIG_MARGIN - width - (side ? 24 : 0);
   let left = Math.min(right + 6 + bar, limit, figLimit);
   if (left < right + 2 + bar) left = Math.min(right + 6 + bar, figLimit);
@@ -631,6 +632,7 @@ export function buildOverlay(page, overlay) {
     const qa = document.createElement("div");
     qa.className = "qa";
     qa.dataset.q = q.id;
+    qa.dataset.printed = String(y1 - y0);
     Object.assign(qa.style, { left: `${x0}px`, top: `${y0}px`, width: `${x1 - x0}px`, height: `${y1 - y0}px` });
     qa.innerHTML = `<div class="qa-in"></div><div class="qa-bar" title="Drag to scroll the answer"><i></i></div>${ctlHTML(q.id)}`;
     qa.querySelector(".qa-in").addEventListener("scroll", () => {
