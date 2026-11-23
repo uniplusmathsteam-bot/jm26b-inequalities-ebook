@@ -44,7 +44,18 @@
     position: absolute; left: 10px; bottom: 10px; display: flex; gap: 4px; align-items: center;
     padding: 4px; border-radius: 10px; background: rgba(20, 20, 20, 0.78); opacity: 0.35; transition: opacity 0.2s;
   }
-  .tools:hover, .stage.pen .tools, .stage.pointer .tools { opacity: 1; }
+  .tools:hover, .stage.pen .tools, .stage.pointer .tools, .stage.menu .tools { opacity: 1; }
+  #menu {
+    position: absolute; left: 10px; bottom: 54px; max-height: calc(100% - 70px); overflow-y: auto;
+    display: grid; grid-template-columns: repeat(2, auto); gap: 2px 8px; padding: 6px;
+    border-radius: 10px; background: rgba(20, 20, 20, 0.94); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  }
+  #menu[hidden] { display: none; }
+  #menu h3 { grid-column: 1 / -1; margin: 6px 8px 2px; font-size: 11px; font-weight: 650; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.6; }
+  #menu button { text-align: left; white-space: nowrap; padding: 5px 10px; font-size: 13px; background: transparent; }
+  #menu button:hover { background: #3a3a3a; }
+  #menu button.on { background: #e0a020; color: #111; }
+  #menu button span { display: inline-block; min-width: 2.2em; opacity: 0.55; font-variant-numeric: tabular-nums; }
   .tools button { padding: 4px 9px; font-size: 13px; }
   .tools button.on { background: #e0a020; color: #111; }
   .tools .swatch { width: 22px; height: 22px; padding: 0; border-radius: 50%; border: 2px solid transparent; }
@@ -75,7 +86,9 @@
   <iframe id="deck" title="JM15 + JM17 intensive class" allow="autoplay; fullscreen" allowfullscreen></iframe>
   <canvas id="ink"></canvas>
   <div id="dot"></div>
+  <div id="menu" hidden></div>
   <div class="tools" id="tools">
+    <button type="button" id="jump" title="Jump to a question (Q)">Questions</button>
     <button type="button" id="pointer" title="Laser pointer (P)">Pointer</button>
     <button type="button" id="pen" title="Pen (D)">Pen</button>
     <button type="button" class="swatch on" data-color="#ffd400" style="background:#ffd400" title="Yellow"></button>
@@ -147,6 +160,36 @@ const buttons = TITLES.map((title, i) => {
   return b;
 });
 
+// ---- Question menu: every slide by title, grouped by topic; it sits in the stage, so it works in full screen.
+const menu = document.getElementById("menu");
+const PARTS = [["Congruence", 0], ["Similarity", 14]];
+const items = TITLES.map((title, i) => {
+  const part = PARTS.find(([, first]) => first === i);
+  if (part) {
+    const h = document.createElement("h3");
+    h.textContent = part[0];
+    menu.append(h);
+  }
+  const b = document.createElement("button");
+  b.type = "button";
+  const n = document.createElement("span");
+  n.textContent = i + 1;
+  b.append(n, title);
+  b.addEventListener("click", () => { showMenu(false); go(i, 0); frame.focus(); });
+  menu.append(b);
+  return b;
+});
+
+function showMenu(open = menu.hidden) {
+  menu.hidden = !open;
+  stage.classList.toggle("menu", open);
+  document.getElementById("jump").classList.toggle("on", open);
+  if (open) items[current].scrollIntoView({ block: "nearest" });
+}
+document.getElementById("jump").addEventListener("click", () => showMenu());
+const closeMenu = (e) => { if (!menu.hidden && !e.target.closest?.("#menu, #jump")) showMenu(false); };
+document.addEventListener("pointerdown", closeMenu);
+
 function go(slide, step) {
   if (!reveal) return;
   slide = Math.max(0, Math.min(TITLES.length - 1, slide));
@@ -162,6 +205,7 @@ function sync() {
   name.textContent = TITLES[slide];
   count.textContent = `Slide ${slide + 1} / ${TITLES.length} · step ${step + 1} / ${steps[slide]}`;
   buttons.forEach((b, i) => b.classList.toggle("on", i === slide));
+  items.forEach((b, i) => b.classList.toggle("on", i === slide));
   buttons[slide].scrollIntoView({ inline: "center", block: "nearest" });
   history.replaceState(null, "", step ? `#${slide + 1}.${step}` : `#${slide + 1}`);
 }
@@ -181,6 +225,7 @@ frame.addEventListener("load", () => {
     });
     reveal.on("slidechanged", sync);
     w.document.addEventListener("keydown", toolKeys, true);
+    w.document.addEventListener("pointerdown", closeMenu, true);
     const { slide, step } = fromHash();
     go(slide, step);
     sync();
@@ -309,6 +354,8 @@ function toolKeys(e) {
   else if (k === "p") setMode("pointer");
   else if (k === "d") setMode("pen");
   else if (k === "c") { strokes[current] = []; drawInk(); }
+  else if (k === "q") showMenu();
+  else if (k === "escape" && !menu.hidden) showMenu(false);
   else if (k === "escape" && mode) setMode(mode);
   else used = false;
   if (used) { e.preventDefault(); e.stopImmediatePropagation(); }

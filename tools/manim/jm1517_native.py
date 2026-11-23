@@ -31,6 +31,14 @@ SCENE = json.loads((ROOT / "pptx" / "scene.json").read_text(encoding="utf-8"))
 TIMELINE = json.loads((ROOT / "pptx" / "timeline.json").read_text(encoding="utf-8"))
 BOXES = json.loads((ROOT / "pptx" / "boxes.json").read_text(encoding="utf-8"))
 
+# Edits made for the class on top of the PowerPoint: (slide, shape id) -> text added to the
+# end of the shape's last run. The shape then widens its fill to the new line ("fit").
+APPEND = {(26, 5): ", 47"}
+for (_n, _id), _extra in APPEND.items():
+    _item = next(i for i in SCENE["slides"][_n - 1]["items"] if i["id"] == _id)
+    [r for p in _item["text"]["paras"] for r in p["runs"] if r.get("text")][-1]["text"] += _extra
+    _item["fit"] = True
+
 # The class is shown on Manim's black. JM1517_LIGHT=1 renders PowerPoint's white page instead,
 # which is what render_static.py compares against PowerPoint's own render.
 DARK = os.environ.get("JM1517_LIGHT") != "1"
@@ -245,7 +253,10 @@ def build_text(item, slide_n):
         x0, y0, x1, y1 = (v / 2 for v in measured)
         target = to_xy((x0 + x1) / 2, (y0 + y1) / 2)
         glow = any(r.get("glow") for p in t["paras"] for r in p["runs"])
-        if not glow:
+        if item.get("fit"):
+            # the measurement is of the PowerPoint text; the edited line keeps only its height
+            group.shift([0, target[1] - group.get_center()[1], 0])
+        elif not glow:
             group.shift(target - group.get_center())
         else:
             group.shift([target[0] - group.get_center()[0], target[1] - group.get_center()[1], 0])
@@ -350,12 +361,16 @@ def build_item(item, n):
         from jm1517_figures import build_picture
         return build_picture(item, n)
     mob = VGroup()
+    t = build_text(item, n) if kind in ("text", "shape+text") and item.get("text") else None
+    if kind == "shape+text" and item.get("fit") and t is not None:
+        left = to_xy(*apply(item["m"], 0, 0))[0]
+        w = max(item["w"], (t.get_right()[0] - left) / PT + item["text"]["ins"][2])
+        k = w / item["w"]
+        item = dict(item, w=w, paths=[dict(p, pts=[[x * k, y] for x, y in p["pts"]]) for p in item["paths"]])
     if kind in ("shape", "shape+text"):
         mob.add(build_shape(item))
-    if kind in ("text", "shape+text") and item.get("text"):
-        t = build_text(item, n)
-        if t is not None:
-            mob.add(t)
+    if t is not None:
+        mob.add(t)
     return mob if len(mob.family_members_with_points()) else None
 
 
@@ -380,16 +395,34 @@ def dark(col):
     return "#%02x%02x%02x" % tuple(round(v * 255) for v in (r, g, b)), 0.6
 
 
-def to_dark(mob):
+def wash(col, alpha):
+    """A see-through shape fill (the coloured triangles) on black: a mid-tone of its hue,
+    dense enough to see, dark enough that white labels over it stay readable."""
+    r, g, b = col.to_rgb()
+    h, l, s = colorsys.rgb_to_hls(r, g, b)
+    r, g, b = colorsys.hls_to_rgb(h, 0.42, max(s, 0.7))
+    return "#%02x%02x%02x" % tuple(round(v * 255) for v in (r, g, b)), min(0.72, max(0.5, 0.45 + 0.6 * alpha))
+
+
+def to_dark(mob, shape=False):
+    """shape: mob is a slide shape, whose see-through fills become a wash().
+    Returns whether any fill did."""
+    washed = False
     for m in mob.family_members_with_points():
         if m.get_fill_opacity() > 0:
-            c, k = dark(m.get_fill_color())
-            m.set_fill(c, opacity=m.get_fill_opacity() * k, family=False)
+            r, g, b = m.get_fill_color().to_rgb()
+            if shape and m.get_fill_opacity() < 0.9 and max(r, g, b) - min(r, g, b) >= 0.08:
+                c, a = wash(m.get_fill_color(), m.get_fill_opacity())
+                m.set_fill(c, opacity=a, family=False)
+                washed = True
+            else:
+                c, k = dark(m.get_fill_color())
+                m.set_fill(c, opacity=m.get_fill_opacity() * k, family=False)
         for back in (False, True):
             if m.get_stroke_width(background=back) > 0 and m.get_stroke_opacity(background=back) > 0:
                 c, k = dark(m.get_stroke_color(background=back))
                 m.set_stroke(c, opacity=m.get_stroke_opacity(background=back) * k, background=back, family=False)
-    return mob
+    return washed
 
 
 def to_marker(mob):
@@ -412,27 +445,32 @@ def slide_mobjects(n):
     On the dark page highlighter ink sits just below the lowest text or picture it
     covers: drawn over white text, as PowerPoint does, it would tint and dim the words
     it marks. (Sending it below the whole slide instead loses it in Manim's animated
-    frames, though a still draws it.)
+    frames, though a still draws it.) A see-through triangle fill goes under the picture
+    it shades in the same way, unless an opaque shape between them would then hide it.
     """
     items = SCENE["slides"][n - 1]["items"]
     out = []
     words = []
+    solid = []
     for z, item in enumerate(items):
         mob = build_item(item, n)
         if mob is None:
             continue
+        box = (*mob.get_corner([-1, -1, 0])[:2], *mob.get_corner([1, 1, 0])[:2])
         marker = DARK and getattr(mob, "highlighter", False)
         if marker:
             to_marker(mob)
-            box = (*mob.get_corner([-1, -1, 0])[:2], *mob.get_corner([1, 1, 0])[:2])
             under = [wz for wz, wbox in words if overlaps(box, wbox)]
             mob.set_z_index(min(under) - 0.5 if under else z)
         else:
-            if DARK:
-                to_dark(mob)
-            mob.set_z_index(z)
+            washed = DARK and to_dark(mob, shape=item["kind"] == "shape")
+            under = [wz for wz, wbox in words if overlaps(box, wbox)
+                     and not any(wz < sz and overlaps(box, sbox) for sz, sbox in solid)] if washed else []
+            mob.set_z_index(min(under) - 0.5 if under else z)
             if item["kind"] in ("text", "shape+text", "picture"):
-                words.append((z, (*mob.get_corner([-1, -1, 0])[:2], *mob.get_corner([1, 1, 0])[:2])))
+                words.append((z, box))
+            elif any(m.get_fill_opacity() >= 0.9 for m in mob.family_members_with_points()):
+                solid.append((z, box))
         out.append((item, mob))
     return out
 
