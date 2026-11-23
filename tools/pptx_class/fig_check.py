@@ -39,7 +39,7 @@ def check(name):
     work.mkdir(parents=True, exist_ok=True)
     src = work / f"fig_{name}.py"
     src.write_text(SCENE % {"tools": ROOT / "tools" / "manim", "name": name}, encoding="utf-8")
-    env = dict(os.environ, PYTHONIOENCODING="utf-8", JM1517_LIGHT="1")
+    env = dict(os.environ, PYTHONIOENCODING="utf-8", JM1517_DARK="0")
     r = subprocess.run([sys.executable, "-X", "utf8", "-m", "manim", "render", "-r", "1920,1080", "-s", "--disable_caching",
                         "--media_dir", "media", "-o", f"fig_{name}", src.name, "FigCheck"],
                        cwd=work, env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")

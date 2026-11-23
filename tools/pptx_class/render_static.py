@@ -4,8 +4,8 @@
 
 Writes books/jm1517/reference/class/native/check/sN.png (the Manim still) and
 sN_vs.png (PowerPoint on top, Manim below, and a red/blue overlay). The comparison
-renders PowerPoint's white page; --dark renders the class's black theme instead,
-for looking at only (its diff against PowerPoint means nothing).
+renders PowerPoint's white page, as the class does; --dark renders the black theme
+instead, for looking at only (its diff against PowerPoint means nothing).
 """
 
 import os
@@ -24,7 +24,7 @@ REF = ROOT / "books" / "jm1517" / "reference" / "class" / "layers"
 
 
 def render(n):
-    env = dict(os.environ, PYTHONIOENCODING="utf-8", JM1517_LIGHT="0" if DARK else "1")
+    env = dict(os.environ, PYTHONIOENCODING="utf-8", JM1517_DARK="1" if DARK else "0")
     cmd = [sys.executable, "-X", "utf8", "-m", "manim", "render", "-r", "1920,1080", "-s", "-v", "ERROR",
            "--media_dir", "media", str(SCRIPT), f"Static{n:02d}"]
     p = subprocess.run(cmd, cwd=OUT, env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")

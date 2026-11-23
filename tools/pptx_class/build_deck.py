@@ -1,6 +1,6 @@
 """Render the class scenes and bundle them into one HTML deck.
 
-    python -X utf8 tools/pptx_class/build_deck.py --native [--workers 4] [-r 1920,1080] [--convert-only] [scene ...]
+    python -X utf8 tools/pptx_class/build_deck.py --native [--workers 4] [-r 1920,1080] [--convert-only] [--dark] [scene ...]
 
 --native renders tools/manim/jm1517_native.py (every shape rebuilt in Manim)
 inside books/jm1517/reference/class/native/deck; without it, the older
@@ -23,8 +23,8 @@ CLASS = ROOT / "books" / "jm1517" / "reference" / "class"
 SLIDES = [n for n in range(1, 28) if n != 13]
 
 
-def run(cmd, cwd, log):
-    env = dict(os.environ, PYTHONIOENCODING="utf-8")
+def run(cmd, cwd, log, dark=False):
+    env = dict(os.environ, PYTHONIOENCODING="utf-8", JM1517_DARK="1" if dark else "0")
     with open(log, "w", encoding="utf-8") as fh:
         return subprocess.run(cmd, cwd=cwd, env=env, stdout=fh, stderr=subprocess.STDOUT).returncode
 
@@ -36,6 +36,7 @@ def main():
     ap.add_argument("-r", "--resolution", default="1920,1080")
     ap.add_argument("--no-convert", action="store_true")
     ap.add_argument("--convert-only", action="store_true", help="bundle the scenes already rendered")
+    ap.add_argument("--dark", action="store_true", help="native deck on Manim's black instead of PowerPoint's white")
     ap.add_argument("--tag", default="", help="media folder prefix, so two batches can render at once")
     ap.add_argument("scenes", nargs="*")
     args = ap.parse_args()
@@ -51,7 +52,7 @@ def main():
     def render(scenes, k):
         cmd = [sys.executable, "-X", "utf8", "-m", "manim", "render", "-r", args.resolution, "--fps", "30",
                "--media_dir", f"media{args.tag}{k}", "--disable_caching", "--progress_bar", "none", "-v", "WARNING", str(script), *scenes]
-        code = run(cmd, out, out / f"render{args.tag}{k}.log")
+        code = run(cmd, out, out / f"render{args.tag}{k}.log", args.dark)
         print(f"worker {k}: {' '.join(scenes)} -> exit {code}", flush=True)
         return code
 
@@ -72,7 +73,7 @@ def main():
             stale.unlink()
     cmd = [sys.executable, "-X", "utf8", "-m", "manim_slides", "convert", "--to", "html", "--offline",
            "-ctitle=JM15 + JM17 Intensive Class", "-cprogress=true", "-chash=true", "-ccontrols=true",
-           f"-cbackground_color={'black' if args.native else 'white'}", *every, "index.html"]
+           f"-cbackground_color={'black' if args.dark else 'white'}", *every, "index.html"]
     code = run(cmd, out, out / "convert.log")
     print("convert -> exit", code)
     sys.exit(code)

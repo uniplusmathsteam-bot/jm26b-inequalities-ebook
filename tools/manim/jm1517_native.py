@@ -39,9 +39,9 @@ for (_n, _id), _extra in APPEND.items():
     [r for p in _item["text"]["paras"] for r in p["runs"] if r.get("text")][-1]["text"] += _extra
     _item["fit"] = True
 
-# The class is shown on Manim's black. JM1517_LIGHT=1 renders PowerPoint's white page instead,
-# which is what render_static.py compares against PowerPoint's own render.
-DARK = os.environ.get("JM1517_LIGHT") != "1"
+# The class is shown on PowerPoint's white page, which is also what render_static.py compares
+# against PowerPoint's own render. JM1517_DARK=1 renders it on Manim's black instead.
+DARK = os.environ.get("JM1517_DARK") == "1"
 BACKGROUND = "#000000" if DARK else "#FFFFFF"
 config.background_color = BACKGROUND
 SLIDE_W, SLIDE_H = SCENE["size"]
