@@ -30,6 +30,25 @@
   .stage:fullscreen { width: 100vw; height: 100vh; aspect-ratio: auto; border-radius: 0; }
   .stage:-webkit-full-screen { width: 100vw; height: 100vh; border-radius: 0; }
   .stage iframe { display: block; width: 100%; height: 100%; border: 0; background: #000; }
+  .stage { position: relative; }
+  #ink { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; touch-action: none; }
+  .stage.pointer #ink, .stage.pen #ink { pointer-events: auto; }
+  .stage.pointer #ink { cursor: none; }
+  .stage.pen #ink { cursor: crosshair; }
+  #dot {
+    position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle, #fff 0 18%, #ff3030 30% 55%, rgba(255, 48, 48, 0) 72%);
+    box-shadow: 0 0 14px 6px rgba(255, 40, 40, 0.55); display: none;
+  }
+  .tools {
+    position: absolute; left: 10px; bottom: 10px; display: flex; gap: 4px; align-items: center;
+    padding: 4px; border-radius: 10px; background: rgba(20, 20, 20, 0.78); opacity: 0.35; transition: opacity 0.2s;
+  }
+  .tools:hover, .stage.pen .tools, .stage.pointer .tools { opacity: 1; }
+  .tools button { padding: 4px 9px; font-size: 13px; }
+  .tools button.on { background: #e0a020; color: #111; }
+  .tools .swatch { width: 22px; height: 22px; padding: 0; border-radius: 50%; border: 2px solid transparent; }
+  .tools .swatch.on { border-color: #fff; background-clip: padding-box; }
   footer {
     flex: none; display: flex; gap: 6px; overflow-x: auto;
     padding: 8px 12px 12px; background: #111;
@@ -52,7 +71,21 @@
   <span class="count" id="count"></span>
   <button type="button" id="full" title="Full screen (F)">Full screen</button>
 </header>
-<main><div class="stage" id="stage"><iframe id="deck" title="JM15 + JM17 intensive class" allow="autoplay; fullscreen" allowfullscreen></iframe></div></main>
+<main><div class="stage" id="stage">
+  <iframe id="deck" title="JM15 + JM17 intensive class" allow="autoplay; fullscreen" allowfullscreen></iframe>
+  <canvas id="ink"></canvas>
+  <div id="dot"></div>
+  <div class="tools" id="tools">
+    <button type="button" id="pointer" title="Laser pointer (P)">Pointer</button>
+    <button type="button" id="pen" title="Pen (D)">Pen</button>
+    <button type="button" class="swatch on" data-color="#ffd400" style="background:#ffd400" title="Yellow"></button>
+    <button type="button" class="swatch" data-color="#ff4d4d" style="background:#ff4d4d" title="Red"></button>
+    <button type="button" class="swatch" data-color="#4dd0ff" style="background:#4dd0ff" title="Blue"></button>
+    <button type="button" class="swatch" data-color="#ffffff" style="background:#ffffff" title="White"></button>
+    <button type="button" id="undo" title="Undo (Ctrl+Z)">Undo</button>
+    <button type="button" id="clear" title="Clear this slide's ink (C)">Clear</button>
+  </div>
+</div></main>
 <footer id="strip"></footer>
 <script>
 const TITLES = [
@@ -125,6 +158,7 @@ function sync() {
   let slide = 0;
   while (slide + 1 < starts.length && starts[slide + 1] <= h) slide++;
   const step = h - starts[slide];
+  if (slide !== current) { current = slide; drawInk(); }
   name.textContent = TITLES[slide];
   count.textContent = `Slide ${slide + 1} / ${TITLES.length} · step ${step + 1} / ${steps[slide]}`;
   buttons.forEach((b, i) => b.classList.toggle("on", i === slide));
@@ -146,6 +180,7 @@ frame.addEventListener("load", () => {
       steps[i]++;
     });
     reveal.on("slidechanged", sync);
+    w.document.addEventListener("keydown", toolKeys, true);
     const { slide, step } = fromHash();
     go(slide, step);
     sync();
@@ -161,6 +196,124 @@ function full() {
     (stage.requestFullscreen || stage.webkitRequestFullscreen).call(stage);
   }
 }
+
+// ---- Laser pointer and pen, drawn over the deck (also in full screen). Ink is kept per slide, in memory only.
+const ink = document.getElementById("ink");
+const dot = document.getElementById("dot");
+const ctx = ink.getContext("2d");
+let current = 0;
+let mode = "";
+let color = "#ffd400";
+let penSeen = false;
+const strokes = {};
+let live = null;
+
+// The deck letterboxes its 16:9 slide inside the stage; ink is stored in that slide's 0..1 coordinates.
+function slideRect() {
+  const w = ink.clientWidth, h = ink.clientHeight;
+  const sw = Math.min(w, h * 16 / 9), sh = sw * 9 / 16;
+  return { x: (w - sw) / 2, y: (h - sh) / 2, w: sw, h: sh };
+}
+
+function drawInk() {
+  const dpr = devicePixelRatio || 1;
+  if (ink.width !== Math.round(ink.clientWidth * dpr) || ink.height !== Math.round(ink.clientHeight * dpr)) {
+    ink.width = Math.round(ink.clientWidth * dpr);
+    ink.height = Math.round(ink.clientHeight * dpr);
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, ink.clientWidth, ink.clientHeight);
+  const r = slideRect();
+  ctx.lineCap = ctx.lineJoin = "round";
+  for (const s of strokes[current] || []) {
+    ctx.strokeStyle = s.color;
+    const pts = s.pts.map(([x, y, p]) => [r.x + x * r.w, r.y + y * r.h, p]);
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1], [x1, y1, p] = pts[i];
+      ctx.lineWidth = r.w * 0.0032 * (0.5 + p);
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.stroke();
+    }
+    if (pts.length === 1) {
+      ctx.fillStyle = s.color;
+      ctx.beginPath();
+      ctx.arc(pts[0][0], pts[0][1], r.w * 0.0024, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+  }
+}
+
+function setMode(m) {
+  mode = mode === m ? "" : m;
+  stage.classList.toggle("pointer", mode === "pointer");
+  stage.classList.toggle("pen", mode === "pen");
+  document.getElementById("pointer").classList.toggle("on", mode === "pointer");
+  document.getElementById("pen").classList.toggle("on", mode === "pen");
+  dot.style.display = "none";
+  if (!mode) frame.focus();
+}
+
+function at(e) {
+  const b = ink.getBoundingClientRect(), r = slideRect();
+  return [(e.clientX - b.left - r.x) / r.w, (e.clientY - b.top - r.y) / r.h, e.pressure > 0 && e.pointerType === "pen" ? e.pressure : 0.5];
+}
+
+ink.addEventListener("pointerdown", (e) => {
+  if (e.pointerType === "pen") penSeen = true;
+  if (mode !== "pen" || (e.pointerType === "touch" && penSeen)) return;
+  e.preventDefault();
+  try { ink.setPointerCapture(e.pointerId); } catch { /* pointer already gone */ }
+  live = { id: e.pointerId, stroke: { color, pts: [at(e)] } };
+  (strokes[current] ||= []).push(live.stroke);
+  drawInk();
+});
+ink.addEventListener("pointermove", (e) => {
+  if (mode === "pointer") {
+    const b = ink.getBoundingClientRect();
+    dot.style.left = `${e.clientX - b.left}px`;
+    dot.style.top = `${e.clientY - b.top}px`;
+    dot.style.display = "block";
+    return;
+  }
+  if (!live || e.pointerId !== live.id) return;
+  const batch = e.getCoalescedEvents?.();
+  for (const ev of batch?.length ? batch : [e]) live.stroke.pts.push(at(ev));
+  drawInk();
+});
+const end = (e) => { if (live && e.pointerId === live.id) live = null; };
+ink.addEventListener("pointerup", end);
+ink.addEventListener("pointercancel", end);
+ink.addEventListener("pointerleave", () => { dot.style.display = "none"; });
+addEventListener("resize", drawInk);
+document.addEventListener("fullscreenchange", () => requestAnimationFrame(drawInk));
+document.addEventListener("webkitfullscreenchange", () => requestAnimationFrame(drawInk));
+
+document.getElementById("pointer").addEventListener("click", () => setMode("pointer"));
+document.getElementById("pen").addEventListener("click", () => setMode("pen"));
+document.getElementById("undo").addEventListener("click", () => { strokes[current]?.pop(); drawInk(); });
+document.getElementById("clear").addEventListener("click", () => { strokes[current] = []; drawInk(); });
+document.querySelectorAll(".tools .swatch").forEach((b) => b.addEventListener("click", () => {
+  color = b.dataset.color;
+  document.querySelectorAll(".tools .swatch").forEach((x) => x.classList.toggle("on", x === b));
+  if (mode !== "pen") setMode("pen");
+}));
+
+// Also runs first inside the deck, where Reveal would otherwise take P as "previous".
+function toolKeys(e) {
+  const k = e.key.toLowerCase();
+  let used = true;
+  if ((e.ctrlKey || e.metaKey) && k === "z") { strokes[current]?.pop(); drawInk(); }
+  else if (e.ctrlKey || e.metaKey || e.altKey) used = false;
+  else if (k === "p") setMode("pointer");
+  else if (k === "d") setMode("pen");
+  else if (k === "c") { strokes[current] = []; drawInk(); }
+  else if (k === "escape" && mode) setMode(mode);
+  else used = false;
+  if (used) { e.preventDefault(); e.stopImmediatePropagation(); }
+}
+document.addEventListener("keydown", toolKeys);
 
 document.getElementById("prev").addEventListener("click", () => reveal?.prev());
 document.getElementById("next").addEventListener("click", () => reveal?.next());
