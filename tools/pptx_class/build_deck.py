@@ -1,6 +1,6 @@
 """Render the class scenes and bundle them into one HTML deck.
 
-    python -X utf8 tools/pptx_class/build_deck.py --native [--workers 4] [-r 1920,1080] [scene ...]
+    python -X utf8 tools/pptx_class/build_deck.py --native [--workers 4] [-r 1920,1080] [--convert-only] [scene ...]
 
 --native renders tools/manim/jm1517_native.py (every shape rebuilt in Manim)
 inside books/jm1517/reference/class/native/deck; without it, the older
@@ -19,7 +19,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CLASS = ROOT / "books" / "jm1517" / "reference" / "class"
-SLIDES = range(1, 28)
+# Slide 13 (MC question 21) is left out of the class, as DROPPED in tools/manim/jm1517_pptx.py.
+SLIDES = [n for n in range(1, 28) if n != 13]
 
 
 def run(cmd, cwd, log):
@@ -34,6 +35,7 @@ def main():
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("-r", "--resolution", default="1920,1080")
     ap.add_argument("--no-convert", action="store_true")
+    ap.add_argument("--convert-only", action="store_true", help="bundle the scenes already rendered")
     ap.add_argument("--tag", default="", help="media folder prefix, so two batches can render at once")
     ap.add_argument("scenes", nargs="*")
     args = ap.parse_args()
@@ -53,8 +55,10 @@ def main():
         print(f"worker {k}: {' '.join(scenes)} -> exit {code}", flush=True)
         return code
 
-    with ThreadPoolExecutor(len(batches)) as pool:
-        codes = list(pool.map(render, batches, range(len(batches))))
+    codes = []
+    if not args.convert_only:
+        with ThreadPoolExecutor(len(batches)) as pool:
+            codes = list(pool.map(render, batches, range(len(batches))))
     if any(codes):
         sys.exit(f"render failed; see {out}/render*.log")
     if args.no_convert:

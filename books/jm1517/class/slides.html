@@ -114,7 +114,6 @@ const TITLES = [
   "Short question 15 (a)",
   "Short question 15 (b)",
   "Short question 17",
-  "MC question 21",
   "Practice: congruence",
   "Properties of similar figures",
   "Prove of similar triangles",
@@ -162,7 +161,7 @@ const buttons = TITLES.map((title, i) => {
 
 // ---- Question menu: every slide by title, grouped by topic; it sits in the stage, so it works in full screen.
 const menu = document.getElementById("menu");
-const PARTS = [["Congruence", 0], ["Similarity", 14]];
+const PARTS = [["Congruence", 0], ["Similarity", 13]];
 const items = TITLES.map((title, i) => {
   const part = PARTS.find(([, first]) => first === i);
   if (part) {

@@ -548,7 +548,7 @@ class NativeSlide(Slide):
     n = 0
 
     def construct(self):
-        from jm1517_pptx import PACING, click_groups, slide_title
+        from jm1517_pptx import PACING, click_groups, slide_label, slide_title
 
         info = TIMELINE["slides"][self.n - 1]
         effects = info["effects"]
@@ -562,7 +562,7 @@ class NativeSlide(Slide):
         marks = PACING[self.n]
 
         def notes(k):
-            return (f"Slide {self.n}/{len(TIMELINE['slides'])}: {slide_title(info)}\n"
+            return (f"{slide_label(self.n)}: {slide_title(info)}\n"
                     f"Click {k} of {clicks}. Aim to be here by {marks[min(k, len(marks) - 1)]:.0f} min.")
 
         self.next_slide(notes=notes(0))
