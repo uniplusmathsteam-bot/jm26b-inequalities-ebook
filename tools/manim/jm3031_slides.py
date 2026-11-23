@@ -1941,7 +1941,8 @@ class S29(Guided):
         self.beat()
 
         self.step(f"The mean is unchanged: (18 × 55.5 {MINUS} 41 {MINUS} 42 {MINUS} (x + y)) ÷ 14 = 55.5.")
-        mean = self.eq([(f"18 × 55.5 {MINUS} 41 {MINUS} 42 {MINUS} (x + y)", "14"), "=", "55.5"], (960, 384), 30)
+        mean = self.eq([(f"18 × 55.5 {MINUS} 41 {MINUS} 42 {MINUS} (x + y)", "14"), "=", "55.5"], (960, 384), 28)
+        mean[0][0].shift(UP * 8 * self.k)
         self.jot(mean, rt=0.8)
         self.beat()
 
