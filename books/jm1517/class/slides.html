@@ -259,6 +259,10 @@ function slideRect() {
   return { x: (w - sw) / 2, y: (h - sh) / 2, w: sw, h: sh };
 }
 
+const TAIL_MS = 320;
+const trail = [];
+let trailRaf = 0;
+
 function drawInk() {
   const dpr = devicePixelRatio || 1;
   if (ink.width !== Math.round(ink.clientWidth * dpr) || ink.height !== Math.round(ink.clientHeight * dpr)) {
@@ -287,6 +291,49 @@ function drawInk() {
       ctx.fill();
     }
   }
+  drawTrail();
+}
+
+// A short red comet behind the laser tip: points older than TAIL_MS drop off.
+function drawTrail() {
+  const now = performance.now();
+  while (trail.length && now - trail[0].t > TAIL_MS) trail.shift();
+  if (trail.length < 2) return;
+  ctx.lineCap = ctx.lineJoin = "round";
+  for (let i = 1; i < trail.length; i++) {
+    const a = trail[i - 1], b = trail[i];
+    const age = (now - b.t) / TAIL_MS;
+    const k = 1 - age;
+    ctx.strokeStyle = `rgba(255, 48, 48, ${0.55 * k})`;
+    ctx.lineWidth = 2 + 10 * k;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+  }
+}
+
+function tickTrail() {
+  trailRaf = 0;
+  if (!trail.length) return;
+  drawInk();
+  if (trail.length) trailRaf = requestAnimationFrame(tickTrail);
+}
+
+function pushTrail(x, y) {
+  const now = performance.now();
+  const last = trail[trail.length - 1];
+  if (last && now - last.t < 12 && (x - last.x) ** 2 + (y - last.y) ** 2 < 4) {
+    last.x = x; last.y = y; last.t = now;
+  } else {
+    trail.push({ x, y, t: now });
+  }
+  if (!trailRaf) trailRaf = requestAnimationFrame(tickTrail);
+}
+
+function clearTrail() {
+  trail.length = 0;
+  if (trailRaf) { cancelAnimationFrame(trailRaf); trailRaf = 0; }
 }
 
 function setMode(m) {
@@ -296,6 +343,8 @@ function setMode(m) {
   document.getElementById("pointer").classList.toggle("on", mode === "pointer");
   document.getElementById("pen").classList.toggle("on", mode === "pen");
   dot.style.display = "none";
+  clearTrail();
+  drawInk();
   if (!mode) frame.focus();
 }
 
@@ -316,9 +365,11 @@ ink.addEventListener("pointerdown", (e) => {
 ink.addEventListener("pointermove", (e) => {
   if (mode === "pointer") {
     const b = ink.getBoundingClientRect();
-    dot.style.left = `${e.clientX - b.left}px`;
-    dot.style.top = `${e.clientY - b.top}px`;
+    const x = e.clientX - b.left, y = e.clientY - b.top;
+    dot.style.left = `${x}px`;
+    dot.style.top = `${y}px`;
     dot.style.display = "block";
+    pushTrail(x, y);
     return;
   }
   if (!live || e.pointerId !== live.id) return;
@@ -329,7 +380,11 @@ ink.addEventListener("pointermove", (e) => {
 const end = (e) => { if (live && e.pointerId === live.id) live = null; };
 ink.addEventListener("pointerup", end);
 ink.addEventListener("pointercancel", end);
-ink.addEventListener("pointerleave", () => { dot.style.display = "none"; });
+ink.addEventListener("pointerleave", () => {
+  dot.style.display = "none";
+  clearTrail();
+  drawInk();
+});
 addEventListener("resize", drawInk);
 document.addEventListener("fullscreenchange", () => requestAnimationFrame(drawInk));
 document.addEventListener("webkitfullscreenchange", () => requestAnimationFrame(drawInk));
