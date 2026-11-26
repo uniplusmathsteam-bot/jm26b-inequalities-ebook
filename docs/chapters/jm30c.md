@@ -46,7 +46,7 @@ The films were chosen by how surely each could be made right and worth watching.
 
 Every question has links except the q7 table, which only fills printed cells.
 
-The q7 region is one printed table row (18 pt), so its buttons sit in one row to the right of the table. Printed ink under an answer (the table it fills in) does not count as a figure beside it when the engine places the buttons.
+The q7 region is one printed table row (18 pt), so its buttons sit in one row to the right of the table, and its probabilities are written 4/9, 2/9, 1/3 on one line: a stacked fraction is taller than the row and runs into the (b) line. Printed ink under an answer (the table it fills in) does not count as a figure beside it when the engine places the buttons.
 
 ## Known warnings
 
