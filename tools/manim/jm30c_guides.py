@@ -11,17 +11,76 @@ the expected value with the cost.
 
 import numpy as np
 from manim import (
-    BOLD, DEGREES, DOWN, LEFT, UP, AnnularSector, Circle, Create, Ellipse, FadeIn, FadeOut, LaggedStart, Line,
+    BOLD, DEGREES, DOWN, LEFT, UP, AnnularSector, Circle, Create, Dot, Ellipse, FadeIn, FadeOut, LaggedStart, Line,
     Polygon, ReplacementTransform, TransformFromCopy, VGroup, GrowArrow, there_and_back,
 )
 
 from jm3031_slides import (
-    BG, BLUE, CELL, EDGE, GOLD, GREEN, MINUS, MUTED, ORANGE, PANEL, PINK, RED, TINT, TXT, VIOLET, WIRE, Z_BOX,
+    BG, BLUE, CELL, EDGE, FAINT, GOLD, GREEN, MINUS, MUTED, ORANGE, PANEL, PINK, RED, TINT, TXT, VIOLET, WIRE, Z_BOX,
     Guided, binary,
 )
 
 
+def _rgb(h):
+    return np.array([int(h[i:i + 2], 16) / 255 for i in (1, 3, 5)])
+
+
+# The slide palette (dark) and what each colour becomes on the white page.
+LIGHT = {
+    BG: "#ffffff", PANEL: "#eef2f7", CELL: "#f8fafc", EDGE: "#cbd5e1", WIRE: "#94a3b8", TXT: "#1e293b",
+    MUTED: "#64748b", FAINT: "#c4ccd6", BLUE: "#2563eb", PINK: "#db2777", GOLD: "#d97706", GREEN: "#16a34a",
+    RED: "#dc2626", VIOLET: "#7c3aed", ORANGE: "#ea580c",
+    TINT[GREEN]: "#dcfce7", TINT[RED]: "#fee2e2", TINT[GOLD]: "#fef3c7", TINT[BLUE]: "#dbeafe",
+    TINT[PINK]: "#fce7f3", TINT[VIOLET]: "#ede9fe", TINT[ORANGE]: "#ffedd5", "#cbd5e1": "#a3afbf",
+}
+_SRC = np.array([_rgb(k) for k in LIGHT])
+_DST = np.array([_rgb(v) for v in LIGHT.values()])
+_I, _J = np.triu_indices(len(_SRC), 1)
+_SEG = _SRC[_J] - _SRC[_I]
+_LEN = np.maximum((_SEG ** 2).sum(1), 1e-12)
+_SEEN = {}
+
+
+def _light(c):
+    """A palette colour, or a blend of two that an animation passes through, becomes the same blend of their
+    light versions. Any other colour is left as it is."""
+    key = tuple(np.round(c, 3))
+    if key not in _SEEN:
+        t = np.clip(((c - _SRC[_I]) * _SEG).sum(1) / _LEN, 0, 1)
+        miss = np.linalg.norm(_SRC[_I] + t[:, None] * _SEG - c, axis=1)
+        k = int(np.argmin(miss))
+        _SEEN[key] = (_DST[_I[k]] + t[k] * (_DST[_J[k]] - _DST[_I[k]])) if miss[k] < 0.02 else c
+    return _SEEN[key]
+
+
+def _relight(rgbas):
+    out = np.array(rgbas, dtype=float, copy=True)
+    for row in out:
+        row[:3] = _light(row[:3])
+    return out
+
+
 class Guide(Guided):
+    """Drawn in the slide palette and shown on a white page: every colour is mapped as the frame is drawn."""
+
+    def setup(self):
+        super().setup()
+        self.camera.background_color = "#ffffff"
+        cam = self.camera
+        fill, stroke = cam.get_fill_rgbas, cam.get_stroke_rgbas
+        cam.get_fill_rgbas = lambda vm: _relight(fill(vm))
+        cam.get_stroke_rgbas = lambda vm, background=False: _relight(stroke(vm, background))
+
+    def die(self, n, p, s=44):
+        """A white face with dark spots (the slides' die has spots in the page colour)."""
+        g = VGroup(self.box(p, s, s, BG, WIRE, r=8, width=1.6))
+        q = s * 0.27
+        spots = {1: [(0, 0)], 2: [(-1, -1), (1, 1)], 3: [(-1, -1), (0, 0), (1, 1)], 4: [(-1, -1), (1, -1), (-1, 1), (1, 1)],
+                 5: [(-1, -1), (1, -1), (0, 0), (-1, 1), (1, 1)], 6: [(-1, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (1, 1)]}[n]
+        for a, b in spots:
+            g.add(Dot(self.P(p[0] + a * q, p[1] + b * q), radius=s * 0.085 * self.k, color=TXT).set_z_index(-2))
+        return g
+
     def header(self):
         before = set(map(id, self.mobjects))
         super().header()
@@ -543,7 +602,7 @@ class Q7(Guide):
            "at random. (a) Complete the table of the probability of each coin drawn.",
            "(b) Find the expected value of the coin drawn.")
 
-    KINDS = [("$2", 4, "#93c5fd"), ("$5", 2, "#f9a8d4"), ("$10", 3, "#fcd34d")]
+    KINDS = [("$2", 4, "#3b82f6"), ("$5", 2, "#ec4899"), ("$10", 3, "#f59e0b")]
 
     def cell(self, j, p):
         """A probability cell: the count in gold over the 9 coins in blue."""
@@ -566,11 +625,11 @@ class Q7(Guide):
             groups.append(VGroup(*[self.coin(name, (cx, y), fill, r=rad, size=20) for cx in xs]))
             spans.append((xs[0], xs[-1]))
 
-        T = self.table(["Probability"], [k[0] for k in self.KINDS], 300, 370, 170, 90, lambda i, j: "", hw=200, hh=60,
+        T = self.table(["Probability"], [k[0] for k in self.KINDS], 300, 350, 170, 90, lambda i, j: "", hw=200, hh=60,
                        size=28, ink=lambda i, j, s, p: self.cell(j, p))
         for j, (_, _, fill) in enumerate(self.KINDS):
             T["frame"][j][1].set_color(fill)
-        corner = self.text("Coin drawn", (400, 400), 26, MUTED)
+        corner = self.text("Coin drawn", (400, 380), 26, MUTED)
         self.step("The bag holds four $2 coins, two $5 coins and three $10 coins.")
         self.play(LaggedStart(*[FadeIn(g, shift=DOWN * 0.2) for g in groups], lag_ratio=0.3), FadeIn(T["frame"]), FadeIn(corner),
                   run_time=1.2)

@@ -473,7 +473,8 @@ function graphicButton(id) {
 /** The control grid for a region `h` tall: the buttons wrap into columns when it is short. */
 function ctlGrid(qa, h) {
   const count = qa.querySelectorAll(".ctl button").length;
-  const rows = Math.max(2, Math.min(count, Math.floor((h + 3) / 25)));
+  // A region too short for two rows of buttons (a table row) gets one row, so none hangs over the text below.
+  const rows = Math.max(h < 47 ? 1 : 2, Math.min(count, Math.floor((h + 3) / 25)));
   const cols = Math.ceil(count / rows);
   // In a short region the step counter would hang well below the buttons, over the next question.
   const side = rows * 25 + 12 > h + 13;
@@ -501,7 +502,8 @@ function placeCtl(qa, els) {
   const x0 = parseFloat(qa.style.left) || 0;
   const y0 = parseFloat(qa.style.top) || 0;
   // Room opened with `space` is not on the page image; past the printed region it shows the next question.
-  const fig = figureLeft(qa, y0, y0 + Math.min(qa.offsetHeight, Number(qa.dataset.printed) || Infinity), x0);
+  // Printed ink under the answer itself (a table the answer fills in) is not a figure beside it.
+  const fig = figureLeft(qa, y0, y0 + Math.min(qa.offsetHeight, Number(qa.dataset.printed) || Infinity), x0 + right + 2 + bar);
   const figLimit = fig == null ? Infinity : fig - x0 - FIG_MARGIN - width - (side ? 24 : 0);
   let left = Math.min(right + 6 + bar, limit, figLimit);
   if (left < right + 2 + bar) left = Math.min(right + 6 + bar, figLimit);

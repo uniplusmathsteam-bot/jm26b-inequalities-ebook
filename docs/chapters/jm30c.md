@@ -30,7 +30,7 @@ No `widgets.js`. Two concept panels are Manim animations (`tools/manim/jm30.py`,
 | 1 | `ExpectedNumber` | Trials × probability; 315 throws and the 1/6 chance go into the working, then 52.5. |
 | 2 | `ExpectedValue` | Each column of the lucky-draw table (value and probability) moves into its term of the sum, then $20. |
 
-Five questions have a guided solution film (`tools/manim/jm30c_guides.py`), built like the JM30 JM31 Intensive guided films on `Guided` from `jm3031_slides.py`: dark slides, a numbered caption per click, and the reader pauses at every slide (`stops`). A probability is built as on the board: the sample space is outlined and joined to the denominator, the favourable outcomes light up one at a time beside a running count, and the count drops into the numerator. An expected value is built one term at a time, each value and probability carried down from where it was found. A "favourable?" part compares the expected value with the cost. q7b plays the same film as q7.
+Five questions have a guided solution film (`tools/manim/jm30c_guides.py`), built like the JM30 JM31 Intensive guided films on `Guided` from `jm3031_slides.py`, but on white: `Guide.setup` maps every palette colour to a light-theme one as the camera draws (white page, dark ink, deeper accents, pale tints), so the shared helpers need no change. Each film has a numbered caption per click, and the reader pauses at every slide (`stops`). A probability is built as on the board: the sample space is outlined and joined to the denominator, the favourable outcomes light up one at a time beside a running count, and the count drops into the numerator. An expected value is built one term at a time, each value and probability carried down from where it was found. A "favourable?" part compares the expected value with the cost. q7b plays the same film as q7.
 
 | Question | Scene | What it shows |
 | --- | --- | --- |
@@ -45,6 +45,8 @@ The films were chosen by how surely each could be made right and worth watching.
 ## Review links
 
 Every question has links except the q7 table, which only fills printed cells.
+
+The q7 region is one printed table row (18 pt), so its buttons sit in one row to the right of the table. Printed ink under an answer (the table it fills in) does not count as a figure beside it when the engine places the buttons.
 
 ## Known warnings
 
