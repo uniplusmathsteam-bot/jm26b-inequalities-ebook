@@ -30,6 +30,18 @@ No `widgets.js`. Two concept panels are Manim animations (`tools/manim/jm30.py`,
 | 1 | `ExpectedNumber` | Trials × probability; 315 throws and the 1/6 chance go into the working, then 52.5. |
 | 2 | `ExpectedValue` | Each column of the lucky-draw table (value and probability) moves into its term of the sum, then $20. |
 
+Five questions have a guided solution film (`tools/manim/jm30c_guides.py`), built like the JM30 JM31 Intensive guided films on `Guided` from `jm3031_slides.py`: dark slides, a numbered caption per click, and the reader pauses at every slide (`stops`). A probability is built as on the board: the sample space is outlined and joined to the denominator, the favourable outcomes light up one at a time beside a running count, and the count drops into the numerator. An expected value is built one term at a time, each value and probability carried down from where it was found. A "favourable?" part compares the expected value with the cost. q7b plays the same film as q7.
+
+| Question | Scene | What it shows |
+| --- | --- | --- |
+| 7 | `Q7` | The nine coins are counted (4 + 2 + 3 = 9); each kind lights up in turn and fills its cell of the printed table (4/9, 2/9, 3/9 = 1/3); then each coin value × its probability moves into the sum, $16/3. |
+| 16 | `Q16` | The wheel and the ratio 2 : 5 : 8. (a) 2 + 5 + 8 = 15 parts is the denominator and the 2 drops into the numerator; 10 × 2/15 = 4/3 times. (b) 5/15 = 1/3. (c) The ratio turns into 2/15, 1/3 and 8/15, and the expected points build term by term to 26/3. |
+| 20 | `Q20` | The 6 × 6 dice table. The prime faces 2, 3 and 5 are outlined, the 9 cells with both prime are counted, 9/36 = 1/4, $80 × 1/4 = $20 > $10: favourable. |
+| 22 | `Q22` | Two balls drop into the tubes. (i) A 2-stage tree, AA and BB light up: P(same tube) = 1/2, 10 × 1/2 + 5 × 1/2 = 7.5. (ii) A 3-stage tree, AAA and BBB: 1/4, 13 × 1/4 + 5 × 3/4 = 7. (b) 7.5 > 7, adopt option I. |
+| 23 | `Q23` | Two balls drop into slots A and C (outcome AC). The 4 × 4 table; each adjacent pair lights its two slots as it is counted: 6/16 = 3/8. The same-slot diagonal (1/4) and the 6 others (3/8) fill a small award table, whose values and probabilities build $15 < $20: not favourable. |
+
+The films were chosen by how surely each could be made right and worth watching. From most to least sure: Q20, Q23, Q16, Q22, Q7, then Q19 (its ✓ ✗ table needs a symbol font), Q17, Q18, Q3, Q21, Q14, Q15, Q12, Q13, Q8, Q6, Q9, Q5, Q4, Q11, Q10, Q24, Q1 and Q2. Q24's tournament cases are the hardest to show faithfully; Q1 and Q2 are a single multiplication.
+
 ## Review links
 
 Every question has links except the q7 table, which only fills printed cells.
