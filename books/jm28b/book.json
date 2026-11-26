@@ -1,0 +1,347 @@
+{
+  "id": "jm28b",
+  "form": "S3",
+  "code": "JM28 (B)",
+  "title": "Special Lines and Centres in Triangles",
+  "topic": "Triangles",
+  "year": 2025,
+  "status": "live",
+  "storage": "jm28b",
+  "source": {
+    "que": "source/S3 JM28 (B) - Special Lines and Centres in Triangles - 2025 (QUE).pdf",
+    "ans": "source/S3 JM28 (B) - Special Lines and Centres in Triangles - 2025 (ANS).pdf",
+    "ansPageOffset": 0
+  },
+  "sections": [
+    {
+      "id": "bis",
+      "label": "Angle Bisector"
+    },
+    {
+      "id": "perp",
+      "label": "Perp. Bisector"
+    },
+    {
+      "id": "par",
+      "label": "Parallel Lines"
+    },
+    {
+      "id": "alt",
+      "label": "Altitude"
+    }
+  ],
+  "continuation": {
+    "top": 96,
+    "x": 48,
+    "width": 499,
+    "bottom": 812
+  },
+  "extract": {
+    "zoom": 3,
+    "regionX": [
+      66,
+      546
+    ],
+    "footer": 822,
+    "questions": [
+      {
+        "id": "q1",
+        "page": 2,
+        "label": "1",
+        "section": "bis"
+      },
+      {
+        "id": "q2",
+        "page": 2,
+        "label": "2",
+        "section": "bis"
+      },
+      {
+        "id": "q3",
+        "page": 2,
+        "label": "3",
+        "section": "bis"
+      },
+      {
+        "id": "q4",
+        "page": 3,
+        "label": "4",
+        "section": "bis"
+      },
+      {
+        "id": "q5",
+        "page": 3,
+        "label": "5",
+        "section": "perp"
+      },
+      {
+        "id": "q6",
+        "page": 3,
+        "label": "6",
+        "section": "perp"
+      },
+      {
+        "id": "q7",
+        "page": 3,
+        "label": "7",
+        "section": "perp"
+      },
+      {
+        "id": "q8",
+        "page": 4,
+        "label": "8",
+        "section": "perp"
+      },
+      {
+        "id": "q9",
+        "page": 4,
+        "label": "9",
+        "section": "perp"
+      },
+      {
+        "id": "q10",
+        "page": 5,
+        "label": "10",
+        "section": "par"
+      },
+      {
+        "id": "q11",
+        "page": 5,
+        "label": "11",
+        "section": "par"
+      },
+      {
+        "id": "q12",
+        "page": 6,
+        "label": "12",
+        "section": "par"
+      },
+      {
+        "id": "q13",
+        "page": 6,
+        "label": "13",
+        "section": "par"
+      },
+      {
+        "id": "q14",
+        "page": 6,
+        "label": "14",
+        "section": "par"
+      },
+      {
+        "id": "q15",
+        "page": 7,
+        "label": "15",
+        "section": "par"
+      },
+      {
+        "id": "q16",
+        "page": 7,
+        "label": "16",
+        "section": "par"
+      },
+      {
+        "id": "q17",
+        "page": 7,
+        "label": "17",
+        "section": "par"
+      },
+      {
+        "id": "q18",
+        "page": 7,
+        "label": "18",
+        "section": "alt"
+      },
+      {
+        "id": "q19",
+        "page": 8,
+        "label": "19",
+        "section": "alt"
+      },
+      {
+        "id": "q20",
+        "page": 8,
+        "label": "20",
+        "section": "alt"
+      },
+      {
+        "id": "q21",
+        "page": 8,
+        "label": "21",
+        "section": "alt"
+      }
+    ],
+    "anchors": {},
+    "fixedAnchors": {},
+    "overrides": {
+      "q1": {
+        "region": [
+          60.0,
+          98.6,
+          370.0,
+          240.6
+        ]
+      },
+      "q3": {
+        "region": [
+          60.0,
+          578.7,
+          348.0,
+          806.7
+        ]
+      },
+      "q2": {
+        "region": [
+          60.0,
+          284.2,
+          404.0,
+          534.2
+        ]
+      },
+      "q5": {
+        "region": [
+          60.0,
+          264.7,
+          384.0,
+          378.7
+        ]
+      },
+      "q6": {
+        "region": [
+          94.0,
+          421.1,
+          416.0,
+          555.1
+        ]
+      },
+      "q7": {
+        "region": [
+          60.0,
+          634.3,
+          340.0,
+          806.3
+        ]
+      },
+      "q4": {
+        "region": [
+          60.0,
+          95.0,
+          418.0,
+          239.0
+        ]
+      },
+      "q8": {
+        "region": [
+          60.0,
+          113.0,
+          384.0,
+          323.0
+        ]
+      },
+      "q9": {
+        "region": [
+          60.0,
+          420.2,
+          386.0,
+          806.2
+        ]
+      },
+      "q10": {
+        "region": [
+          60.0,
+          392.0,
+          454.0,
+          558.0
+        ]
+      },
+      "q11": {
+        "region": [
+          60.0,
+          603.6,
+          426.0,
+          807.6
+        ]
+      },
+      "q12": {
+        "region": [
+          60.0,
+          120.1,
+          406.0,
+          278.1
+        ]
+      },
+      "q13": {
+        "region": [
+          60.0,
+          322.6,
+          414.0,
+          434.6
+        ]
+      },
+      "q14": {
+        "region": [
+          60.0,
+          516.2,
+          372.0,
+          806.2
+        ]
+      },
+      "q16": {
+        "region": [
+          60.0,
+          273.6,
+          358.0,
+          389.6
+        ]
+      },
+      "q17": {
+        "region": [
+          60.0,
+          433.9,
+          392.0,
+          551.9
+        ]
+      },
+      "q15": {
+        "region": [
+          60.0,
+          118.8,
+          464.0,
+          230.8
+        ]
+      },
+      "q18": {
+        "region": [
+          60.0,
+          631.6,
+          394.0,
+          807.6
+        ]
+      },
+      "q21": {
+        "region": [
+          60.0,
+          488.4,
+          386.0,
+          806.4
+        ]
+      },
+      "q19": {
+        "region": [
+          60.0,
+          118.8,
+          464.0,
+          260.8
+        ]
+      },
+      "q20": {
+        "region": [
+          62.0,
+          304.6,
+          398.0,
+          444.6
+        ]
+      }
+    }
+  }
+}

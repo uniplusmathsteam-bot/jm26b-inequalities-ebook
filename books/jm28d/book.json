@@ -1,0 +1,213 @@
+{
+  "id": "jm28d",
+  "form": "S3",
+  "code": "JM28 (D)",
+  "title": "Special Lines and Centres in Triangles",
+  "topic": "Triangles",
+  "year": 2023,
+  "status": "live",
+  "storage": "jm28d",
+  "source": {
+    "que": "source/S3 JM28 (D) - Special Lines and Centres in Triangles - 2023 (QUE).pdf",
+    "ans": "source/S3 JM28 (D) - Special Lines and Centres in Triangles - 2023 (ANS).pdf",
+    "ansPageOffset": 0
+  },
+  "sections": [
+    {
+      "id": "q",
+      "label": "Q1–6"
+    },
+    {
+      "id": "l2",
+      "label": "Q7–12"
+    }
+  ],
+  "continuation": {
+    "top": 96,
+    "x": 48,
+    "width": 499,
+    "bottom": 812
+  },
+  "extract": {
+    "zoom": 3,
+    "regionX": [
+      66,
+      546
+    ],
+    "footer": 822,
+    "questions": [
+      {
+        "id": "q1",
+        "page": 1,
+        "label": "1",
+        "section": "q"
+      },
+      {
+        "id": "q2",
+        "page": 1,
+        "label": "2",
+        "section": "q"
+      },
+      {
+        "id": "q3",
+        "page": 2,
+        "label": "3",
+        "section": "q"
+      },
+      {
+        "id": "q4",
+        "page": 2,
+        "label": "4",
+        "section": "q"
+      },
+      {
+        "id": "q5",
+        "page": 3,
+        "label": "5",
+        "section": "q"
+      },
+      {
+        "id": "q6",
+        "page": 3,
+        "label": "6",
+        "section": "q"
+      },
+      {
+        "id": "q7",
+        "page": 4,
+        "label": "7",
+        "section": "l2"
+      },
+      {
+        "id": "q8",
+        "page": 4,
+        "label": "8",
+        "section": "l2"
+      },
+      {
+        "id": "q9",
+        "page": 5,
+        "label": "9",
+        "section": "l2"
+      },
+      {
+        "id": "q10",
+        "page": 5,
+        "label": "10",
+        "section": "l2"
+      },
+      {
+        "id": "q11",
+        "page": 6,
+        "label": "11",
+        "section": "l2"
+      },
+      {
+        "id": "q12",
+        "page": 6,
+        "label": "12",
+        "section": "l2"
+      }
+    ],
+    "anchors": {},
+    "fixedAnchors": {},
+    "overrides": {
+      "q1": {
+        "region": [
+          60.0,
+          485.9,
+          376.0,
+          593.9
+        ]
+      },
+      "q2": {
+        "region": [
+          60.0,
+          657.8,
+          436.0,
+          807.8
+        ]
+      },
+      "q3": {
+        "region": [
+          60.0,
+          180.8,
+          550.0,
+          306.8
+        ]
+      },
+      "q4": {
+        "region": [
+          60.0,
+          455.1,
+          550.0,
+          795.1
+        ]
+      },
+      "q5": {
+        "region": [
+          60.0,
+          184.7,
+          550.0,
+          426.7
+        ]
+      },
+      "q6": {
+        "region": [
+          60.0,
+          568.0,
+          550.0,
+          796.0
+        ]
+      },
+      "q7": {
+        "region": [
+          60.0,
+          192.9,
+          550.0,
+          478.9
+        ]
+      },
+      "q8": {
+        "region": [
+          60.0,
+          541.2,
+          452.0,
+          807.2
+        ]
+      },
+      "q9": {
+        "region": [
+          60.0,
+          150.8,
+          410.0,
+          338.8
+        ]
+      },
+      "q10": {
+        "region": [
+          60.0,
+          463.4,
+          550.0,
+          795.4
+        ]
+      },
+      "q11": {
+        "region": [
+          60.0,
+          150.8,
+          438.0,
+          436.8
+        ]
+      },
+      "q12": {
+        "region": [
+          60.0,
+          555.3,
+          550.0,
+          795.3
+        ]
+      }
+    }
+  }
+}

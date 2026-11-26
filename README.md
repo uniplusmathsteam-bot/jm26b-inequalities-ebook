@@ -21,6 +21,9 @@ Live site: <https://uniplusmathsteam-bot.github.io/jm26b-inequalities-ebook/>. I
 | `jm27c` | S3 JM27 (C) Percentages II | live |
 | `jm03c` | S1 JM03 (C) Percentages I | live |
 | `jm28a` | S3 JM28 (A) Special Lines and Centres in Triangles | live |
+| `jm28b` | S3 JM28 (B) Special Lines and Centres in Triangles | live |
+| `jm28c` | S3 JM28 (C) Special Lines and Centres in Triangles | live |
+| `jm28d` | S3 JM28 (D) Special Lines and Centres in Triangles | live |
 | `jm29a` | S3 JM29 (A) Quadrilaterals | live |
 | `jm29b` | S3 JM29 (B) Quadrilaterals | live |
 | `jm29c` | S3 JM29 (C) Quadrilaterals | live |
